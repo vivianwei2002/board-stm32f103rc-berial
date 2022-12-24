@@ -4,6 +4,23 @@
 
 ### ARM Comiler V6
 
+优点：编译快，配置简便
+
+缺点：使用微库导致部分函数缺失
+
+![4](README.assets/4.png)
+
+![6](README.assets/6.png)
+
+![10](README.assets/10.png)
+
+```c
+void __aeabi_f2h(){}
+void __aeabi_h2f(){}
+```
+
+### ARM Comiler V6
+
 优点：编译快
 
 缺点：库不是最新的，缺少支持向量机，高斯朴素贝叶斯分类等库
