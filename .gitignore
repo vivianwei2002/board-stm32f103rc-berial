@@ -1,0 +1,16 @@
+5.Toolchain/._cache_XCOM V2.6.exe
+5.Toolchain/FlyMcuConfig.ini
+*.d
+*.o
+*.uvguix.Administrator
+*.sct
+*.lnp
+*.map
+*.dep
+*.build_log.htm
+RTE_Components.h
+*.mxproject
+5.Toolchain/ProgramLogs.txt
+*.dbgconf
+7.Example/HAL/08.I2C/03 lis3dsh/MDK-ARM/.vscode/keil-assistant.log
+7.Example/HAL/08.I2C/03 lis3dsh/MDK-ARM/.vscode/c_cpp_properties.json

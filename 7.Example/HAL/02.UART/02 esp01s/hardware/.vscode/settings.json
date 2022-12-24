@@ -1,0 +1,9 @@
+{
+  "files.associations": {
+    "*.H": "c",
+    "atomic": "c",
+    "iterator": "c",
+    "xstring": "c",
+    "xutility": "c"
+  }
+}
