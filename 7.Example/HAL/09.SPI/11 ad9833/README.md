@@ -14,5 +14,4 @@
 
 每500ms切换1次输出波形：
 
-![每500ms切换1次输出波形](Ima(README.assets/ms切换1次输出波形.png)
-
+![1](README.assets/1.png)

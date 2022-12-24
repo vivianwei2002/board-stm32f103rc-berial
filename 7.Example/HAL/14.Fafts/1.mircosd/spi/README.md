@@ -22,7 +22,7 @@ FAT：File Allocation Table，文件分配表
 
 以FAT32为例，下图为FAT32文件系统布局：
 
-![在这里插入图片描述](Ima(README.assets/1015153021180.png)
+![1](README.assets/20201015153021180.png)
 
 簇是文件存储的最小单元，FAT32分区大小与对应簇空间大小关系如下表示：
 
@@ -35,17 +35,17 @@ FAT：File Allocation Table，文件分配表
 
 例如：创建一个50字节的test.txt文件，文件大小是50字节，但是占用磁盘空间为4096字节（一个簇）
 
-![在这里插入图片描述](Ima(README.assets/1015161426995.png)
+![2](README.assets/20201015161426995.png)
 
 #### 层次结构
 
 FATFS模块的层次结构如下图示：
 
-![在这里插入图片描述](Ima(README.assets/1015152548334.png)
+![3](README.assets/20201015152548334.png)
 
 * 应用层：提供应用接口函数。http://elm-chan.org/fsw/ff/00index_e.html
 
-![在这里插入图片描述](Ima(README.assets/1016140809173.png)
+![4](README.assets/20201015233613478.png)
 
 * FATFS模块：文件读写协议。
 * 底层接口：包括存储媒介读写接口和供给文件创建修改时间的实时时钟。
