@@ -56,7 +56,7 @@
 
 ![7](README.assets/7.png)
 
-注释的大致意思是：SysTick 以最低的中断优先级运行，因此当该中断执行时，会屏蔽其他所有中断。
+注释大意是：SysTick 以最低的中断优先级运行，因此当该中断执行时，会屏蔽其他所有中断。
 
 ```
 vPortRaiseBASEPRI()：进入临界区，即将滴答定时器中断设置为最高，防止被其他中断打断。
@@ -71,7 +71,7 @@ vPortClearBASEPRIFromISR()：退出临界区，即恢复滴答定时器的中断
 
 ![5](README.assets/5.png)
 
-此时的 StsTick_Handler 被定义为 xPortSysTickHandler
+此时的 `StsTick_Handler` 被定义为 `xPortSysTickHandler`
 
 ```c
 #define xPortSysTickHandler SysTick_Handler
@@ -81,6 +81,6 @@ vPortClearBASEPRIFromISR()：退出临界区，即恢复滴答定时器的中断
 
 ### 编译器
 
-AC6 较于 AC5 有较大的改动，使用 AC6 直接编译会报错。因此选择 AC5 版本。
+AC6 较于 AC5 有较大的改动，使用 AC6 直接编译会报错，因此选择 AC5 版本。
 
 ![2](README.assets/2.png)

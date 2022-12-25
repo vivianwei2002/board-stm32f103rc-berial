@@ -17,7 +17,6 @@
  ******************************************************************************
  */
 /* USER CODE END Header */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
@@ -37,7 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ENABLE_DMA_IT 1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,6 +47,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint16_t adc_value = 0;
 
 /* USER CODE END PV */
 
@@ -60,6 +60,11 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+#if ENABLE_DMA_IT == 1
+    printf("%f\r\n", adc_value / 4096.f * 3.3f);
+#endif
+}
 /* USER CODE END 0 */
 
 /**
@@ -91,6 +96,7 @@ int main(void) {
     MX_GPIO_Init();
     MX_DMA_Init();
     MX_USART1_UART_Init();
+    MX_USART2_UART_Init();
     MX_ADC1_Init();
     /* USER CODE BEGIN 2 */
     HAL_ADCEx_Calibration_Start(&hadc1);
@@ -98,11 +104,12 @@ int main(void) {
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    uint16_t adc_value;
     HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adc_value, 1);
     while (1) {
+#if ENABLE_DMA_IT == 0
         printf("%f\r\n", adc_value / 4096.f * 3.3f);
-        HAL_Delay(100);
+        HAL_Delay(50);
+#endif
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
@@ -119,7 +126,8 @@ void SystemClock_Config(void) {
     RCC_ClkInitTypeDef       RCC_ClkInitStruct = {0};
     RCC_PeriphCLKInitTypeDef PeriphClkInit     = {0};
 
-    /** Initializes the CPU, AHB and APB busses clocks
+    /** Initializes the RCC Oscillators according to the specified parameters
+     * in the RCC_OscInitTypeDef structure.
      */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
@@ -131,7 +139,8 @@ void SystemClock_Config(void) {
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
-    /** Initializes the CPU, AHB and APB busses clocks
+
+    /** Initializes the CPU, AHB and APB buses clocks
      */
     RCC_ClkInitStruct.ClockType      = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
@@ -179,5 +188,3 @@ void assert_failed(uint8_t* file, uint32_t line) {
     /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
