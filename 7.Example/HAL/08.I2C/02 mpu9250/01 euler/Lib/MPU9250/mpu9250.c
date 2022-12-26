@@ -5,7 +5,7 @@ void i2c_scan() {
     for (uint8_t addr_7bits, addr_8bits = 1; addr_8bits != 255; addr_8bits += 2) {
         if (HAL_I2C_Mem_Read(&MPU9250_I2C, addr_8bits, 0, I2C_MEMADD_SIZE_8BIT, &data, 1, 0xff) == HAL_OK) {
             addr_7bits = addr_8bits >> 1;
-            printf("0x%02x(%d)\r\n", addr_7bits, addr_7bits);
+            printf("0x%2x(%d)\r\n", addr_7bits, addr_7bits);
         }
     }
 }
@@ -152,4 +152,13 @@ uint8_t MPU_ReadByte(uint8_t dev, uint8_t reg) {
     uint8_t data;
     HAL_I2C_Mem_Read(&MPU9250_I2C, dev, reg, I2C_MEMADD_SIZE_8BIT, &data, 1, 0xFF);
     return data;
+}
+
+HAL_StatusTypeDef  MPU_CalcAngle(void){
+	int16_t ax,ay,az;
+	if(MPU_GetAccelerometer(&ax,&ay,&az)==HAL_OK){
+		printf("pitch:%f\t,roll:%f\r\n", atan2(ax, az) * RAD_TO_DEG, atan2(ay, az) * RAD_TO_DEG);
+		return HAL_OK;
+	}
+	return HAL_ERROR;
 }

@@ -2,6 +2,8 @@
 #define _MPU9250_H
 
 #include "i2c.h"
+#include <math.h>
+#include <stdio.h>
 
 #define MPU_ADDR_LOW 0x68
 #define MPU_ADDR_HIGH 0x69
@@ -27,7 +29,7 @@
 
 #define MPU9250_I2C hi2c2            // <-----
 #define MPU_DEV (MPU_ADDR_LOW << 1)  // <-----
-#define MPU_ID MPU6515_ID            // <-----
+#define MPU_ID MPU6500_ID            // <-----
 #define AK8963_DEV (0x0C << 1)       // 磁力计地址（固定）
 #define AK8963_ID 0X48
 
@@ -82,6 +84,8 @@
 
 #define MPU_DEVICE_ID 0X75  // 器件ID
 
+#define RAD_TO_DEG 57.2958
+
 uint8_t MPU9250_Init(void);
 
 HAL_StatusTypeDef MPU_WriteByte(uint8_t dev, uint8_t reg, uint8_t data);
@@ -97,5 +101,7 @@ float             MPU_GetTemperature(void);
 HAL_StatusTypeDef MPU_GetGyroscope(int16_t* gx, int16_t* gy, int16_t* gz);
 HAL_StatusTypeDef MPU_GetAccelerometer(int16_t* ax, int16_t* ay, int16_t* az);
 HAL_StatusTypeDef MPU_GetMagnetometer(int16_t* mx, int16_t* my, int16_t* mz);
+
+HAL_StatusTypeDef  MPU_CalcAngle(void);
 
 #endif
