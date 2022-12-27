@@ -138,8 +138,13 @@ typedef enum {
         _type_ x, y, z;         \
     } _name_
 
-Vector3(int16_t, vector3_int16);
-Vector3(float_t, vector3_float);
+typedef struct {
+    int16_t x, y, z;
+} vector3_int16;
+
+typedef struct {
+    float_t xy, yz, xz;
+} vector3_float;
 
 // read / write function
 
@@ -177,5 +182,7 @@ void                XMC5883L_SetSamples(XMC5883L_samples_t samples);
 XMC5883L_samples_t  XMC5883L_GetSamples(void);
 
 float_t XMC5883L_GetHeadingDegrees(vector3_int16* raw, float_t declination /* 磁偏角 */);
+
+void Compass(float heading);
 
 #endif

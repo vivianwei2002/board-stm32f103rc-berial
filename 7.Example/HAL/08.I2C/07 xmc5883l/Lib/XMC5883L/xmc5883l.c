@@ -60,9 +60,9 @@ vector3_int16* XMC5883L_ReadRaw(vector3_int16* v)
 
 vector3_float* XMC5883L_CalcAngle(vector3_int16* data, vector3_float* angle)
 {
-    angle->z = (atan2(data->y, data->x) * RAD_TO_DEG + 180);  // xy
-    angle->y = (atan2(data->z, data->x) * RAD_TO_DEG + 180);  // xz
-    angle->x = (atan2(data->z, data->y) * RAD_TO_DEG + 180);  // yz
+    angle->xy = (atan2(data->y, data->x) * RAD_TO_DEG + 180);
+    angle->xz = (atan2(data->z, data->x) * RAD_TO_DEG + 180);
+    angle->yz = (atan2(data->z, data->y) * RAD_TO_DEG + 180);
     return angle;
 }
 
@@ -197,4 +197,66 @@ float_t XMC5883L_GetHeadingDegrees(vector3_int16* raw, float_t declination)
     else if (heading > 2 * PI)
         heading -= 2 * PI;
     return heading * 180 / PI;
+}
+
+void Compass(float angle /* angle.xy */)
+{
+    /*
+
+Refer the following application note for heading calculation.
+http://www.ssec.honeywell.com/magnetic/datasheets/lowcost.pdf
+----------------------------------------------------------------------------------------
+atan2(y, x) is the angle in radians between the positive x-axis of a plane and the point
+given by the coordinates (x, y) on it.
+----------------------------------------------------------------------------------------
+
+This sketch does not utilize the magnetic component Z as tilt compensation can not be done without an Accelerometer
+
+----------------->y
+|
+|
+|
+|
+|
+|
+\/
+x
+
+
+
+     N
+ NW  |  NE
+     |
+W----------E
+     |
+ SW  |  SE
+     S
+
+*/
+
+    // Print the approximate direction
+
+    char* direction;
+
+    if ((angle < 22.5) || (angle > 337.5))
+        direction = "South";
+    else if ((angle > 22.5) && (angle < 67.5))
+        direction = "South-West";
+    else if ((angle > 67.5) && (angle < 112.5))
+        direction = "West";
+    else if ((angle > 112.5) && (angle < 157.5))
+        direction = "North-West";
+    else if ((angle > 157.5) && (angle < 202.5))
+        direction = "North";
+    else if ((angle > 202.5) && (angle < 247.5))
+        direction = "NorthEast";
+    else if ((angle > 247.5) && (angle < 292.5))
+        direction = "East";
+    else if ((angle > 292.5) && (angle < 337.5))
+        direction = "SouthEast";
+
+    // Angle between X-axis and the South direction
+    if (angle > 180) angle = 360 - angle;
+
+    printf("[ %.2f deg ] %s\r\n", angle, direction);
 }

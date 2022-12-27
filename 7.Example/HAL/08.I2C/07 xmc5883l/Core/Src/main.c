@@ -104,17 +104,19 @@ int main(void)
 
     XMC5883L_Init();
     vector3_int16 raw;
-    vector3_float angel;
+    vector3_float angle;
     float         heading;
 
     while (1) {
         XMC5883L_ReadRaw(&raw);
+        XMC5883L_CalcAngle(&raw, &angle);
+        heading = XMC5883L_GetHeadingDegrees(&raw, 0);
 #if 0
         printf("%d,%d,%d\r\n", raw.x, raw.y, raw.z);
-#else
-        XMC5883L_CalcAngle(&raw, &angel);
-        heading = XMC5883L_GetHeadingDegrees(&raw, 0);
-        printf("%f\t%f\t%f\t%f\r\n", angel.x, angel.y, angel.z, heading);
+#elif 0
+        printf("%f\t%f\t%f\t%f\r\n", angel.xy, angel.yz, angel.xz, heading);
+#elif 1
+        Compass(angle.xy);  // 输出x轴与北极的夹角（拿手机的里的指南针对下）
 #endif
         HAL_Delay(100);
         /* USER CODE END WHILE */
