@@ -520,9 +520,9 @@
           <GroupName>Application/Lib</GroupName>
           <Files>
             <File>
-              <FileName>hmc5883l.c</FileName>
+              <FileName>xmc5883l.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Lib\HMC5883L\hmc5883l.c</FilePath>
+              <FilePath>..\Lib\XMC5883L\xmc5883l.c</FilePath>
             </File>
           </Files>
         </Group>

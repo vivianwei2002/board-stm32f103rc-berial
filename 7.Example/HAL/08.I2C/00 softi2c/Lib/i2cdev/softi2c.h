@@ -7,11 +7,11 @@
 // i2c master
 
 #define WRITE 0x00
-#define READ 0x01
+#define READ  0x01
 
 typedef enum {
-    I2C_OK  = 0,
-    I2C_ERR = 1,
+    SOFT_I2C_OK  = 0,
+    SOFT_I2C_ERR = 1,
 } soft_i2c_state;
 
 #if 0
@@ -44,27 +44,9 @@ uint8_t soft_i2c_recv_byte(soft_i2c* i2c);
 
 // advance
 
-uint8_t soft_i2c_scan(soft_i2c* i2c);
 uint8_t soft_i2c_check(soft_i2c* i2c, uint8_t dev);  // is device ready
 
 soft_i2c_state soft_i2c_read_mem(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
 soft_i2c_state soft_i2c_write_mem(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
-
-soft_i2c_state soft_i2c_read_1byte(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t* data);
-soft_i2c_state soft_i2c_read_2byte(soft_i2c* i2c, uint8_t dev, uint8_t reg_lsb, uint8_t reg_msb, uint16_t* data);
-
-soft_i2c_state soft_i2c_write_1byte(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t data);
-
-soft_i2c_state soft_i2c_read_bit(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t bit, uint8_t* data);
-soft_i2c_state soft_i2c_write_bit(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t bit, uint8_t data);
-
-soft_i2c_state soft_i2c_read_bits(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t len, uint8_t* data);
-soft_i2c_state soft_i2c_write_bits(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t len, uint8_t data);
-
-soft_i2c_state soft_i2c_read_bits_ex(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t end, uint8_t* data);
-soft_i2c_state soft_i2c_write_bits_ex(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t end, uint8_t data);
-
-soft_i2c_state soft_i2c_read_mask(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t mask, uint8_t* data);
-soft_i2c_state soft_i2c_write_mask(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t mask, uint8_t data);
 
 #endif

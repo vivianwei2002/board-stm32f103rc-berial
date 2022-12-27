@@ -10,7 +10,8 @@ uint8_t HMC5883Lmode;
  * after initialization, especially the gain settings if you happen to be seeing
  * a lot of -4096 values (see the datasheet for mor information).
  */
-void HMC5883L_Initialize() {
+void HMC5883L_Initialize()
+{
     // write CONFIG_A register
 
     uint8_t tmp = (HMC5883L_AVERAGING_8 << (HMC5883L_CRA_AVERAGE_BIT - HMC5883L_CRA_AVERAGE_LENGTH + 1)) | (HMC5883L_RATE_15 << (HMC5883L_CRA_RATE_BIT - HMC5883L_CRA_RATE_LENGTH + 1)) | (HMC5883L_BIAS_NORMAL << (HMC5883L_CRA_BIAS_BIT - HMC5883L_CRA_BIAS_LENGTH + 1));
@@ -27,7 +28,8 @@ void HMC5883L_Initialize() {
  * Make sure the device is connected and responds as expected.
  * @return True if connection is valid, false otherwise
  */
-uint8_t HMC5883L_TestConnection() {
+uint8_t HMC5883L_TestConnection()
+{
     uint8_t tmp[3] = {0};
     HMC5883L_ReadBytes(HMC5883L_RA_ID_A, tmp, 3);
     return tmp[0] == 'H' && tmp[1] == '4' && tmp[2] == '3';
@@ -41,7 +43,8 @@ uint8_t HMC5883L_TestConnection() {
  * @see HMC5883L_CRA_AVERAGE_BIT
  * @see HMC5883L_CRA_AVERAGE_LENGTH
  */
-uint8_t HMC5883L_GetSampleAveraging() {
+uint8_t HMC5883L_GetSampleAveraging()
+{
     return HMC5883L_ReadBits(HMC5883L_RA_CONFIG_A, HMC5883L_CRA_AVERAGE_BIT, HMC5883L_CRA_AVERAGE_LENGTH);
 }
 
@@ -51,7 +54,8 @@ uint8_t HMC5883L_GetSampleAveraging() {
  * @see HMC5883L_CRA_AVERAGE_BIT
  * @see HMC5883L_CRA_AVERAGE_LENGTH
  */
-void HMC5883L_SetSampleAveraging(uint8_t averaging) {
+void HMC5883L_SetSampleAveraging(uint8_t averaging)
+{
     HMC5883L_WriteBits(HMC5883L_RA_CONFIG_A, HMC5883L_CRA_AVERAGE_BIT, HMC5883L_CRA_AVERAGE_LENGTH, averaging);
 }
 
@@ -79,7 +83,8 @@ void HMC5883L_SetSampleAveraging(uint8_t averaging) {
  * @see HMC5883L_CRA_RATE_BIT
  * @see HMC5883L_CRA_RATE_LENGTH
  */
-uint8_t HMC5883L_GetDataRate() {
+uint8_t HMC5883L_GetDataRate()
+{
     return HMC5883L_ReadBits(HMC5883L_RA_CONFIG_A, HMC5883L_CRA_RATE_BIT, HMC5883L_CRA_RATE_LENGTH);
 }
 
@@ -91,7 +96,8 @@ uint8_t HMC5883L_GetDataRate() {
  * @see HMC5883L_CRA_RATE_BIT
  * @see HMC5883L_CRA_RATE_LENGTH
  */
-void HMC5883L_SetDataRate(uint8_t rate) {
+void HMC5883L_SetDataRate(uint8_t rate)
+{
     HMC5883L_WriteBits(HMC5883L_RA_CONFIG_A, HMC5883L_CRA_RATE_BIT, HMC5883L_CRA_RATE_LENGTH, rate);
 }
 
@@ -102,7 +108,8 @@ void HMC5883L_SetDataRate(uint8_t rate) {
  * @see HMC5883L_CRA_BIAS_BIT
  * @see HMC5883L_CRA_BIAS_LENGTH
  */
-uint8_t HMC5883L_GetMeasurementBias() {
+uint8_t HMC5883L_GetMeasurementBias()
+{
     return HMC5883L_ReadBits(HMC5883L_RA_CONFIG_A, HMC5883L_CRA_BIAS_BIT, HMC5883L_CRA_BIAS_LENGTH);
 }
 
@@ -113,7 +120,8 @@ uint8_t HMC5883L_GetMeasurementBias() {
  * @see HMC5883L_CRA_BIAS_BIT
  * @see HMC5883L_CRA_BIAS_LENGTH
  */
-void HMC5883L_SetMeasurementBias(uint8_t bias) {
+void HMC5883L_SetMeasurementBias(uint8_t bias)
+{
     HMC5883L_WriteBits(HMC5883L_RA_CONFIG_A, HMC5883L_CRA_BIAS_BIT, HMC5883L_CRA_BIAS_LENGTH, bias);
 }
 
@@ -143,7 +151,8 @@ void HMC5883L_SetMeasurementBias(uint8_t bias) {
  * @see HMC5883L_CRB_GAIN_BIT
  * @see HMC5883L_CRB_GAIN_LENGTH
  */
-uint8_t HMC5883L_GetGain() {
+uint8_t HMC5883L_GetGain()
+{
     return HMC5883L_ReadBits(HMC5883L_RA_CONFIG_B, HMC5883L_CRB_GAIN_BIT, HMC5883L_CRB_GAIN_LENGTH);
 }
 
@@ -154,7 +163,8 @@ uint8_t HMC5883L_GetGain() {
  * @see HMC5883L_CRB_GAIN_BIT
  * @see HMC5883L_CRB_GAIN_LENGTH
  */
-void HMC5883L_SetGain(uint8_t gain) {
+void HMC5883L_SetGain(uint8_t gain)
+{
     // use this method to guarantee that bits 4-0 are set to zero, which is a
     // requirement specified in the datasheet;
     HMC5883L_WriteReg(HMC5883L_RA_CONFIG_B, gain << (HMC5883L_CRB_GAIN_BIT - HMC5883L_CRB_GAIN_LENGTH + 1));
@@ -184,7 +194,8 @@ void HMC5883L_SetGain(uint8_t gain) {
  * @see HMC5883L_MODEREG_BIT
  * @see HMC5883L_MODEREG_LENGTH
  */
-uint8_t HMC5883L_GetMode() {
+uint8_t HMC5883L_GetMode()
+{
     return HMC5883L_ReadBits(HMC5883L_RA_MODE, HMC5883L_MODEREG_BIT, HMC5883L_MODEREG_LENGTH);
 }
 
@@ -198,7 +209,8 @@ uint8_t HMC5883L_GetMode() {
  * @see HMC5883L_MODEREG_BIT
  * @see HMC5883L_MODEREG_LENGTH
  */
-void HMC5883L_SetMode(uint8_t newMode) {
+void HMC5883L_SetMode(uint8_t newMode)
+{
     // use this method to guarantee that bits 7-2 are set to zero, which is a
     // requirement specified in the datasheet;
     uint8_t tmp = HMC5883Lmode << (HMC5883L_MODEREG_BIT - HMC5883L_MODEREG_LENGTH + 1);
@@ -217,7 +229,8 @@ void HMC5883L_SetMode(uint8_t newMode) {
  * @param x 16-bit signed integer container for X,Y,Z-axis heading
  * @see HMC5883L_RA_DATAX_H
  */
-void HMC5883L_GetHeading(int16_t* Mag /*x,z,y*/) {
+void HMC5883L_GetHeading(int16_t* Mag /*x,z,y*/)
+{
     uint8_t tmpbuff[6] = {0};
     HMC5883L_ReadBytes(HMC5883L_RA_DATAX_H, tmpbuff, 6);
 
@@ -242,7 +255,8 @@ void HMC5883L_GetHeading(int16_t* Mag /*x,z,y*/) {
  * @see HMC5883L_RA_STATUS
  * @see HMC5883L_STATUS_LOCK_BIT
  */
-uint8_t HMC5883L_GetLockStatus() {
+uint8_t HMC5883L_GetLockStatus()
+{
     return HMC5883L_ReadBit(HMC5883L_RA_STATUS, HMC5883L_STATUS_LOCK_BIT) == 0x01;
 }
 
@@ -256,47 +270,55 @@ uint8_t HMC5883L_GetLockStatus() {
  * @see HMC5883L_RA_STATUS
  * @see HMC5883L_STATUS_READY_BIT
  */
-uint8_t HMC5883L_GetReadyStatus() {
+uint8_t HMC5883L_GetReadyStatus()
+{
     return HMC5883L_ReadBit(HMC5883L_RA_STATUS, HMC5883L_STATUS_READY_BIT) == 0x01;
 }
 
-void HMC5883L_WriteBits(uint8_t reg, uint8_t bitStart, uint8_t length, uint8_t data) {
+void HMC5883L_WriteBits(uint8_t reg, uint8_t start, uint8_t length, uint8_t data)
+{
     uint8_t tmp  = HMC5883L_ReadReg(reg);
-    uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
-    data <<= (bitStart - length + 1);  // shift data into correct position
-    data &= mask;                      // zero all non-important bits in data
-    tmp &= ~(mask);                    // zero all important bits in existing byte
-    tmp |= data;                       // combine data with existing byte
+    uint8_t mask = ((1 << length) - 1) << (start - length + 1);
+    data <<= (start - length + 1);  // shift data into correct position
+    data &= mask;                   // zero all non-important bits in data
+    tmp &= ~(mask);                 // zero all important bits in existing byte
+    tmp |= data;                    // combine data with existing byte
     HMC5883L_WriteReg(reg, tmp);
 }
 
-void HMC5883L_WriteBit(uint8_t reg, uint8_t bitNum, uint8_t data) {
+void HMC5883L_WriteBit(uint8_t reg, uint8_t index, uint8_t data)
+{
     uint8_t tmp = HMC5883L_ReadReg(reg);
-    HMC5883L_WriteReg(reg, (data != 0) ? (tmp | (1 << bitNum)) : (tmp & ~(1 << bitNum)));
+    HMC5883L_WriteReg(reg, (data != 0) ? (tmp | (1 << index)) : (tmp & ~(1 << index)));
 }
 
-uint8_t HMC5883L_ReadBits(uint8_t reg, uint8_t bitStart, uint8_t length) {
+uint8_t HMC5883L_ReadBits(uint8_t reg, uint8_t start, uint8_t length)
+{
     uint8_t tmp  = HMC5883L_ReadReg(reg);
-    uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+    uint8_t mask = ((1 << length) - 1) << (start - length + 1);
     tmp &= mask;
-    tmp >>= (bitStart - length + 1);
+    tmp >>= (start - length + 1);
     return tmp;
 }
 
-uint8_t HMC5883L_ReadBit(uint8_t reg, uint8_t bitNum) {
-    return HMC5883L_ReadReg(reg) & (1 << bitNum);
+uint8_t HMC5883L_ReadBit(uint8_t reg, uint8_t index)
+{
+    return (HMC5883L_ReadReg(reg) >> index) & 0x01;
 }
 
-void HMC5883L_WriteReg(uint8_t reg, uint8_t buff) {
+void HMC5883L_WriteReg(uint8_t reg, uint8_t buff)
+{
     HAL_I2C_Mem_Write(&HMC5883L_I2C, HMC5883L_DEV, reg, I2C_MEMADD_SIZE_8BIT, &buff, 1, HAL_MAX_DELAY);
 }
 
-uint8_t HMC5883L_ReadReg(uint8_t reg) {
+uint8_t HMC5883L_ReadReg(uint8_t reg)
+{
     uint8_t buff;
     HAL_I2C_Mem_Read(&HMC5883L_I2C, HMC5883L_DEV, reg, I2C_MEMADD_SIZE_8BIT, &buff, 1, HAL_MAX_DELAY);
     return buff;
 }
 
-void HMC5883L_ReadBytes(uint8_t reg, uint8_t* buff, uint16_t size) {
+void HMC5883L_ReadBytes(uint8_t reg, uint8_t* buff, uint16_t size)
+{
     HAL_I2C_Mem_Read(&HMC5883L_I2C, HMC5883L_DEV, reg, I2C_MEMADD_SIZE_8BIT, buff, size, HAL_MAX_DELAY);
 }

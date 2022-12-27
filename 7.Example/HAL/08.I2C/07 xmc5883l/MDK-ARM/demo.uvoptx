@@ -507,8 +507,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Lib\HMC5883L\hmc5883l.c</PathWithFileName>
-      <FilenameWithoutPath>hmc5883l.c</FilenameWithoutPath>
+      <PathWithFileName>..\Lib\XMC5883L\xmc5883l.c</PathWithFileName>
+      <FilenameWithoutPath>xmc5883l.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

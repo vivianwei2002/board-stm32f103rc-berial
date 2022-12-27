@@ -25,12 +25,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "soft_i2c/delay.h"
-#include "soft_i2c/soft_i2c.h"
+#include "i2cdev/delay.h"
+#include "i2cdev/i2cdev.h"
 
 uint8_t SDA(void) { return HAL_GPIO_ReadPin(SDA_GPIO_Port, SDA_Pin); }
 
-void SDA_IN(void) {
+void SDA_IN(void)
+{
     static GPIO_InitTypeDef GPIO_InitStruct = {
         .Pin   = SDA_Pin,
         .Mode  = GPIO_MODE_INPUT,
@@ -46,7 +47,8 @@ void SDA_IN(void) {
     // SDA_GPIO_Port->CRH |= (uint32_t)8 << 12;
 }
 
-void SDA_OUT(void) {
+void SDA_OUT(void)
+{
     static GPIO_InitTypeDef GPIO_InitStruct = {
         .Pin   = SDA_Pin,
         .Mode  = GPIO_MODE_OUTPUT_OD,
@@ -114,7 +116,8 @@ void SystemClock_Config(void);
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -153,7 +156,7 @@ int main(void) {
     soft_i2c_init(&i2c);
 
     while (1) {
-        soft_i2c_scan(&i2c);
+        i2c_scan(&i2c);
         HAL_Delay(2000);
         /* USER CODE END WHILE */
 
@@ -166,7 +169,8 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -203,7 +207,8 @@ void SystemClock_Config(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
@@ -218,7 +223,8 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t* file, uint32_t line)
+{
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

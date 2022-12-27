@@ -17,17 +17,17 @@
  ******************************************************************************
  */
 /* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "gpio.h"
 #include "i2c.h"
-#include "spi.h"
 #include "usart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <math.h>
-#include "MPU/mpu.h"
+#include "XMC5883L\xmc5883l.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,7 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define RAD_TO_DEG 57.2958
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -66,7 +66,8 @@ void SystemClock_Config(void);
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -92,22 +93,29 @@ int main(void) {
     MX_USART1_UART_Init();
     MX_I2C2_Init();
     MX_USART2_UART_Init();
-    MX_SPI1_Init();
     /* USER CODE BEGIN 2 */
 
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    MPU_Initialize();
-    raw_axes_t accel, gyro;
-    while (1) {
-        if (MPU_Motion(&accel, &gyro) == MPU_OK) {
-            printf("pitch:%f\t,roll:%f\r\n",
-                   atan2(accel.x, accel.z) * RAD_TO_DEG,
-                   atan2(accel.y, accel.z) * RAD_TO_DEG);
-        }
 
+    // Find yours here: http://www.magnetic-declination.com/
+
+    XMC5883L_Init();
+    vector3_int16 raw;
+    vector3_float angel;
+    float         heading;
+
+    while (1) {
+        XMC5883L_ReadRaw(&raw);
+#if 0
+        printf("%d,%d,%d\r\n", raw.x, raw.y, raw.z);
+#else
+        XMC5883L_CalcAngle(&raw, &angel);
+        heading = XMC5883L_GetHeadingDegrees(&raw, 0);
+        printf("%f\t%f\t%f\t%f\r\n", angel.x, angel.y, angel.z, heading);
+#endif
         HAL_Delay(100);
         /* USER CODE END WHILE */
 
@@ -120,12 +128,12 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-    /** Initializes the RCC Oscillators according to the specified parameters
-     * in the RCC_OscInitTypeDef structure.
+    /** Initializes the CPU, AHB and APB busses clocks
      */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
@@ -137,8 +145,7 @@ void SystemClock_Config(void) {
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
-
-    /** Initializes the CPU, AHB and APB buses clocks
+    /** Initializes the CPU, AHB and APB busses clocks
      */
     RCC_ClkInitStruct.ClockType      = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
@@ -159,7 +166,8 @@ void SystemClock_Config(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
@@ -174,10 +182,13 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t* file, uint32_t line)
+{
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
     /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
