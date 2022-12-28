@@ -16,7 +16,8 @@ uint8_t  beatsDetectedNum;
 uint32_t samplesRecorded;
 uint8_t  spO2;
 
-void SpO2Calculator() {
+void SpO2Calculator()
+{
     irACValueSqSum   = 0;
     redACValueSqSum  = 0;
     beatsDetectedNum = 0;
@@ -24,7 +25,8 @@ void SpO2Calculator() {
     spO2             = 0;
 }
 
-void SPO2update(float irACValue, float redACValue, uint8_t beatDetected) {
+void SPO2update(float irACValue, float redACValue, uint8_t beatDetected)
+{
     irACValueSqSum += irACValue * irACValue;
     redACValueSqSum += redACValue * redACValue;
     ++samplesRecorded;
@@ -47,7 +49,8 @@ void SPO2update(float irACValue, float redACValue, uint8_t beatDetected) {
     }
 }
 
-void reset() {
+void reset()
+{
     samplesRecorded  = 0;
     redACValueSqSum  = 0;
     irACValueSqSum   = 0;
@@ -55,6 +58,7 @@ void reset() {
     spO2             = 0;
 }
 
-uint8_t getSpO2() {
+uint8_t getSpO2()
+{
     return spO2;
 }

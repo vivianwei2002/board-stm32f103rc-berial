@@ -1,13 +1,13 @@
 #ifndef __LCD_H__
 #define __LCD_H__
 
-#define DRIVEMODE_4BIT 0
-#define DRIVEMODE_8BIT 1
+#define DRIVEMODE_4BIT        0
+#define DRIVEMODE_8BIT        1
 #define DRIVEMODE_I2C_PCF8574 2  // PCF8574
 
 #define DRIVEMODE DRIVEMODE_I2C_PCF8574
 
-#define LCD_DISPLAY_LINES 2    // number of visible lines of the display
+#define LCD_DISPLAY_LINES  2   // number of visible lines of the display
 #define LCD_DISPLAY_LENGTH 16  // visibles characters per line of the display
 
 // #define delay_ms HAL_Delay
@@ -26,13 +26,13 @@
 
 // Pin - Register select
 #define LCD_RS_HIGH (1 << 0)
-#define LCD_RS_LOW (0 << 0)
+#define LCD_RS_LOW  (0 << 0)
 // Pin - Enable
 #define LCD_EN_HIGH (1 << 2)
-#define LCD_EN_LOW (0 << 2)
+#define LCD_EN_LOW  (0 << 2)
 // Pin - BackLight
 #define LCD_BL_HIGH (1 << 3)
-#define LCD_BL_LOW (0 << 3)
+#define LCD_BL_LOW  (0 << 3)
 
 #else
 
@@ -57,42 +57,42 @@
 /**************/
 
 // commands
-#define LCD_CLEARDISPLAY 0x01    // clear display
-#define LCD_RETURNHOME 0x02      // return home
-#define LCD_ENTRYMODESET 0x04    // entry mode set
+#define LCD_CLEARDISPLAY   0x01  // clear display
+#define LCD_RETURNHOME     0x02  // return home
+#define LCD_ENTRYMODESET   0x04  // entry mode set
 #define LCD_DISPLAYCONTROL 0x08  // display control
-#define LCD_CURSORSHIFT 0x10     // cursor shift
-#define LCD_FUNCTIONSET 0x20     // function set
-#define LCD_SETCGRAMADDR 0x40    // set cgram addr
-#define LCD_SETDDRAMADDR 0x80    // set ddram addr
+#define LCD_CURSORSHIFT    0x10  // cursor shift
+#define LCD_FUNCTIONSET    0x20  // function set
+#define LCD_SETCGRAMADDR   0x40  // set cgram addr
+#define LCD_SETDDRAMADDR   0x80  // set ddram addr
 
 // - flags for display entry mode
-#define LCD_ENTRYRIGHT 0x00  // decrement cursor
-#define LCD_ENTRYLEFT 0x02   // increment cursor
+#define LCD_ENTRYRIGHT          0x00  // decrement cursor
+#define LCD_ENTRYLEFT           0x02  // increment cursor
 #define LCD_ENTRYSHIFTINCREMENT 0x01
 #define LCD_ENTRYSHIFTDECREMENT 0x00
 
 // - flags for display on/off control
-#define LCD_DISPLAYON 0x04
+#define LCD_DISPLAYON  0x04
 #define LCD_DISPLAYOFF 0x00
-#define LCD_CURSORON 0x02
-#define LCD_CURSOROFF 0x00
-#define LCD_BLINKON 0x01
-#define LCD_BLINKOFF 0x00
+#define LCD_CURSORON   0x02
+#define LCD_CURSOROFF  0x00
+#define LCD_BLINKON    0x01
+#define LCD_BLINKOFF   0x00
 
 // - flags for display/cursor shift
 #define LCD_DISPLAYMOVE 0x08
-#define LCD_CURSORMOVE 0x00
-#define LCD_MOVERIGHT 0x04
-#define LCD_MOVELEFT 0x00
+#define LCD_CURSORMOVE  0x00
+#define LCD_MOVERIGHT   0x04
+#define LCD_MOVELEFT    0x00
 
 // - flags for function set
 #define LCD_8BITMODE 0x10
 #define LCD_4BITMODE 0x00
-#define LCD_2LINE 0x08
-#define LCD_1LINE 0x00
+#define LCD_2LINE    0x08
+#define LCD_1LINE    0x00
 #define LCD_5x10DOTS 0x04
-#define LCD_5x7DOTS 0x00
+#define LCD_5x7DOTS  0x00
 // LCD_4BITMODE | LCD_1LINE | LCD_5x7DOTS = 0x00
 // LCD_4BITMODE | LCD_2LINE | LCD_5x7DOTS = 0x08
 // LCD_8BITMODE | LCD_1LINE | LCD_5x7DOTS = 0x10
@@ -107,7 +107,7 @@
 #define LCD_LINE4_START 0x54
 
 void LCD_WriteByte(uint8_t byte, uint8_t mode);
-#define LCD_WriteCmd(byte) LCD_WriteByte(byte, 0x00)
+#define LCD_WriteCmd(byte)  LCD_WriteByte(byte, 0x00)
 #define LCD_WriteData(byte) LCD_WriteByte(byte, 0x01)
 
 void LCD_Init(void);

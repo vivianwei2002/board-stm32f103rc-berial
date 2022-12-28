@@ -37,7 +37,8 @@ uint8_t   buffer[16];   /*!< Commom buffer for temporary data */
  *  - A soft reset is performed first, which takes 100-200ms.
  *  - When using SPI, the primary I2C Slave module is disabled right away.
  * */
-mpu_err_t MPU_Initialize() {
+mpu_err_t MPU_Initialize()
+{
     // reset device (wait a little to clear all registers)
     if (MPU_Reset()) return err;
     // wake-up the device (power on-reset state is asleep for some models)
@@ -81,7 +82,8 @@ mpu_err_t MPU_Initialize() {
  *  - This function delays 100ms when using I2C and 200ms when using SPI.
  *  - It does not initialize the MPU again, just call initialize() instead.
  * */
-mpu_err_t MPU_Reset() {
+mpu_err_t MPU_Reset()
+{
     if (MPU_WriteBit(PWR_MGMT1, PWR1_DEVICE_RESET_BIT, 1)) return err;
     delay_ms(100);  // 100ms
 #ifdef CONFIG_MPU_SPI
@@ -95,7 +97,8 @@ mpu_err_t MPU_Reset() {
  * @brief Enable / disable sleep mode
  * @param enable enable value
  * */
-mpu_err_t MPU_SetSleep(bool enable) {
+mpu_err_t MPU_SetSleep(bool enable)
+{
     return MPU_WriteBit(PWR_MGMT1, PWR1_SLEEP_BIT, (uint8_t)enable);
 }
 
@@ -105,7 +108,8 @@ mpu_err_t MPU_SetSleep(bool enable) {
  *  - `true`: sleep enabled.
  *  - `false`: sleep disabled.
  */
-bool MPU_GetSleep() {
+bool MPU_GetSleep()
+{
     MPU_ReadBit(PWR_MGMT1, PWR1_SLEEP_BIT, buffer);
     return buffer[0];
 }
@@ -118,7 +122,8 @@ bool MPU_GetSleep() {
  *  - `MPU_ERR`: A device is connect, but does not match the chip selected in _menuconfig_.
  *  - May return other communication bus errors. e.g: `ESP_FAIL`, `mpu_err_tIMEOUT`.
  * */
-mpu_err_t MPU_TestConnection() {
+mpu_err_t MPU_TestConnection()
+{
     const uint8_t wai = MPU_WhoAmI();
     if (err) return err;
 #if defined CONFIG_MPU6000 || defined CONFIG_MPU6050 || defined CONFIG_MPU9150
@@ -137,7 +142,8 @@ mpu_err_t MPU_TestConnection() {
 /**
  * @brief Returns the value from WHO_AM_I register.
  */
-uint8_t MPU_WhoAmI() {
+uint8_t MPU_WhoAmI()
+{
     MPU_ReadByte(WHO_AM_I, buffer);
     return buffer[0];
 }
@@ -160,7 +166,8 @@ uint8_t MPU_WhoAmI() {
  *   - If sample rate lesser than 100 Hz, data-ready interrupt will wait for compass data.
  *   - If sample rate greater than 100 Hz, data-ready interrupt will not be delayed by the compass.
  * */
-mpu_err_t MPU_SetSampleRate(uint16_t rate) {
+mpu_err_t MPU_SetSampleRate(uint16_t rate)
+{
     // Check value range
     if (rate < 4) {
         MPU_LOGWMSG(MSG_INVALID_SAMPLE_RATE, " %d, minimum rate is 4", rate);
@@ -224,7 +231,8 @@ mpu_err_t MPU_SetSampleRate(uint16_t rate) {
 /**
  * @brief Retrieve sample rate divider and calculate the actual rate.
  */
-uint16_t MPU_GetSampleRate() {
+uint16_t MPU_GetSampleRate()
+{
 #ifdef CONFIG_MPU6500
     fchoice_t fchoice = MPU_GetFchoice();
     if (fchoice != FCHOICE_3) return SAMPLE_RATE_MAX;
@@ -245,14 +253,16 @@ uint16_t MPU_GetSampleRate() {
  * @note The gyro PLL is better than internal clock.
  * @param clockSrc clock source
  */
-mpu_err_t MPU_SetClockSource(clock_src_t clockSrc) {
+mpu_err_t MPU_SetClockSource(clock_src_t clockSrc)
+{
     return MPU_WriteBits(PWR_MGMT1, PWR1_CLKSEL_BIT, PWR1_CLKSEL_LENGTH, clockSrc);
 }
 
 /**
  * @brief Return clock source.
  */
-clock_src_t MPU_GetClockSource() {
+clock_src_t MPU_GetClockSource()
+{
     MPU_ReadBits(PWR_MGMT1, PWR1_CLKSEL_BIT, PWR1_CLKSEL_LENGTH, buffer);
     return (clock_src_t)buffer[0];
 }
@@ -261,7 +271,8 @@ clock_src_t MPU_GetClockSource() {
  * @brief Configures Digital Low Pass Filter (DLPF) setting for both the gyroscope and accelerometer.
  * @param dlpf digital low-pass filter value
  */
-mpu_err_t MPU_SetDigitalLowPassFilter(dlpf_t dlpf) {
+mpu_err_t MPU_SetDigitalLowPassFilter(dlpf_t dlpf)
+{
     if (MPU_WriteBits(CONFIG, CONFIG_DLPF_CFG_BIT, CONFIG_DLPF_CFG_LENGTH, dlpf)) return err;
 #ifdef CONFIG_MPU6500
     MPU_WriteBits(ACCEL_CONFIG2, ACONFIG2_A_DLPF_CFG_BIT, ACONFIG2_A_DLPF_CFG_LENGTH, dlpf);
@@ -272,7 +283,8 @@ mpu_err_t MPU_SetDigitalLowPassFilter(dlpf_t dlpf) {
 /**
  * @brief Return Digital Low Pass Filter configuration
  */
-dlpf_t MPU_GetDigitalLowPassFilter() {
+dlpf_t MPU_GetDigitalLowPassFilter()
+{
     MPU_ReadBits(CONFIG, CONFIG_DLPF_CFG_BIT, CONFIG_DLPF_CFG_LENGTH, buffer);
     return (dlpf_t)buffer[0];
 }
@@ -285,7 +297,8 @@ dlpf_t MPU_GetDigitalLowPassFilter() {
  *
  * @note This function delays 100 ms, needed for reset to complete.
  * */
-mpu_err_t MPU_ResetSignalPath() {
+mpu_err_t MPU_ResetSignalPath()
+{
     if (MPU_WriteBit(USER_CTRL, USERCTRL_SIG_COND_RESET_BIT, 1)) return err;
     delay_ms(100);
     return err;
@@ -316,7 +329,8 @@ mpu_err_t MPU_ResetSignalPath() {
  *   - Set FCHOICE to 3 (ACCEL_FCHOICE_B bit to 0) [MPU6500 / MPU9250 only]
  *   - Enable Auxiliary I2C Master I/F
  * */
-mpu_err_t MPU_SetLowPowerAccelMode(bool enable) {
+mpu_err_t MPU_SetLowPowerAccelMode(bool enable)
+{
 // set FCHOICE
 #ifdef CONFIG_MPU6500
     fchoice_t fchoice = enable ? FCHOICE_0 : FCHOICE_3;
@@ -360,7 +374,8 @@ mpu_err_t MPU_SetLowPowerAccelMode(bool enable) {
  *  - FCHOICE is 0 (ACCEL_FCHOICE_B bit is 1) [MPU6500 / MPU9250 only]
  *
  * */
-bool MPU_GetLowPowerAccelMode() {
+bool MPU_GetLowPowerAccelMode()
+{
 // check FCHOICE
 #ifdef CONFIG_MPU6500
     fchoice_t fchoice = MPU_GetFchoice();
@@ -386,7 +401,8 @@ bool MPU_GetLowPowerAccelMode() {
 /**
  * @brief Set Low Power Accelerometer frequency of wake-up.
  * */
-mpu_err_t   MPU_SetLowPowerAccelRate(lp_accel_rate_t rate) {
+mpu_err_t MPU_SetLowPowerAccelRate(lp_accel_rate_t rate)
+{
 #if defined CONFIG_MPU6050
     return MPU_WriteBits(PWR_MGMT2, PWR2_LP_WAKE_CTRL_BIT, PWR2_LP_WAKE_CTRL_LENGTH, rate);
 #elif defined CONFIG_MPU6500
@@ -397,8 +413,9 @@ mpu_err_t   MPU_SetLowPowerAccelRate(lp_accel_rate_t rate) {
 /**
  * @brief Get Low Power Accelerometer frequency of wake-up.
  */
-lp_accel_rate_t MPU_GetLowPowerAccelRate() {
-#if defined     CONFIG_MPU6050
+lp_accel_rate_t MPU_GetLowPowerAccelRate()
+{
+#if defined CONFIG_MPU6050
     MPU_ReadBits(PWR_MGMT2, PWR2_LP_WAKE_CTRL_BIT, PWR2_LP_WAKE_CTRL_LENGTH, buffer);
 #elif defined CONFIG_MPU6500
     MPU_ReadBits(LP_ACCEL_ODR, LPA_ODR_CLKSEL_BIT, LPA_ODR_CLKSEL_LENGTH, buffer);
@@ -420,7 +437,8 @@ lp_accel_rate_t MPU_GetLowPowerAccelRate() {
  *    and disable Auxiliary I2C Master I/F.
  *  - On _false_, this function sets DLPF to 42Hz and enables Auxiliary I2C master I/F.
  * */
-mpu_err_t   MPU_SetMotionFeatureEnabled(bool enable) {
+mpu_err_t MPU_SetMotionFeatureEnabled(bool enable)
+{
 #if defined CONFIG_MPU6050
     if (MPU_WriteBits(ACCEL_CONFIG, ACONFIG_HPF_BIT, ACONFIG_HPF_LENGTH, ACCEL_DHPF_RESET)) return err;
 #endif
@@ -455,7 +473,8 @@ mpu_err_t   MPU_SetMotionFeatureEnabled(bool enable) {
 /**
  * @brief Return true if a Motion Dectection module is enabled.
  */
-bool MPU_GetMotionFeatureEnabled() {
+bool MPU_GetMotionFeatureEnabled()
+{
     uint8_t data;
 #if defined CONFIG_MPU6050
     MPU_ReadBits(ACCEL_CONFIG, ACONFIG_HPF_BIT, ACONFIG_HPF_LENGTH, &data);
@@ -501,7 +520,8 @@ bool MPU_GetMotionFeatureEnabled() {
  *  3. Configure motion-detect interrupt with setMotionDetectConfig();
  *  4. Enable the motion detection module with setMotionFeatureEnabled();
  * */
-mpu_err_t   MPU_SetMotionDetectConfig(mot_config_t* config) {
+mpu_err_t MPU_SetMotionDetectConfig(mot_config_t* config)
+{
 #if defined CONFIG_MPU6050
     if (MPU_WriteByte(MOTION_DUR, config->time)) return err;
     if (MPU_WriteBits(MOTION_DETECT_CTRL, MOTCTRL_ACCEL_ON_DELAY_BIT, MOTCTRL_ACCEL_ON_DELAY_LENGTH, config->accel_on_delay)) return err;
@@ -513,7 +533,8 @@ mpu_err_t   MPU_SetMotionDetectConfig(mot_config_t* config) {
 /**
  * @brief Return Motion Detection Configuration.
  */
-mot_config_t MPU_GetMotionDetectConfig() {
+mot_config_t MPU_GetMotionDetectConfig()
+{
     mot_config_t config;
 #if defined CONFIG_MPU6050
     MPU_ReadByte(MOTION_DUR, &config.time);
@@ -543,7 +564,8 @@ mot_config_t MPU_GetMotionDetectConfig() {
  *
  * @note Enable by calling setMotionFeatureEnabled();
  * */
-mpu_err_t MPU_SetZeroMotionConfig(zrmot_config_t* config) {
+mpu_err_t MPU_SetZeroMotionConfig(zrmot_config_t* config)
+{
     buffer[0] = config->threshold;
     buffer[1] = config->time;
     return MPU_WriteBytes(ZRMOTION_THR, 2, buffer);
@@ -552,7 +574,8 @@ mpu_err_t MPU_SetZeroMotionConfig(zrmot_config_t* config) {
 /**
  * @brief Return Zero-Motion configuration.
  */
-zrmot_config_t MPU_GetZeroMotionConfig() {
+zrmot_config_t MPU_GetZeroMotionConfig()
+{
     MPU_ReadBytes(ZRMOTION_THR, 2, buffer);
     zrmot_config_t config;
     config.threshold = buffer[0];
@@ -573,7 +596,8 @@ zrmot_config_t MPU_GetZeroMotionConfig() {
  *
  * @note Enable by calling setMotionFeatureEnabled().
  * */
-mpu_err_t MPU_SetFreeFallConfig(ff_config_t* config) {
+mpu_err_t MPU_SetFreeFallConfig(ff_config_t* config)
+{
     buffer[0] = config->threshold;
     buffer[1] = config->time;
     if (MPU_WriteBytes(FF_THR, 2, buffer)) return err;
@@ -585,7 +609,8 @@ mpu_err_t MPU_SetFreeFallConfig(ff_config_t* config) {
 /**
  * @brief Return Free-Fall Configuration.
  */
-ff_config_t MPU_GetFreeFallConfig() {
+ff_config_t MPU_GetFreeFallConfig()
+{
     ff_config_t config;
     MPU_ReadBytes(FF_THR, 2, buffer);
     config.threshold = buffer[0];
@@ -600,7 +625,8 @@ ff_config_t MPU_GetFreeFallConfig() {
  * @brief Return Motion Detection Status.
  * @note Reading this register clears all motion detection status bits.
  * */
-mot_stat_t MPU_GetMotionDetectStatus() {
+mot_stat_t MPU_GetMotionDetectStatus()
+{
     MPU_ReadByte(MOTION_DETECT_STATUS, buffer);
     return (mot_stat_t)buffer[0];
 }
@@ -609,7 +635,8 @@ mot_stat_t MPU_GetMotionDetectStatus() {
 /**
  * @brief Configure sensors' standby mode.
  * */
-mpu_err_t MPU_SetStandbyMode(stby_en_t mask) {
+mpu_err_t MPU_SetStandbyMode(stby_en_t mask)
+{
     const uint8_t kPwr1StbyBits = mask >> 6;
     if (MPU_WriteBits(PWR_MGMT1, PWR1_GYRO_STANDBY_BIT, 2, kPwr1StbyBits)) return err;
     return MPU_WriteBits(PWR_MGMT2, PWR2_STBY_XA_BIT, 6, mask);
@@ -618,7 +645,8 @@ mpu_err_t MPU_SetStandbyMode(stby_en_t mask) {
 /**
  * @brief Return Standby configuration.
  * */
-stby_en_t MPU_GetStandbyMode() {
+stby_en_t MPU_GetStandbyMode()
+{
     MPU_ReadBytes(PWR_MGMT1, 2, buffer);
     const uint8_t kStbyTempAndGyroPLLBits = STBY_EN_TEMP | STBY_EN_LOWPWR_GYRO_PLL_ON;
     stby_en_t     mask                    = buffer[0] << 3 & kStbyTempAndGyroPLLBits;
@@ -634,7 +662,8 @@ stby_en_t MPU_GetStandbyMode() {
  * Dev note: FCHOICE is the inverted value of FCHOICE_B (e.g. FCHOICE=2b¡¯00 is same as FCHOICE_B=2b¡¯11).
  * Reset value is FCHOICE_3
  * */
-mpu_err_t MPU_SetFchoice(fchoice_t fchoice) {
+mpu_err_t MPU_SetFchoice(fchoice_t fchoice)
+{
     buffer[0] = (~(fchoice)&0x3);  // invert to fchoice_b
     if (MPU_WriteBits(GYRO_CONFIG, GCONFIG_FCHOICE_B, GCONFIG_FCHOICE_B_LENGTH, buffer[0])) return err;
     return MPU_WriteBit(ACCEL_CONFIG2, ACONFIG2_ACCEL_FCHOICE_B_BIT, (buffer[0] == 0 ? 0 : 1));
@@ -643,7 +672,8 @@ mpu_err_t MPU_SetFchoice(fchoice_t fchoice) {
 /**
  * @brief Return FCHOICE.
  */
-fchoice_t MPU_GetFchoice() {
+fchoice_t MPU_GetFchoice()
+{
     MPU_ReadBits(GYRO_CONFIG, GCONFIG_FCHOICE_B, GCONFIG_FCHOICE_B_LENGTH, buffer);
     return (fchoice_t)(~(buffer[0]) & 0x3);
 }
@@ -652,14 +682,16 @@ fchoice_t MPU_GetFchoice() {
 /**
  * @brief Select Gyroscope Full-scale range.
  * */
-mpu_err_t MPU_SetGyroFullScale(gyro_fs_t fsr) {
+mpu_err_t MPU_SetGyroFullScale(gyro_fs_t fsr)
+{
     return MPU_WriteBits(GYRO_CONFIG, GCONFIG_FS_SEL_BIT, GCONFIG_FS_SEL_LENGTH, fsr);
 }
 
 /**
  * @brief Return Gyroscope Full-scale range.
  */
-gyro_fs_t MPU_GetGyroFullScale() {
+gyro_fs_t MPU_GetGyroFullScale()
+{
     MPU_ReadBits(GYRO_CONFIG, GCONFIG_FS_SEL_BIT, GCONFIG_FS_SEL_LENGTH, buffer);
     return (gyro_fs_t)buffer[0];
 }
@@ -667,14 +699,16 @@ gyro_fs_t MPU_GetGyroFullScale() {
 /**
  * @brief Select Accelerometer Full-scale range.
  * */
-mpu_err_t MPU_SetAccelFullScale(accel_fs_t fsr) {
+mpu_err_t MPU_SetAccelFullScale(accel_fs_t fsr)
+{
     return MPU_WriteBits(ACCEL_CONFIG, ACONFIG_FS_SEL_BIT, ACONFIG_FS_SEL_LENGTH, fsr);
 }
 
 /**
  * @brief Return Accelerometer Full-scale range.
  */
-accel_fs_t MPU_GetAccelFullScale() {
+accel_fs_t MPU_GetAccelFullScale()
+{
     MPU_ReadBits(ACCEL_CONFIG, ACONFIG_FS_SEL_BIT, ACONFIG_FS_SEL_LENGTH, buffer);
     return (accel_fs_t)buffer[0];
 }
@@ -687,7 +721,8 @@ accel_fs_t MPU_GetAccelFullScale() {
  *
  * Note: Bias inputs are LSB in +-1000dps format.
  * */
-mpu_err_t MPU_SetGyroOffset(raw_axes_t bias) {
+mpu_err_t MPU_SetGyroOffset(raw_axes_t bias)
+{
     buffer[0] = (uint8_t)(bias.x >> 8);
     buffer[1] = (uint8_t)(bias.x);
     buffer[2] = (uint8_t)(bias.y >> 8);
@@ -702,7 +737,8 @@ mpu_err_t MPU_SetGyroOffset(raw_axes_t bias) {
  *
  * Note: Bias output are LSB in +-1000dps format.
  * */
-raw_axes_t MPU_GetGyroOffset() {
+raw_axes_t MPU_GetGyroOffset()
+{
     MPU_ReadBytes(XG_OFFSET_H, 6, buffer);
     raw_axes_t bias;
     bias.x = (buffer[0] << 8) | buffer[1];
@@ -719,7 +755,8 @@ raw_axes_t MPU_GetGyroOffset() {
  *
  * Note: Bias inputs are LSB in +-16G format.
  * */
-mpu_err_t MPU_SetAccelOffset(raw_axes_t bias) {
+mpu_err_t MPU_SetAccelOffset(raw_axes_t bias)
+{
     raw_axes_t facBias;
     // first, read OTP values of Accel factory trim
 
@@ -772,7 +809,8 @@ mpu_err_t MPU_SetAccelOffset(raw_axes_t bias) {
  *
  * Note: Bias output are LSB in +-16G format.
  * */
-raw_axes_t MPU_GetAccelOffset() {
+raw_axes_t MPU_GetAccelOffset()
+{
     raw_axes_t bias;
 
 #if defined CONFIG_MPU6050
@@ -802,7 +840,8 @@ raw_axes_t MPU_GetAccelOffset() {
  * Note: Gyro offset output are LSB in 1000DPS format.
  * Note: Accel offset output are LSB in 16G format.
  * */
-mpu_err_t MPU_ComputeOffsets(raw_axes_t* accel, raw_axes_t* gyro) {
+mpu_err_t MPU_ComputeOffsets(raw_axes_t* accel, raw_axes_t* gyro)
+{
     const accel_fs_t kAccelFS = ACCEL_FS_2G;     // most sensitive
     const gyro_fs_t  kGyroFS  = GYRO_FS_250DPS;  // most sensitive
     if (MPU_GetBiases(kAccelFS, kGyroFS, accel, gyro, false)) return err;
@@ -819,7 +858,8 @@ mpu_err_t MPU_ComputeOffsets(raw_axes_t* accel, raw_axes_t* gyro) {
 /**
  * @brief Read accelerometer raw data.
  * */
-mpu_err_t MPU_Acceleration(raw_axes_t* accel) {
+mpu_err_t MPU_Acceleration(raw_axes_t* accel)
+{
     if (MPU_ReadBytes(ACCEL_XOUT_H, 6, buffer)) return err;
     accel->x = buffer[0] << 8 | buffer[1];
     accel->y = buffer[2] << 8 | buffer[3];
@@ -830,7 +870,8 @@ mpu_err_t MPU_Acceleration(raw_axes_t* accel) {
 /**
  * @brief Read accelerometer raw data.
  * */
-mpu_err_t MPU_AccelerationEx(int16_t* x, int16_t* y, int16_t* z) {
+mpu_err_t MPU_AccelerationEx(int16_t* x, int16_t* y, int16_t* z)
+{
     if (MPU_ReadBytes(ACCEL_XOUT_H, 6, buffer)) return err;
     *x = buffer[0] << 8 | buffer[1];
     *y = buffer[2] << 8 | buffer[3];
@@ -841,7 +882,8 @@ mpu_err_t MPU_AccelerationEx(int16_t* x, int16_t* y, int16_t* z) {
 /**
  * @brief Read gyroscope raw data.
  * */
-mpu_err_t MPU_Rotation(raw_axes_t* gyro) {
+mpu_err_t MPU_Rotation(raw_axes_t* gyro)
+{
     if (MPU_ReadBytes(GYRO_XOUT_H, 6, buffer)) return err;
     gyro->x = buffer[0] << 8 | buffer[1];
     gyro->y = buffer[2] << 8 | buffer[3];
@@ -852,7 +894,8 @@ mpu_err_t MPU_Rotation(raw_axes_t* gyro) {
 /**
  * @brief Read gyroscope raw data.
  * */
-mpu_err_t MPU_RotationEx(int16_t* x, int16_t* y, int16_t* z) {
+mpu_err_t MPU_RotationEx(int16_t* x, int16_t* y, int16_t* z)
+{
     if (MPU_ReadBytes(GYRO_XOUT_H, 6, buffer)) return err;
     *x = buffer[0] << 8 | buffer[1];
     *y = buffer[2] << 8 | buffer[3];
@@ -863,7 +906,8 @@ mpu_err_t MPU_RotationEx(int16_t* x, int16_t* y, int16_t* z) {
 /**
  * Read temperature raw data.
  * */
-mpu_err_t MPU_Temperature(int16_t* temp) {
+mpu_err_t MPU_Temperature(int16_t* temp)
+{
     if (MPU_ReadBytes(TEMP_OUT_H, 2, buffer)) return err;
     *temp = buffer[0] << 8 | buffer[1];
     return err;
@@ -872,7 +916,8 @@ mpu_err_t MPU_Temperature(int16_t* temp) {
 /**
  * @brief Read accelerometer and gyroscope data at once.
  * */
-mpu_err_t MPU_Motion(raw_axes_t* accel, raw_axes_t* gyro) {
+mpu_err_t MPU_Motion(raw_axes_t* accel, raw_axes_t* gyro)
+{
     if (MPU_ReadBytes(ACCEL_XOUT_H, 14, buffer)) return err;
     accel->x = buffer[0] << 8 | buffer[1];
     accel->y = buffer[2] << 8 | buffer[3];
@@ -887,7 +932,8 @@ mpu_err_t MPU_Motion(raw_axes_t* accel, raw_axes_t* gyro) {
 /**
  * @brief Read compass data.
  * */
-mpu_err_t MPU_Heading(raw_axes_t* mag) {
+mpu_err_t MPU_Heading(raw_axes_t* mag)
+{
     if (MPU_ReadBytes(EXT_SENS_DATA_01, 6, buffer)) return err;
     mag->x = buffer[1] << 8 | buffer[0];
     mag->y = buffer[3] << 8 | buffer[2];
@@ -898,7 +944,8 @@ mpu_err_t MPU_Heading(raw_axes_t* mag) {
 /**
  * @brief Read compass data.
  * */
-mpu_err_t MPU_HeadingEx(int16_t* x, int16_t* y, int16_t* z) {
+mpu_err_t MPU_HeadingEx(int16_t* x, int16_t* y, int16_t* z)
+{
     if (MPU_ReadBytes(EXT_SENS_DATA_01, 6, buffer)) return err;
     *x = buffer[1] << 8 | buffer[0];
     *y = buffer[3] << 8 | buffer[2];
@@ -909,7 +956,8 @@ mpu_err_t MPU_HeadingEx(int16_t* x, int16_t* y, int16_t* z) {
 /**
  * @brief Read accelerometer, gyroscope, compass raw data.
  * */
-mpu_err_t MPU_MotionEx(raw_axes_t* accel, raw_axes_t* gyro, raw_axes_t* mag) {
+mpu_err_t MPU_MotionEx(raw_axes_t* accel, raw_axes_t* gyro, raw_axes_t* mag)
+{
     uint8_t buffer[22];
     if (MPU_ReadBytes(ACCEL_XOUT_H, 22, buffer)) return err;
     accel->x = buffer[0] << 8 | buffer[1];
@@ -928,7 +976,8 @@ mpu_err_t MPU_MotionEx(raw_axes_t* accel, raw_axes_t* gyro, raw_axes_t* mag) {
 /**
  * @brief Read data from all internal sensors.
  * */
-mpu_err_t MPU_Sensors(raw_axes_t* accel, raw_axes_t* gyro, int16_t* temp) {
+mpu_err_t MPU_Sensors(raw_axes_t* accel, raw_axes_t* gyro, int16_t* temp)
+{
     if (MPU_ReadBytes(ACCEL_XOUT_H, 14, buffer)) return err;
     accel->x = buffer[0] << 8 | buffer[1];
     accel->y = buffer[2] << 8 | buffer[3];
@@ -943,7 +992,8 @@ mpu_err_t MPU_Sensors(raw_axes_t* accel, raw_axes_t* gyro, int16_t* temp) {
 /**
  * @brief Read data from all sensors, including external sensors in Aux I2C.
  * */
-mpu_err_t MPU_SensorsEx(sensors_t* sensors, size_t extsens_len) {
+mpu_err_t MPU_SensorsEx(sensors_t* sensors, size_t extsens_len)
+{
     const size_t kIntSensLenMax = 14;  // internal sensors data length max
     const size_t kExtSensLenMax = 24;  // external sensors data length max
     uint8_t      buffer[kIntSensLenMax + kExtSensLenMax];
@@ -980,14 +1030,16 @@ mpu_err_t MPU_SensorsEx(sensors_t* sensors, size_t extsens_len) {
  * VLOGIC is the power supply voltage for the microprocessor system bus and VDD is the supply for
  * the auxiliary I2C bus
  * */
-mpu_err_t MPU_SetAuxVDDIOLevel(auxvddio_lvl_t level) {
+mpu_err_t MPU_SetAuxVDDIOLevel(auxvddio_lvl_t level)
+{
     return MPU_WriteBit(YG_OTP_OFFSET_TC, TC_PWR_MODE_BIT, level);
 }
 
 /**
  * Return MPU-6050¡¯s I/O logic levels.
  */
-auxvddio_lvl_t MPU_GetAuxVDDIOLevel() {
+auxvddio_lvl_t MPU_GetAuxVDDIOLevel()
+{
     MPU_ReadBit(YG_OTP_OFFSET_TC, TC_PWR_MODE_BIT, buffer);
     return (auxvddio_lvl_t)buffer[0];
 }
@@ -997,7 +1049,8 @@ auxvddio_lvl_t MPU_GetAuxVDDIOLevel() {
  * @brief Configure the Interrupt pin (INT).
  * @param config configuration desired.
  */
-mpu_err_t MPU_SetInterruptConfig(int_config_t config) {
+mpu_err_t MPU_SetInterruptConfig(int_config_t config)
+{
     if (MPU_ReadByte(INT_PIN_CONFIG, buffer)) return err;
     // zero the bits we're setting, but keep the others we're not setting as they are;
     const uint8_t INT_PIN_CONFIG_BITMASK = (1 << INT_CFG_LEVEL_BIT) | (1 << INT_CFG_OPEN_BIT) |
@@ -1015,7 +1068,8 @@ mpu_err_t MPU_SetInterruptConfig(int_config_t config) {
 /**
  * @brief Return Interrupt pin (INT) configuration.
  */
-int_config_t MPU_GetInterruptConfig() {
+int_config_t MPU_GetInterruptConfig()
+{
     MPU_ReadByte(INT_PIN_CONFIG, buffer);
     int_config_t config;
     config.level = (int_lvl_t)((buffer[0] >> INT_CFG_LEVEL_BIT) & 0x1);
@@ -1029,14 +1083,16 @@ int_config_t MPU_GetInterruptConfig() {
  * @brief Enable features to generate signal at Interrupt pin
  * @param mask ORed features.
  */
-mpu_err_t MPU_SetInterruptEnabled(int_en_t mask) {
+mpu_err_t MPU_SetInterruptEnabled(int_en_t mask)
+{
     return MPU_WriteByte(INT_ENABLE, mask);
 }
 
 /**
  * @brief Return enabled features configured to generate signal at Interrupt pin.
  */
-int_en_t MPU_GetInterruptEnabled() {
+int_en_t MPU_GetInterruptEnabled()
+{
     MPU_ReadByte(INT_ENABLE, buffer);
     return (int_en_t)buffer[0];
 }
@@ -1046,7 +1102,8 @@ int_en_t MPU_GetInterruptEnabled() {
  *
  * Note: Reading this register, clear all bits.
  */
-int_stat_t MPU_GetInterruptStatus() {
+int_stat_t MPU_GetInterruptStatus()
+{
     MPU_ReadByte(INT_STATUS, buffer);
     return (int_stat_t)buffer[0];
 }
@@ -1059,14 +1116,16 @@ int_stat_t MPU_GetInterruptStatus() {
  *  written to the fifo,replacing the oldest data.
  * `FIFO_MODE_STOP_FULL`: When the fifo is full, additional writes will not be written to fifo.
  * */
-mpu_err_t MPU_SetFIFOMode(fifo_mode_t mode) {
+mpu_err_t MPU_SetFIFOMode(fifo_mode_t mode)
+{
     return MPU_WriteBit(CONFIG, CONFIG_FIFO_MODE_BIT, mode);
 }
 
 /**
  * @brief Return FIFO mode.
  */
-fifo_mode_t MPU_GetFIFOMode() {
+fifo_mode_t MPU_GetFIFOMode()
+{
     MPU_ReadBit(CONFIG, CONFIG_FIFO_MODE_BIT, buffer);
     return (fifo_mode_t)buffer[0];
 }
@@ -1074,7 +1133,8 @@ fifo_mode_t MPU_GetFIFOMode() {
 /**
  * @brief Configure the sensors that will be written to the FIFO.
  * */
-mpu_err_t MPU_SetFIFOConfig(fifo_config_t config) {
+mpu_err_t MPU_SetFIFOConfig(fifo_config_t config)
+{
     if (MPU_WriteByte(FIFO_EN, (uint8_t)config)) return err;
     return MPU_WriteBit(I2C_MST_CTRL, I2C_MST_CTRL_SLV_3_FIFO_EN_BIT, config >> 8);
 }
@@ -1082,7 +1142,8 @@ mpu_err_t MPU_SetFIFOConfig(fifo_config_t config) {
 /**
  * @brief Return FIFO configuration.
  */
-fifo_config_t MPU_GetFIFOConfig() {
+fifo_config_t MPU_GetFIFOConfig()
+{
     MPU_ReadBytes(FIFO_EN, 2, buffer);
     fifo_config_t config = buffer[0];
     config |= (buffer[1] & (1 << I2C_MST_CTRL_SLV_3_FIFO_EN_BIT)) << 3;
@@ -1092,14 +1153,16 @@ fifo_config_t MPU_GetFIFOConfig() {
 /**
  * @brief Enabled / disable FIFO module.
  * */
-mpu_err_t MPU_SetFIFOEnabled(bool enable) {
+mpu_err_t MPU_SetFIFOEnabled(bool enable)
+{
     return MPU_WriteBit(USER_CTRL, USERCTRL_FIFO_EN_BIT, (uint8_t)enable);
 }
 
 /**
  * @brief Return FIFO module state.
  */
-bool MPU_GetFIFOEnabled() {
+bool MPU_GetFIFOEnabled()
+{
     MPU_ReadBit(USER_CTRL, USERCTRL_FIFO_EN_BIT, buffer);
     return buffer[0];
 }
@@ -1110,7 +1173,8 @@ bool MPU_GetFIFOEnabled() {
  * Zero FIFO count, reset is asynchronous. \n
  * The bit auto clears after one clock cycle.
  * */
-mpu_err_t MPU_ResetFIFO() {
+mpu_err_t MPU_ResetFIFO()
+{
     return MPU_WriteBit(USER_CTRL, USERCTRL_FIFO_RESET_BIT, 1);
 }
 
@@ -1118,7 +1182,8 @@ mpu_err_t MPU_ResetFIFO() {
  * @brief Return number of written bytes in the FIFO.
  * @note FIFO overflow generates an interrupt which can be check with getInterruptStatus().
  * */
-uint16_t MPU_GetFIFOCount() {
+uint16_t MPU_GetFIFOCount()
+{
     MPU_ReadBytes(FIFO_COUNT_H, 2, buffer);
     uint16_t count = buffer[0] << 8 | buffer[1];
     return count;
@@ -1127,14 +1192,16 @@ uint16_t MPU_GetFIFOCount() {
 /**
  * @brief Read data contained in FIFO buffer.
  * */
-mpu_err_t MPU_ReadFIFO(size_t length, uint8_t* data) {
+mpu_err_t MPU_ReadFIFO(size_t length, uint8_t* data)
+{
     return MPU_ReadBytes(FIFO_R_W, length, data);
 }
 
 /**
  * @brief Write data to FIFO buffer.
  * */
-mpu_err_t MPU_WriteFIFO(size_t length, uint8_t* data) {
+mpu_err_t MPU_WriteFIFO(size_t length, uint8_t* data)
+{
     return MPU_WriteBytes(FIFO_R_W, length, data);
 }
 
@@ -1143,7 +1210,8 @@ mpu_err_t MPU_WriteFIFO(size_t length, uint8_t* data) {
  * @note For [MPU9150, MPU9250]: The Auxiliary I2C is configured in the initialization stage
  *  to connect with the compass in Slave 0 and Slave 1.
  * */
-mpu_err_t MPU_SetAuxI2CConfig(const auxi2c_config_t* config) {
+mpu_err_t MPU_SetAuxI2CConfig(const auxi2c_config_t* config)
+{
     // TODO: check compass enabled, to constrain sample_delay which defines the compass read sample
     // rate
     if (MPU_ReadBit(I2C_MST_CTRL, I2C_MST_CTRL_SLV_3_FIFO_EN_BIT, buffer)) return err;
@@ -1166,7 +1234,8 @@ mpu_err_t MPU_SetAuxI2CConfig(const auxi2c_config_t* config) {
 /**
  * @brief Get Auxiliary I2C Master configuration.
  */
-auxi2c_config_t MPU_GetAuxI2CConfig() {
+auxi2c_config_t MPU_GetAuxI2CConfig()
+{
     MPU_ReadByte(I2C_MST_CTRL, buffer);
     auxi2c_config_t config;
     config.multi_master_en = buffer[0] >> I2C_MST_CTRL_MULT_EN_BIT;
@@ -1183,7 +1252,8 @@ auxi2c_config_t MPU_GetAuxI2CConfig() {
 /**
  * @brief Enable / disable Auxiliary I2C Master module.
  * */
-mpu_err_t MPU_SetAuxI2CEnabled(bool enable) {
+mpu_err_t MPU_SetAuxI2CEnabled(bool enable)
+{
     if (MPU_WriteBit(USER_CTRL, USERCTRL_I2C_MST_EN_BIT, (uint8_t)enable)) return err;
     if (enable) {
         return MPU_WriteBit(INT_PIN_CONFIG, INT_CFG_I2C_BYPASS_EN_BIT, 0);
@@ -1194,7 +1264,8 @@ mpu_err_t MPU_SetAuxI2CEnabled(bool enable) {
 /**
  * @brief Return Auxiliary I2C Master state.
  */
-bool MPU_GetAuxI2CEnabled() {
+bool MPU_GetAuxI2CEnabled()
+{
     MPU_ReadBit(USER_CTRL, USERCTRL_I2C_MST_EN_BIT, buffer);
     MPU_ReadBit(INT_PIN_CONFIG, INT_CFG_I2C_BYPASS_EN_BIT, buffer + 1);
     return buffer[0] && (!buffer[1]);
@@ -1203,7 +1274,8 @@ bool MPU_GetAuxI2CEnabled() {
 /**
  * @brief Configure communication with a Slave connected to Auxiliary I2C bus.
  * */
-mpu_err_t MPU_SetAuxI2CSlaveConfig(const auxi2c_slv_config_t* config) {
+mpu_err_t MPU_SetAuxI2CSlaveConfig(const auxi2c_slv_config_t* config)
+{
     // slaves' config registers are grouped as 3 regs in a row
     const uint8_t reg = config->slave * 3 + I2C_SLV0_ADDR;
     // data for I2C_SLVx_ADDR
@@ -1241,10 +1313,11 @@ mpu_err_t MPU_SetAuxI2CSlaveConfig(const auxi2c_slv_config_t* config) {
  * @brief Return configuration of a Aux I2C Slave.
  * @param slave slave number.
  */
-auxi2c_slv_config_t MPU_GetAuxI2CSlaveConfig(auxi2c_slv_t slave) {
+auxi2c_slv_config_t MPU_GetAuxI2CSlaveConfig(auxi2c_slv_t slave)
+{
     auxi2c_slv_config_t config;
     const uint8_t       reg = slave * 3 + I2C_SLV0_ADDR;
-    config.slave                = slave;
+    config.slave            = slave;
     MPU_ReadBytes(reg, 3, buffer);
     config.rw       = (auxi2c_rw_t)((buffer[0] >> I2C_SLV_RNW_BIT) & 0x1);
     config.addr     = buffer[0] & 0x7F;
@@ -1266,7 +1339,8 @@ auxi2c_slv_config_t MPU_GetAuxI2CSlaveConfig(auxi2c_slv_t slave) {
 /**
  * @brief Enable the Auxiliary I2C module to transfer data with a slave at sample rate.
  * */
-mpu_err_t MPU_SetAuxI2CSlaveEnabled(auxi2c_slv_t slave, bool enable) {
+mpu_err_t MPU_SetAuxI2CSlaveEnabled(auxi2c_slv_t slave, bool enable)
+{
     const uint8_t reg = slave * 3 + I2C_SLV0_CTRL;
     return MPU_WriteBit(reg, I2C_SLV_EN_BIT, enable);
 }
@@ -1274,7 +1348,8 @@ mpu_err_t MPU_SetAuxI2CSlaveEnabled(auxi2c_slv_t slave, bool enable) {
 /**
  * @brief Return enable state of a Aux I2C's Slave.
  */
-bool MPU_GetAuxI2CSlaveEnabled(auxi2c_slv_t slave) {
+bool MPU_GetAuxI2CSlaveEnabled(auxi2c_slv_t slave)
+{
     const uint8_t reg = slave * 3 + I2C_SLV0_CTRL;
     MPU_ReadBit(reg, I2C_SLV_EN_BIT, buffer);
     return buffer[0];
@@ -1287,7 +1362,8 @@ bool MPU_GetAuxI2CSlaveEnabled(auxi2c_slv_t slave) {
  *  - `false`: Bypass is disabled, but the Auxiliar I2C Master I/F is not enabled back,
  *             if needed, enabled it again with setAuxI2CmasterEnabled().
  * */
-mpu_err_t MPU_SetAuxI2CBypass(bool enable) {
+mpu_err_t MPU_SetAuxI2CBypass(bool enable)
+{
 #ifdef CONFIG_MPU_SPI
     if (enable) {
         MPU_LOGWMSG(MSG_EMPTY, "Setting Aux I2C to bypass mode while MPU is connected via SPI");
@@ -1310,7 +1386,8 @@ mpu_err_t MPU_SetAuxI2CBypass(bool enable) {
 /**
  * @brief Return Auxiliary I2C Master bypass mode state.
  */
-bool MPU_GetAuxI2CBypass() {
+bool MPU_GetAuxI2CBypass()
+{
     MPU_ReadBit(USER_CTRL, USERCTRL_I2C_MST_EN_BIT, buffer);
     MPU_ReadBit(INT_PIN_CONFIG, INT_CFG_I2C_BYPASS_EN_BIT, buffer + 1);
     return (!buffer[0]) && buffer[1];
@@ -1334,7 +1411,8 @@ bool MPU_GetAuxI2CBypass() {
  *
  * @attention Set `skip` to `8` when using compass, because compass data takes up the first `8` bytes.
  * */
-mpu_err_t MPU_ReadAuxI2CRxData(size_t length, uint8_t* data, size_t skip) {
+mpu_err_t MPU_ReadAuxI2CRxData(size_t length, uint8_t* data, size_t skip)
+{
     if (length + skip > 24) {
         MPU_LOGEMSG(MSG_INVALID_LENGTH, " %d, mpu has only 24 external sensor data registers!", length);
         return err = MPU_ERR;  // INVALID_SIZE
@@ -1356,7 +1434,8 @@ mpu_err_t MPU_ReadAuxI2CRxData(size_t length, uint8_t* data, size_t skip) {
  * is set during an active I2C master transaction, the I2C slave will hang, which
  * will require the host to reset the slave.
  * */
-mpu_err_t MPU_RestartAuxI2C() {
+mpu_err_t MPU_RestartAuxI2C()
+{
     return MPU_WriteBit(USER_CTRL, USERCTRL_I2C_MST_RESET_BIT, 1);
 }
 
@@ -1364,7 +1443,8 @@ mpu_err_t MPU_RestartAuxI2C() {
  * @brief Return Auxiliary I2C Master status from register I2C_MST_STATUS.
  * Reading this register clear all its bits.
  * */
-auxi2c_stat_t MPU_GetAuxI2CStatus() {
+auxi2c_stat_t MPU_GetAuxI2CStatus()
+{
     MPU_ReadByte(I2C_MST_STATUS, buffer);
     return (auxi2c_stat_t)buffer[0];
 }
@@ -1383,7 +1463,8 @@ auxi2c_stat_t MPU_GetAuxI2CStatus() {
  *  - `ESP_FAIL`:               Auxiliary I2C Master lost arbitration of the bus;
  *  - or other standard I2C driver error codes.
  * */
-mpu_err_t MPU_AuxI2CWriteByte(uint8_t dev, uint8_t reg, const uint8_t data) {
+mpu_err_t MPU_AuxI2CWriteByte(uint8_t dev, uint8_t reg, const uint8_t data)
+{
     // check for Aux I2C master enabled first
     const bool kAuxI2CEnabled = MPU_GetAuxI2CEnabled();
     if (err) return err;
@@ -1441,7 +1522,8 @@ mpu_err_t MPU_AuxI2CWriteByte(uint8_t dev, uint8_t reg, const uint8_t data) {
  *  - ESP_FAIL               Auxiliary I2C Master lost arbitration of the bus;
  *  - or other standard I2C driver error codes.
  * */
-mpu_err_t MPU_AuxI2CReadByte(uint8_t dev, uint8_t reg, uint8_t* data) {
+mpu_err_t MPU_AuxI2CReadByte(uint8_t dev, uint8_t reg, uint8_t* data)
+{
     // check for Aux I2C master enabled first
     const bool kAuxI2CEnabled = MPU_GetAuxI2CEnabled();
     if (err) return err;
@@ -1487,14 +1569,16 @@ mpu_err_t MPU_AuxI2CReadByte(uint8_t dev, uint8_t reg, uint8_t* data) {
  * @brief Configure the active level of FSYNC pin that will cause an interrupt.
  * @details Use setFsyncEnabled() to enable / disable this interrupt.
  * */
-mpu_err_t MPU_SetFsyncConfig(int_lvl_t level) {
+mpu_err_t MPU_SetFsyncConfig(int_lvl_t level)
+{
     return MPU_WriteBit(INT_PIN_CONFIG, INT_CFG_FSYNC_LEVEL_BIT, level);
 }
 
 /**
  * @brief Return FSYNC pin active level configuration.
  */
-int_lvl_t MPU_GetFsyncConfig() {
+int_lvl_t MPU_GetFsyncConfig()
+{
     MPU_ReadBit(INT_PIN_CONFIG, INT_CFG_FSYNC_LEVEL_BIT, buffer);
     return (int_lvl_t)buffer[0];
 }
@@ -1512,14 +1596,16 @@ int_lvl_t MPU_GetFsyncConfig() {
  *
  * @see setFsyncConfig().
  * */
-mpu_err_t MPU_SetFsyncEnabled(bool enable) {
+mpu_err_t MPU_SetFsyncEnabled(bool enable)
+{
     return MPU_WriteBit(INT_PIN_CONFIG, INT_CFG_FSYNC_INT_MODE_EN_BIT, enable);
 }
 
 /**
  * @brief Return FSYNC enable state.
  */
-bool MPU_GetFsyncEnabled() {
+bool MPU_GetFsyncEnabled()
+{
     MPU_ReadBit(INT_PIN_CONFIG, INT_CFG_FSYNC_INT_MODE_EN_BIT, buffer);
     return buffer[0];
 }
@@ -1529,7 +1615,8 @@ bool MPU_GetFsyncEnabled() {
  * @param start first register number.
  * @param end last register number.
  */
-mpu_err_t MPU_RegisterDump(uint8_t start, uint8_t end) {
+mpu_err_t MPU_RegisterDump(uint8_t start, uint8_t end)
+{
     const uint8_t kNumOfRegs = 128;
     if (end - start < 0 || start >= kNumOfRegs || end >= kNumOfRegs) return err = MPU_ERR;
     // printf(LOG_COLOR_W ">> " CONFIG_MPU_CHIP_MODEL " register dump:" LOG_RESET_COLOR "\n");
@@ -1553,7 +1640,8 @@ mpu_err_t MPU_RegisterDump(uint8_t start, uint8_t end) {
  *  - I2C, Auxiliary I2C bus will set to bypass mode and the reading will be performed directly (faster).
  *  - SPI, the function will use Slave 4 of Auxiliary I2C bus to read the byte (slower).
  * */
-mpu_err_t MPU_CompassReadByte(uint8_t reg, uint8_t* data) {
+mpu_err_t MPU_CompassReadByte(uint8_t reg, uint8_t* data)
+{
 // in case of I2C
 #if defined CONFIG_MPU_I2C
     const bool kPrevAuxI2CBypassState = MPU_GetAuxI2CBypass();
@@ -1580,7 +1668,8 @@ mpu_err_t MPU_CompassReadByte(uint8_t reg, uint8_t* data) {
  *  - I2C, Auxiliary I2C bus will set to bypass mode and the reading will be performed directly (faster).
  *  - SPI, the function will use Slave 4 of Auxiliary I2C bus to read the byte (slower).
  * */
-mpu_err_t MPU_CompassWriteByte(uint8_t reg, const uint8_t data) {
+mpu_err_t MPU_CompassWriteByte(uint8_t reg, const uint8_t data)
+{
 // in case of I2C
 #if defined CONFIG_MPU_I2C
     const bool kPrevAuxI2CBypassState = MPU_GetAuxI2CBypass();
@@ -1608,7 +1697,8 @@ mpu_err_t MPU_CompassWriteByte(uint8_t reg, const uint8_t data) {
  *
  * To disable the compass, call compassSetMode(MAG_MODE_POWER_DOWN).
  * */
-mpu_err_t MPU_CompassInit() {
+mpu_err_t MPU_CompassInit()
+{
 #ifdef CONFIG_MPU_I2C
     if (MPU_SetAuxI2CBypass(true)) return err;
 
@@ -1650,7 +1740,8 @@ mpu_err_t MPU_CompassInit() {
 /**
  * @brief Test connection with Magnetometer by checking WHO_I_AM register.
  * */
-mpu_err_t MPU_CompassTestConnection() {
+mpu_err_t MPU_CompassTestConnection()
+{
     const uint8_t wai = MPU_CompassWhoAmI();
     if (err) return err;
     return (wai == 0x48) ? MPU_OK : MPU_ERR;
@@ -1660,7 +1751,8 @@ mpu_err_t MPU_CompassTestConnection() {
  * @brief Return value from WHO_I_AM register.
  * @details Should be `0x48` for AK8963 and AK8975.
  * */
-uint8_t MPU_CompassWhoAmI() {
+uint8_t MPU_CompassWhoAmI()
+{
     MPU_CompassReadByte(WHO_I_AM, buffer);
     return buffer[0];
 }
@@ -1668,7 +1760,8 @@ uint8_t MPU_CompassWhoAmI() {
 /**
  * @brief Return value from magnetometer's INFO register.
  * */
-uint8_t MPU_CompassGetInfo() {
+uint8_t MPU_CompassGetInfo()
+{
     MPU_CompassReadByte(INFO, buffer);
     return buffer[0];
 }
@@ -1681,7 +1774,8 @@ uint8_t MPU_CompassGetInfo() {
  *  - Setting to MAG_MODE_POWER_DOWN will disable readings from compass and disable (free) Aux I2C slaves 0 and 1.
  *    It will not disable Aux I2C Master I/F though! To enable back, use compassInit().
  * */
-mpu_err_t MPU_CompassSetMode(mag_mode_t mode) {
+mpu_err_t MPU_CompassSetMode(mag_mode_t mode)
+{
 // keep previous sensitivity value
 #if defined CONFIG_MPU_AK8963
     const uint8_t kControl1Value = mode | (MPU_CompassGetSensitivity() << CONTROL1_BIT_OUTPUT_BIT);
@@ -1763,7 +1857,8 @@ mpu_err_t MPU_CompassSetMode(mag_mode_t mode) {
 /**
  * @brief Return magnetometer's measurement mode.
  * */
-mag_mode_t MPU_CompassGetMode() {
+mag_mode_t MPU_CompassGetMode()
+{
     const auxi2c_slv_config_t kSlaveChgModeConfig  = MPU_GetAuxI2CSlaveConfig(MAG_SLAVE_CHG_MODE);
     const bool                kSlaveChgModeEnabled = MPU_GetAuxI2CSlaveEnabled(MAG_SLAVE_CHG_MODE);
     mag_mode_t                mode;
@@ -1781,7 +1876,8 @@ mag_mode_t MPU_CompassGetMode() {
 /**
  * @brief Return Magnetometer's sensitivity adjustment data for each axis.
  * */
-mpu_err_t MPU_CompassGetAdjustment(uint8_t* x, uint8_t* y, uint8_t* z) {
+mpu_err_t MPU_CompassGetAdjustment(uint8_t* x, uint8_t* y, uint8_t* z)
+{
     mag_mode_t prevMode = MPU_CompassGetMode();
     if (err) return err;
     if (MPU_CompassSetMode(MAG_MODE_FUSE_ROM)) return err;
@@ -1797,7 +1893,8 @@ mpu_err_t MPU_CompassGetAdjustment(uint8_t* x, uint8_t* y, uint8_t* z) {
  * @bug Not fully functional yet.
  * @todo Elaborate comment. Add more `tries`.
  */
-bool MPU_CompassSelfTest(raw_axes_t* result) {
+bool MPU_CompassSelfTest(raw_axes_t* result)
+{
     bool       ret      = true;
     mag_mode_t prevMode = MPU_CompassGetMode();
     if (err) return err;
@@ -1863,7 +1960,8 @@ bool MPU_CompassSelfTest(raw_axes_t* result) {
  *  - `MAG_SENSITIVITY_0_6_uT`:   0.6  uT/LSB = 14-bit output
  *  - `MAG_SENSITIVITY_0_15_uT`:  0.15 uT/LSB = 16-bit output
  * */
-mpu_err_t MPU_CompassSetSensitivity(mag_sensy_t sensy) {
+mpu_err_t MPU_CompassSetSensitivity(mag_sensy_t sensy)
+{
     auxi2c_slv_config_t slaveChgModeConfig = MPU_GetAuxI2CSlaveConfig(MAG_SLAVE_CHG_MODE);
     if (err) return err;
     slaveChgModeConfig.txdata &= ~(1 << CONTROL1_BIT_OUTPUT_BIT);
@@ -1876,7 +1974,8 @@ mpu_err_t MPU_CompassSetSensitivity(mag_sensy_t sensy) {
 /**
  * @brief Return magnetometer sensitivity.
  * */
-mag_sensy_t MPU_CompassGetSensitivity() {
+mag_sensy_t MPU_CompassGetSensitivity()
+{
     auxi2c_slv_config_t slaveChgModeConfig   = MPU_GetAuxI2CSlaveConfig(MAG_SLAVE_CHG_MODE);
     const bool          kSlaveChgModeEnabled = MPU_GetAuxI2CSlaveEnabled(MAG_SLAVE_CHG_MODE);
     mag_sensy_t         sensy;
@@ -1894,7 +1993,8 @@ mag_sensy_t MPU_CompassGetSensitivity() {
 /**
  * @brief Soft reset AK8963.
  * */
-mpu_err_t MPU_CompassReset() {
+mpu_err_t MPU_CompassReset()
+{
     return MPU_CompassWriteByte(CONTROL2, 0x1);
 }
 
@@ -1907,7 +2007,8 @@ mpu_err_t MPU_CompassReset() {
  * @param result Should be ZERO if gyro and accel passed.
  * @todo Elaborate doc.
  * */
-mpu_err_t MPU_SelfTest(selftest_t* result) {
+mpu_err_t MPU_SelfTest(selftest_t* result)
+{
 #ifdef CONFIG_MPU6050
     const accel_fs_t kAccelFS = ACCEL_FS_16G;
     const gyro_fs_t  kGyroFS  = GYRO_FS_250DPS;
@@ -1976,7 +2077,8 @@ static const uint16_t kSelfTestTable[256] = {
  * @param result self-test error for each axis (X=bit0, Y=bit1, Z=bit2). Zero is a pass.
  * @note Bias should be in 16G format for MPU6050 and 2G for MPU6500 based models.
  * */
-mpu_err_t   MPU_AccelSelfTest(raw_axes_t* regularBias, raw_axes_t* selfTestBias, uint8_t* result) {
+mpu_err_t MPU_AccelSelfTest(raw_axes_t* regularBias, raw_axes_t* selfTestBias, uint8_t* result)
+{
 #if defined CONFIG_MPU6050
     const accel_fs_t kAccelFS = ACCEL_FS_16G;
     // Criteria A: must be within 14% variation
@@ -2063,7 +2165,8 @@ mpu_err_t   MPU_AccelSelfTest(raw_axes_t* regularBias, raw_axes_t* selfTestBias,
  * @param result Self-test error for each axis (X=bit0, Y=bit1, Z=bit2). Zero is a pass.
  * @note Bias should be in 250DPS format for both MPU6050 and MPU6500 based models.
  * */
-mpu_err_t MPU_GyroSelfTest(raw_axes_t* regularBias, raw_axes_t* selfTestBias, uint8_t* result) {
+mpu_err_t MPU_GyroSelfTest(raw_axes_t* regularBias, raw_axes_t* selfTestBias, uint8_t* result)
+{
     const gyro_fs_t kGyroFS = GYRO_FS_250DPS;
 
 #if defined CONFIG_MPU6050
@@ -2144,7 +2247,8 @@ mpu_err_t MPU_GyroSelfTest(raw_axes_t* regularBias, raw_axes_t* selfTestBias, ui
  * @attention When calculating the biases the MPU must remain as horizontal as possible (0 degrees), facing up.
  * This algorithm takes about ~400ms to compute offsets.
  * */
-mpu_err_t MPU_GetBiases(accel_fs_t accelFS, gyro_fs_t gyroFS, raw_axes_t* accelBias, raw_axes_t* gyroBias, bool selftest) {
+mpu_err_t MPU_GetBiases(accel_fs_t accelFS, gyro_fs_t gyroFS, raw_axes_t* accelBias, raw_axes_t* gyroBias, bool selftest)
+{
     // configurations to compute biases
     const uint16_t      kSampleRate = 1000;
     const dlpf_t        kDLPF       = DLPF_188HZ;

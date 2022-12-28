@@ -21,10 +21,11 @@
 
 extern u8 nonside[];
 
-//串口初始函数
+// 串口初始函数
 void USARTTEST_Configuration(void);
 /* Private functions ---------------------------------x------------------------*/
-void Dly_ms(int ms) {
+void Dly_ms(int ms)
+{
     int ii, jj;
     if (ms < 1) ms = 1;
     for (ii = 0; ii < ms; ii++)
@@ -41,7 +42,8 @@ void Dly_ms(int ms) {
  * Output         : None
  * Return         : None
  *******************************************************************************/
-int main(void) {
+int main(void)
+{
     LCD_Init();
 
     while (1) {

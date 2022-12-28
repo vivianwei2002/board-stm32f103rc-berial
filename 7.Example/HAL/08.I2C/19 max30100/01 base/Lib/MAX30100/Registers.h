@@ -7,30 +7,30 @@
 
 // Interrupt status register (RO)
 #define MAX30100_REG_INTERRUPT_STATUS 0x00
-#define MAX30100_IS_PWR_RDY (1 << 0)
-#define MAX30100_IS_SPO2_RDY (1 << 4)
-#define MAX30100_IS_HR_RDY (1 << 5)
-#define MAX30100_IS_TEMP_RDY (1 << 6)
-#define MAX30100_IS_A_FULL (1 << 7)
+#define MAX30100_IS_PWR_RDY           (1 << 0)
+#define MAX30100_IS_SPO2_RDY          (1 << 4)
+#define MAX30100_IS_HR_RDY            (1 << 5)
+#define MAX30100_IS_TEMP_RDY          (1 << 6)
+#define MAX30100_IS_A_FULL            (1 << 7)
 
 // Interrupt enable register
 #define MAX30100_REG_INTERRUPT_ENABLE 0x01
-#define MAX30100_IE_ENB_SPO2_RDY (1 << 4)
-#define MAX30100_IE_ENB_HR_RDY (1 << 5)
-#define MAX30100_IE_ENB_TEMP_RDY (1 << 6)
-#define MAX30100_IE_ENB_A_FULL (1 << 7)
+#define MAX30100_IE_ENB_SPO2_RDY      (1 << 4)
+#define MAX30100_IE_ENB_HR_RDY        (1 << 5)
+#define MAX30100_IE_ENB_TEMP_RDY      (1 << 6)
+#define MAX30100_IE_ENB_A_FULL        (1 << 7)
 
 // FIFO control and data registers
-#define MAX30100_REG_FIFO_WRITE_POINTER 0x02
+#define MAX30100_REG_FIFO_WRITE_POINTER    0x02
 #define MAX30100_REG_FIFO_OVERFLOW_COUNTER 0x03
-#define MAX30100_REG_FIFO_READ_POINTER 0x04
-#define MAX30100_REG_FIFO_DATA 0x05  // Burst read does not autoincrement addr
+#define MAX30100_REG_FIFO_READ_POINTER     0x04
+#define MAX30100_REG_FIFO_DATA             0x05  // Burst read does not autoincrement addr
 
 // Mode Configuration register
 #define MAX30100_REG_MODE_CONFIGURATION 0x06
-#define MAX30100_MC_TEMP_EN (1 << 3)
-#define MAX30100_MC_RESET (1 << 6)
-#define MAX30100_MC_SHDN (1 << 7)
+#define MAX30100_MC_TEMP_EN             (1 << 3)
+#define MAX30100_MC_RESET               (1 << 6)
+#define MAX30100_MC_SHDN                (1 << 7)
 typedef enum Mode {
     MAX30100_MODE_HRONLY  = 0x02,
     MAX30100_MODE_SPO2_HR = 0x03
@@ -40,7 +40,7 @@ typedef enum Mode {
 // Check tables 8 and 9, p19 of the MAX30100 datasheet to see the permissible
 // combinations of sampling rates and pulse widths
 #define MAX30100_REG_SPO2_CONFIGURATION 0x07
-#define MAX30100_SPC_SPO2_HI_RES_EN (1 << 6)
+#define MAX30100_SPC_SPO2_HI_RES_EN     (1 << 6)
 typedef enum SamplingRate {
     MAX30100_SAMPRATE_50HZ   = 0x00,
     MAX30100_SAMPRATE_100HZ  = 0x01,

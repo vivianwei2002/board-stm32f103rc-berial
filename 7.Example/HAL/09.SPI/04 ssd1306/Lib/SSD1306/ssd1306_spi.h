@@ -2,10 +2,10 @@
 #define _LQOLED_H
 #include "spi.h"
 #include "stdlib.h"
-//汉字大小，英文数字大小
-#define TYPE8X16 1
+// 汉字大小，英文数字大小
+#define TYPE8X16  1
 #define TYPE16X16 2
-#define TYPE6X8 3
+#define TYPE6X8   3
 
 #define OLED_CS_Clr HAL_GPIO_WritePin(OLED_CS_GPIO_Port, OLED_CS_Pin, GPIO_PIN_RESET)  // CS
 #define OLED_CS_Set HAL_GPIO_WritePin(OLED_CS_GPIO_Port, OLED_CS_Pin, GPIO_PIN_SET)

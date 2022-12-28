@@ -6,5 +6,3 @@
 void rnn_test(void);
 
 #endif
-
-

@@ -1,24 +1,24 @@
 #ifndef __ALGORITHM_H
 #define __ALGORITHM_H
 
-#define FFT_N 512      //定义傅里叶变换的点数
-#define START_INDEX 4  //低频过滤阈值
+#define FFT_N       512  // 定义傅里叶变换的点数
+#define START_INDEX 4    // 低频过滤阈值
 
-struct compx  //定义一个复数结构
+struct compx  // 定义一个复数结构
 {
     float real;
     float imag;
 };
 
-//向下取整
+// 向下取整
 double my_floor(double x);
-//求余运算
+// 求余运算
 double my_fmod(double x, double y);
-//正弦函数
+// 正弦函数
 double XSin(double x);
-//余弦函数
+// 余弦函数
 double XCos(double x);
-//开平方
+// 开平方
 int qsqrt(int a);
 
 /*******************************************************************
@@ -35,7 +35,7 @@ struct compx EE(struct compx a, struct compx b);
 *****************************************************************/
 void FFT(struct compx* xin);
 
-//读取峰值
+// 读取峰值
 int find_max_num_index(struct compx* data, int count);
 
 typedef struct
@@ -46,7 +46,7 @@ typedef struct
 
 } DC_FilterData;
 
-//直流滤波器
+// 直流滤波器
 int dc_filter(int input, DC_FilterData* df);
 
 typedef struct {

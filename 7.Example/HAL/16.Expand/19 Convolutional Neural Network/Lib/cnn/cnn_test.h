@@ -6,5 +6,3 @@
 void cnn_test(void);
 
 #endif
-
-

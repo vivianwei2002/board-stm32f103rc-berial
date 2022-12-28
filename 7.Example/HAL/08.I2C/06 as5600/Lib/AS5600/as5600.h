@@ -4,7 +4,7 @@
 
 #include "i2c.h"
 
-#define AS5600_ADDR_LOW 0x36
+#define AS5600_ADDR_LOW  0x36
 #define AS5600_ADDR_HIGH 0x37
 
 #define AS5600_DEV (AS5600_ADDR_LOW << 1)  // <------- dev

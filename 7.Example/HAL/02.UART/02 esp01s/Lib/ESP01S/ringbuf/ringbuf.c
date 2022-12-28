@@ -1,11 +1,13 @@
 #include "ringbuf.h"
 
-uint8_t ringbuf_length(ringbuf* ring) {
+uint8_t ringbuf_length(ringbuf* ring)
+{
     int8_t len = ring->rear - ring->head;
     return (len < 0) ? (len + ring->capacity) : len;
 }
 
-uint8_t ringbuf_push(ringbuf* ring, datatype data) {
+uint8_t ringbuf_push(ringbuf* ring, datatype data)
+{
     ring->buffer[ring->rear++] = data;
     if (ring->rear == ring->capacity)
         ring->rear = 0;
@@ -17,7 +19,8 @@ uint8_t ringbuf_push(ringbuf* ring, datatype data) {
     return 1;
 }
 
-uint8_t ringbuf_pop(ringbuf* ring, datatype* data) {
+uint8_t ringbuf_pop(ringbuf* ring, datatype* data)
+{
     if (ring->head == ring->rear)
         return 0;  // ring is NULL
     *data = ring->buffer[ring->head];
@@ -26,7 +29,8 @@ uint8_t ringbuf_pop(ringbuf* ring, datatype* data) {
     return 1;
 }
 
-uint16_t ringbuf_popall(ringbuf* ring, datatype* data) {
+uint16_t ringbuf_popall(ringbuf* ring, datatype* data)
+{
     if (ring->rear == ring->head) return 0;
     int16_t length = ring->rear - ring->head;
     if (length > 0) {
@@ -40,7 +44,8 @@ uint16_t ringbuf_popall(ringbuf* ring, datatype* data) {
     return length;
 }
 
-void ringbuf_print(ringbuf* ring, uint8_t raw /* 0: start from head; 1: start from 0;*/, uint8_t type /*0:Dec,1:Hex,2:Char;*/) {
+void ringbuf_print(ringbuf* ring, uint8_t raw /* 0: start from head; 1: start from 0;*/, uint8_t type /*0:Dec,1:Hex,2:Char;*/)
+{
 #if PRINT_RINGBUF
     uint8_t i;
     char*   style;

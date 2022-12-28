@@ -3,14 +3,14 @@
 
 #define RAD_TO_DEG 57.295779513082320876798154814105
 
-#define WHO_AM_I_REG 0x75
-#define PWR_MGMT_1_REG 0x6B
-#define SMPLRT_DIV_REG 0x19
+#define WHO_AM_I_REG     0x75
+#define PWR_MGMT_1_REG   0x6B
+#define SMPLRT_DIV_REG   0x19
 #define ACCEL_CONFIG_REG 0x1C
 #define ACCEL_XOUT_H_REG 0x3B
-#define TEMP_OUT_H_REG 0x41
-#define GYRO_CONFIG_REG 0x1B
-#define GYRO_XOUT_H_REG 0x43
+#define TEMP_OUT_H_REG   0x41
+#define GYRO_CONFIG_REG  0x1B
+#define GYRO_XOUT_H_REG  0x43
 
 // Setup MPU6050
 #define MPU6050_ADDR 0xD0
@@ -22,7 +22,8 @@ uint32_t timer;
 Kalman_t KalmanX = {.Q_angle = 0.001f, .Q_bias = 0.003f, .R_measure = 0.03f},
          KalmanY = {.Q_angle = 0.001f, .Q_bias = 0.003f, .R_measure = 0.03f};
 
-uint8_t MPU6050_Init(I2C_HandleTypeDef* I2Cx) {
+uint8_t MPU6050_Init(I2C_HandleTypeDef* I2Cx)
+{
     uint8_t check;
     uint8_t Data;
 
@@ -54,7 +55,8 @@ uint8_t MPU6050_Init(I2C_HandleTypeDef* I2Cx) {
     return 1;
 }
 
-void MPU6050_Read_Accel(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data) {
+void MPU6050_Read_Accel(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data)
+{
     uint8_t Rec_Data[6];
 
     // Read 6 BYTES of data starting from ACCEL_XOUT_H register
@@ -75,7 +77,8 @@ void MPU6050_Read_Accel(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data) {
     Data->Az = Data->AccelZ / Accel_Z_corrector;
 }
 
-void MPU6050_Read_Gyro(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data) {
+void MPU6050_Read_Gyro(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data)
+{
     uint8_t Rec_Data[6];
 
     // Read 6 BYTES of data starting from GYRO_XOUT_H register
@@ -96,7 +99,8 @@ void MPU6050_Read_Gyro(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data) {
     Data->Gz = Data->GyroZ / 131.0;
 }
 
-void MPU6050_Read_Temp(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data) {
+void MPU6050_Read_Temp(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data)
+{
     uint8_t Rec_Data[2];
     int16_t temp;
 
@@ -108,7 +112,8 @@ void MPU6050_Read_Temp(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data) {
     Data->Temperature = (float)((int16_t)temp / (float)340.0 + (float)36.53);
 }
 
-void MPU6050_Read_All(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data) {
+void MPU6050_Read_All(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data)
+{
     uint8_t Rec_Data[14];
     int16_t temp;
 
@@ -148,7 +153,8 @@ void MPU6050_Read_All(I2C_HandleTypeDef* I2Cx, MPU6050_t* Data) {
     Data->AngleX = Kalman_getAngle(&KalmanX, roll, Data->Gx, dt);
 }
 
-double Kalman_getAngle(Kalman_t* Kalman, double newAngle, double newRate, double dt) {
+double Kalman_getAngle(Kalman_t* Kalman, double newAngle, double newRate, double dt)
+{
     double rate = newRate - Kalman->bias;
     Kalman->angle += dt * rate;
 

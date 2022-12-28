@@ -131,7 +131,8 @@ typedef union {
     };
 } status;
 
-static void set_status(status* v, uint8_t data) {
+static void set_status(status* v, uint8_t data)
+{
     v->flags = data;
     // v->AVALID = data & 0x01;
     // v->PVALID = (data >> 1) & 0x01;
@@ -253,7 +254,8 @@ typedef union {
     };
 } gconf4;
 
-static void set_gconf4(gconf4* v, uint8_t data) {
+static void set_gconf4(gconf4* v, uint8_t data)
+{
     v->flags = data & 0b111;
     // v->GIEN  = (data >> 1) & 0x01;
     // v->GMODE = data & 0x01;
@@ -275,7 +277,8 @@ typedef union {
     };
 } gstatus;
 
-static void set_gstatus(gstatus* v, uint8_t data) {
+static void set_gstatus(gstatus* v, uint8_t data)
+{
     v->flags = data & 0b111;
     // v->GFOV   = (data >> 1) & 0x01;
     // v->GVALID = data & 0x01;
@@ -304,49 +307,58 @@ uint8_t DCount;
 uint8_t LCount;
 uint8_t RCount;
 
-float powf(const float x, const float y) {
+float powf(const float x, const float y)
+{
     return (float)(pow((double)x, (double)y));
 }
 
-uint8_t APDS9960_ReadBytes(uint8_t reg, uint8_t* buf, uint8_t num) {
+uint8_t APDS9960_ReadBytes(uint8_t reg, uint8_t* buf, uint8_t num)
+{
     HAL_I2C_Mem_Read(&APDS9960_I2C, APDS9960_DEV, reg, I2C_MEMADD_SIZE_8BIT, buf, num, 0xFF);
     return num;
 }
 
-void APDS9960_WriteBytes(uint8_t reg, uint8_t* buf, uint8_t num) {
+void APDS9960_WriteBytes(uint8_t reg, uint8_t* buf, uint8_t num)
+{
     HAL_I2C_Mem_Write(&APDS9960_I2C, APDS9960_DEV, reg, I2C_MEMADD_SIZE_8BIT, buf, num, 0xFF);
 }
 
-void APDS9960_WriteByte(uint8_t reg, uint8_t value) {
+void APDS9960_WriteByte(uint8_t reg, uint8_t value)
+{
     APDS9960_WriteBytes(reg, &value, 1);
 }
 
-uint8_t APDS9960_ReadByte(uint8_t reg) {
+uint8_t APDS9960_ReadByte(uint8_t reg)
+{
     uint8_t ret;
     APDS9960_ReadBytes(reg, &ret, 1);
     return ret;
 }
 
-uint32_t APDS9960_ReadU32(uint8_t reg) {
+uint32_t APDS9960_ReadU32(uint8_t reg)
+{
     uint8_t ret[4];
     APDS9960_ReadBytes(reg, ret, 4);
     return (ret[0] << 24) | (ret[1] << 16) | (ret[2] << 8) | ret[3];
 }
 
-uint16_t APDS9960_ReadU16(uint8_t reg) {
+uint16_t APDS9960_ReadU16(uint8_t reg)
+{
     uint8_t ret[2];
     APDS9960_ReadBytes(reg, ret, 2);
     return (ret[0] << 8) | ret[1];
 }
 
-uint16_t APDS9960_ReadU16R(uint8_t reg) {
+uint16_t APDS9960_ReadU16R(uint8_t reg)
+{
     uint8_t ret[2];
     APDS9960_ReadBytes(reg, ret, 2);
     return (ret[1] << 8) | ret[0];
 }
 
 // Enables / Disables the device (putting it in lower power sleep mode)
-void APDS9960_Enable(uint8_t en) {
+void APDS9960_Enable(uint8_t en)
+{
     _enable.PON = en;
     APDS9960_WriteByte(APDS9960_ENABLE, _enable.flags);
 }
@@ -354,7 +366,8 @@ void APDS9960_Enable(uint8_t en) {
 //////////////////////////////////////////////////////////
 
 // configures the sensor (call this function before doing anything else)
-uint8_t APDS9960_Init() {
+uint8_t APDS9960_Init()
+{
     /* Make sure we're actually connected */
     uint8_t x = APDS9960_ReadByte(APDS9960_ID);
     if (x != 0xAB) return 0;
@@ -393,7 +406,8 @@ uint8_t APDS9960_Init() {
 }
 
 // Sets the integration time for the ADC of the APDS9960, in mills
-void APDS9960_SetADCIntegrationTime(uint16_t iTimeMS) {
+void APDS9960_SetADCIntegrationTime(uint16_t iTimeMS)
+{
     float temp;
 
     // convert ms into 2.78ms increments
@@ -407,7 +421,8 @@ void APDS9960_SetADCIntegrationTime(uint16_t iTimeMS) {
     APDS9960_WriteByte(APDS9960_ATIME, (uint8_t)temp);
 }
 
-float APDS9960_GetADCIntegrationTime(void) {
+float APDS9960_GetADCIntegrationTime(void)
+{
     float temp;
 
     temp = APDS9960_ReadByte(APDS9960_ATIME);
@@ -419,28 +434,33 @@ float APDS9960_GetADCIntegrationTime(void) {
 }
 
 // Adjusts the color/ALS gain on the APDS9960 (adjusts the sensitivity to light)
-void APDS9960_SetADCGain(APDS9960_AGain aGain) {
+void APDS9960_SetADCGain(APDS9960_AGain aGain)
+{
     _control.AGAIN = aGain;
     /* Update the timing register */
     APDS9960_WriteByte(APDS9960_CONTROL, _control.flags);
 }
 
-APDS9960_AGain APDS9960_GetADCGain(void) {
+APDS9960_AGain APDS9960_GetADCGain(void)
+{
     return (APDS9960_AGain)(APDS9960_ReadByte(APDS9960_CONTROL) & 0x03);
 }
 
 // Adjusts the Proximity gain on the APDS9960
-void APDS9960_SetProxGain(APDS9960_PGain pGain) {
+void APDS9960_SetProxGain(APDS9960_PGain pGain)
+{
     _control.PGAIN = pGain;
     /* Update the timing register */
     APDS9960_WriteByte(APDS9960_CONTROL, _control.flags);
 }
 
-APDS9960_PGain APDS9960_GetProxGain(void) {
+APDS9960_PGain APDS9960_GetProxGain(void)
+{
     return (APDS9960_PGain)(APDS9960_ReadByte(APDS9960_CONTROL) & 0x0C);
 }
 
-void APDS9960_SetProxPulse(APDS9960_PPulseLen pLen, uint8_t pulses) {
+void APDS9960_SetProxPulse(APDS9960_PPulseLen pLen, uint8_t pulses)
+{
     if (pulses < 1) pulses = 1;
     if (pulses > 64) pulses = 64;
     --pulses;
@@ -452,23 +472,27 @@ void APDS9960_SetProxPulse(APDS9960_PPulseLen pLen, uint8_t pulses) {
 }
 
 // Enable proximity readings on APDS9960
-void APDS9960_EnableProximity(uint8_t en) {
+void APDS9960_EnableProximity(uint8_t en)
+{
     _enable.PEN = en;
     APDS9960_WriteByte(APDS9960_ENABLE, _enable.flags);
 }
 
-void APDS9960_EnableProximityInterrupt() {
+void APDS9960_EnableProximityInterrupt()
+{
     _enable.PIEN = 1;
     APDS9960_WriteByte(APDS9960_ENABLE, _enable.flags);
     APDS9960_ClearInterrupt();
 }
 
-void APDS9960_DisableProximityInterrupt() {
+void APDS9960_DisableProximityInterrupt()
+{
     _enable.PIEN = 0;
     APDS9960_WriteByte(APDS9960_ENABLE, _enable.flags);
 }
 
-void APDS9960_SetProximityInterruptThreshold(uint8_t low, uint8_t high, uint8_t persistance) {
+void APDS9960_SetProximityInterruptThreshold(uint8_t low, uint8_t high, uint8_t persistance)
+{
     APDS9960_WriteByte(APDS9960_PILT, low);
     APDS9960_WriteByte(APDS9960_PIHT, high);
 
@@ -477,41 +501,49 @@ void APDS9960_SetProximityInterruptThreshold(uint8_t low, uint8_t high, uint8_t 
     APDS9960_WriteByte(APDS9960_PERS, _pers.flags);
 }
 
-uint8_t APDS9960_GetProximityInterrupt() {
+uint8_t APDS9960_GetProximityInterrupt()
+{
     set_status(&_status, APDS9960_ReadByte(APDS9960_STATUS));
     return _status.PINT;
 };
 
 // Read proximity data
-uint8_t APDS9960_ReadProximity(void) {
+uint8_t APDS9960_ReadProximity(void)
+{
     return APDS9960_ReadByte(APDS9960_PDATA);
 }
 
-uint8_t APDS9960_GestureValid() {
+uint8_t APDS9960_GestureValid()
+{
     set_gstatus(&_gstatus, APDS9960_ReadByte(APDS9960_GSTATUS));
     return _gstatus.GVALID;
 }
 
-void APDS9960_SetGestureDimensions(uint8_t dims) {
+void APDS9960_SetGestureDimensions(uint8_t dims)
+{
     _gconf3.GDIMS = dims;
     APDS9960_WriteByte(APDS9960_GCONF3, _gconf3.flags);
 }
 
-void APDS9960_SetGestureFIFOThreshold(uint8_t thresh) {
+void APDS9960_SetGestureFIFOThreshold(uint8_t thresh)
+{
     _gconf1.GFIFOTH = thresh;
     APDS9960_WriteByte(APDS9960_GCONF1, _gconf1.flags);
 }
 
-void APDS9960_SetGestureGain(uint8_t gain) {
+void APDS9960_SetGestureGain(uint8_t gain)
+{
     _gconf2.GGAIN = gain;
     APDS9960_WriteByte(APDS9960_GCONF2, _gconf2.flags);
 }
 
-void APDS9960_SetGestureProximityThreshold(uint8_t thresh) {
+void APDS9960_SetGestureProximityThreshold(uint8_t thresh)
+{
     APDS9960_WriteByte(APDS9960_GPENTH, thresh);
 }
 
-void APDS9960_SetGestureOffset(uint8_t offset_up, uint8_t offset_down, uint8_t offset_left, uint8_t offset_right) {
+void APDS9960_SetGestureOffset(uint8_t offset_up, uint8_t offset_down, uint8_t offset_left, uint8_t offset_right)
+{
     APDS9960_WriteByte(APDS9960_GOFFSET_U, offset_up);
     APDS9960_WriteByte(APDS9960_GOFFSET_D, offset_down);
     APDS9960_WriteByte(APDS9960_GOFFSET_L, offset_left);
@@ -519,7 +551,8 @@ void APDS9960_SetGestureOffset(uint8_t offset_up, uint8_t offset_down, uint8_t o
 }
 
 // Enable gesture readings on APDS9960
-void APDS9960_EnableGesture(uint8_t en) {
+void APDS9960_EnableGesture(uint8_t en)
+{
     if (!en) {
         _gconf4.GMODE = 0;
         APDS9960_WriteByte(APDS9960_GCONF4, _gconf4.flags);
@@ -529,7 +562,8 @@ void APDS9960_EnableGesture(uint8_t en) {
     APDS9960_ResetCounts();
 }
 
-void APDS9960_ResetCounts() {
+void APDS9960_ResetCounts()
+{
     gestCnt = 0;
     UCount  = 0;
     DCount  = 0;
@@ -537,7 +571,8 @@ void APDS9960_ResetCounts() {
     RCount  = 0;
 }
 
-uint8_t APDS9960_ReadGesture(void) {
+uint8_t APDS9960_ReadGesture(void)
+{
     uint8_t       toRead, uint8_tsRead;
     uint8_t       buf[256];
     unsigned long t;
@@ -597,7 +632,8 @@ uint8_t APDS9960_ReadGesture(void) {
 }
 
 // Set LED brightness for proximity/gesture
-void APDS9960_SetLED(APDS9960_LedDrive drive, APDS9960_LedBoost boost) {
+void APDS9960_SetLED(APDS9960_LedDrive drive, APDS9960_LedBoost boost)
+{
     // set BOOST
     _config2.LED_BOOST = boost;
     APDS9960_WriteByte(APDS9960_CONFIG2, _config2.flags + 1);
@@ -606,18 +642,21 @@ void APDS9960_SetLED(APDS9960_LedDrive drive, APDS9960_LedBoost boost) {
 }
 
 // Enable proximity readings on APDS9960
-void APDS9960_EnableColor(uint8_t en) {
+void APDS9960_EnableColor(uint8_t en)
+{
     _enable.AEN = en;
     APDS9960_WriteByte(APDS9960_ENABLE, _enable.flags);
 }
 
-uint8_t APDS9960_ColorDataReady() {
+uint8_t APDS9960_ColorDataReady()
+{
     set_status(&_status, APDS9960_ReadByte(APDS9960_STATUS));
     return _status.AVALID;
 }
 
 // Reads the raw red, green, blue and clear channel values
-void APDS9960_GetColorData(uint16_t* r, uint16_t* g, uint16_t* b, uint16_t* c) {
+void APDS9960_GetColorData(uint16_t* r, uint16_t* g, uint16_t* b, uint16_t* c)
+{
     *c = APDS9960_ReadU16R(APDS9960_CDATAL);
     *r = APDS9960_ReadU16R(APDS9960_RDATAL);
     *g = APDS9960_ReadU16R(APDS9960_GDATAL);
@@ -625,7 +664,8 @@ void APDS9960_GetColorData(uint16_t* r, uint16_t* g, uint16_t* b, uint16_t* c) {
 }
 
 // Converts the raw R/G/B values to color temperature in degrees Kelvin
-uint16_t APDS9960_CalculateColorTemperature(uint16_t r, uint16_t g, uint16_t b) {
+uint16_t APDS9960_CalculateColorTemperature(uint16_t r, uint16_t g, uint16_t b)
+{
     float X, Y, Z; /* RGB to XYZ correlation      */
     float xc, yc;  /* Chromaticity co-ordinates   */
     float n;       /* McCamy's formula            */
@@ -654,7 +694,8 @@ uint16_t APDS9960_CalculateColorTemperature(uint16_t r, uint16_t g, uint16_t b) 
 }
 
 // Calculate ambient light values
-uint16_t APDS9960_CalculateLux(uint16_t r, uint16_t g, uint16_t b) {
+uint16_t APDS9960_CalculateLux(uint16_t r, uint16_t g, uint16_t b)
+{
     float illuminance;
 
     /* This only uses RGB ... how can we integrate clear or calculate lux */
@@ -664,21 +705,25 @@ uint16_t APDS9960_CalculateLux(uint16_t r, uint16_t g, uint16_t b) {
     return (uint16_t)illuminance;
 }
 
-void APDS9960_EnableColorInterrupt() {
+void APDS9960_EnableColorInterrupt()
+{
     _enable.AIEN = 1;
     APDS9960_WriteByte(APDS9960_ENABLE, _enable.flags);
 }
 
-void APDS9960_DisableColorInterrupt() {
+void APDS9960_DisableColorInterrupt()
+{
     _enable.AIEN = 0;
     APDS9960_WriteByte(APDS9960_ENABLE, _enable.flags);
 }
 
-void APDS9960_ClearInterrupt(void) {
+void APDS9960_ClearInterrupt(void)
+{
     APDS9960_WriteBytes(APDS9960_AICLEAR, NULL, 0);
 }
 
-void APDS9960_SetIntLimits(uint16_t low, uint16_t high) {
+void APDS9960_SetIntLimits(uint16_t low, uint16_t high)
+{
     APDS9960_WriteByte(APDS9960_AILTIL, low & 0xFF);
     APDS9960_WriteByte(APDS9960_AILTH, low >> 8);
     APDS9960_WriteByte(APDS9960_AIHTL, high & 0xFF);

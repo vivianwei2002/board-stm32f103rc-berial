@@ -3,17 +3,20 @@
 #include "font.h"
 
 // 写命令
-void SSD1306_WriteCmd(uint8_t cmd) {
+void SSD1306_WriteCmd(uint8_t cmd)
+{
     HAL_I2C_Mem_Write(&SSD1306_I2C, SSD1306_DEV, 0x00, I2C_MEMADD_SIZE_8BIT, &cmd, 1, 0xFF);
 }
 
 // 写数据
-void SSD1306_WriteData(uint8_t data) {
+void SSD1306_WriteData(uint8_t data)
+{
     HAL_I2C_Mem_Write(&SSD1306_I2C, SSD1306_DEV, 0x40, I2C_MEMADD_SIZE_8BIT, &data, 1, 0xFF);
 }
 
 // 初始化
-void SSD1306_Init(void) {
+void SSD1306_Init(void)
+{
     HAL_Delay(500);  // 这里的延时很重要
 
     SSD1306_WriteCmd(0xAE);  // display off
@@ -47,14 +50,16 @@ void SSD1306_Init(void) {
 }
 
 // 设置起始点坐标
-void SSD1306_SetPos(uint8_t x, uint8_t y) {
+void SSD1306_SetPos(uint8_t x, uint8_t y)
+{
     SSD1306_WriteCmd(0xb0 + y);
     SSD1306_WriteCmd(((x & 0xf0) >> 4) | 0x10);
     SSD1306_WriteCmd((x & 0x0f) | 0x01);
 }
 
 // 全屏填充(全亮:0xFF,全灭:0x00)
-void SSD1306_Fill(uint8_t data) {
+void SSD1306_Fill(uint8_t data)
+{
     uint8_t m, n;
     for (m = 0; m < 8; m++) {
         SSD1306_WriteCmd(0xb0 + m);  // page0 - page1
@@ -67,26 +72,30 @@ void SSD1306_Fill(uint8_t data) {
 }
 
 // 清屏
-void SSD1306_Clear(void) {
+void SSD1306_Clear(void)
+{
     SSD1306_Fill(0x00);
 }
 
 // 唤醒
-void SSD1306_On(void) {
+void SSD1306_On(void)
+{
     SSD1306_WriteCmd(0X8D);  // 设置电荷泵
     SSD1306_WriteCmd(0X14);  // 开启电荷泵
     SSD1306_WriteCmd(0XAF);  // SSD1306唤醒
 }
 
 // 休眠(功耗<10uA)
-void SSD1306_Off(void) {
+void SSD1306_Off(void)
+{
     SSD1306_WriteCmd(0X8D);  // 设置电荷泵
     SSD1306_WriteCmd(0X10);  // 关闭电荷泵
     SSD1306_WriteCmd(0XAE);  // SSD1306休眠
 }
 
 // 显示 ascii 字符 ( size = 1: 6*8, 2: 8*16)
-void SSD1306_ShowStr(uint8_t x, uint8_t y, const uint8_t str[], uint8_t size) {
+void SSD1306_ShowStr(uint8_t x, uint8_t y, const uint8_t str[], uint8_t size)
+{
     uint8_t c = 0, i = 0, j = 0;
     switch (size) {
         case 1: {
@@ -124,7 +133,8 @@ void SSD1306_ShowStr(uint8_t x, uint8_t y, const uint8_t str[], uint8_t size) {
 }
 
 // 显示汉字（需先取模，16*16点阵，N 为 汉字在 font.h 中的索引）
-void SSD1306_ShowCN(uint8_t x, uint8_t y, uint8_t N) {
+void SSD1306_ShowCN(uint8_t x, uint8_t y, uint8_t N)
+{
     uint8_t  wm  = 0;
     uint32_t idx = 32 * N;
     SSD1306_SetPos(x, y);
@@ -138,7 +148,8 @@ void SSD1306_ShowCN(uint8_t x, uint8_t y, uint8_t N) {
 }
 
 // 显示BMP位图 (x:0~127, y:0~7)
-void SSD1306_DrawIMG(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const uint8_t img[]) {
+void SSD1306_DrawIMG(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const uint8_t img[])
+{
     uint32_t j = 0;
     uint8_t  x, y;
     y = y1 / 8;
@@ -150,11 +161,13 @@ void SSD1306_DrawIMG(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, const uint8
     }
 }
 
-void SSD1306_ShowIMG(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t img[]) {
+void SSD1306_ShowIMG(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t img[])
+{
     SSD1306_DrawIMG(x, y, x + w, y + h, img);
 }
 
-void SSD1306_DrawIMG_Fast(const uint8_t img[]) {
+void SSD1306_DrawIMG_Fast(const uint8_t img[])
+{
     SSD1306_SetPos(0, 0);
     HAL_I2C_Mem_Write(&SSD1306_I2C, SSD1306_DEV, 0x40, I2C_MEMADD_SIZE_8BIT, img, 1024, 0xFF);
 }

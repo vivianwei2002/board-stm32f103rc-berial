@@ -26,7 +26,7 @@
 
 #include "i2c.h"
 
-#define BH1750_ADDR_LOW 0X23
+#define BH1750_ADDR_LOW  0X23
 #define BH1750_ADDR_HIGH 0X5C
 
 #define BH1750_I2C hi2c2                    // <----
@@ -34,8 +34,8 @@
 
 /*** CMD 指令集 ***/
 
-#define BH1750_POWER_DOWN 0x00    // 掉电，芯片上电后缺省就是 PowerOff 模式
-#define BH1750_POWER_ON 0x01      // 上电，等待测量命令
+#define BH1750_POWER_DOWN   0x00  // 掉电，芯片上电后缺省就是 PowerOff 模式
+#define BH1750_POWER_ON     0x01  // 上电，等待测量命令
 #define BH1750_MODULE_RESET 0x07  // 清零数据寄存器 (在 PowerOff 模式下无效)
 
 /**
@@ -47,13 +47,13 @@
  */
 
 // 连续高分辨率测量模式（测量时间 120ms，最大 180ms）
-#define BH1750_CONTINUE_H_MODE 0x10
+#define BH1750_CONTINUE_H_MODE  0x10
 #define BH1750_CONTINUE_H_MODE2 0x11
 // 连续低分辨率测量模式（测量时间 16ms）
 #define BH1750_CONTINUE_L_MODE 0x13
 
 // 单次高分辨率测量模式（测量完成后自动进入 PowerOff）
-#define BH1750_ONE_TIME_H_MODE 0x20
+#define BH1750_ONE_TIME_H_MODE  0x20
 #define BH1750_ONE_TIME_H_MODE2 0x21
 // 单次低分辨率测量模式（测量完成后进入 PowerOff）
 #define BH1750_ONE_TIME_L_MODE 0x23

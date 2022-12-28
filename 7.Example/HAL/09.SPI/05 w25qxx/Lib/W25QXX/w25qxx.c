@@ -2,10 +2,12 @@
 #include "w25qxx.h"
 
 /**
- * @brief  Initializes the W25QXX interface.
- * @retval None
+ * @brief
+ *
  */
-uint8_t W25QXX_Init(void) {
+*@retval None* /
+    uint8_t W25QXX_Init(void)
+{
     /* Reset W25Qxxx */
     W25QXX_Reset();
 
@@ -16,7 +18,8 @@ uint8_t W25QXX_Init(void) {
  * @brief  This function reset the W25Qx.
  * @retval None
  */
-static void W25QXX_Reset(void) {
+static void W25QXX_Reset(void)
+{
     uint8_t cmd[2] = {RESET_ENABLE_CMD, RESET_MEMORY_CMD};
 
     W25Qx_Enable();
@@ -29,7 +32,8 @@ static void W25QXX_Reset(void) {
  * @brief  Reads current status of the W25QXX.
  * @retval W25QXX memory status
  */
-static uint8_t W25QXX_GetStatus(void) {
+static uint8_t W25QXX_GetStatus(void)
+{
     uint8_t cmd[] = {READ_STATUS_REG1_CMD};
     uint8_t status;
 
@@ -52,7 +56,8 @@ static uint8_t W25QXX_GetStatus(void) {
  * @brief  This function send a Write Enable and wait it is effective.
  * @retval None
  */
-uint8_t W25QXX_WriteEnable(void) {
+uint8_t W25QXX_WriteEnable(void)
+{
     uint8_t  cmd[]     = {WRITE_ENABLE_CMD};
     uint32_t tickstart = HAL_GetTick();
 
@@ -81,7 +86,8 @@ uint8_t W25QXX_WriteEnable(void) {
  * @param  return value address
  * @retval None
  */
-void W25QXX_Read_ID(uint8_t* ID) {
+void W25QXX_Read_ID(uint8_t* ID)
+{
     uint8_t cmd[4] = {READ_ID_CMD, 0x00, 0x00, 0x00};
 
     W25Qx_Enable();
@@ -99,7 +105,8 @@ void W25QXX_Read_ID(uint8_t* ID) {
  * @param  Size: Size of data to read
  * @retval QSPI memory status
  */
-uint8_t W25QXX_Read(uint8_t* pData, uint32_t ReadAddr, uint32_t Size) {
+uint8_t W25QXX_Read(uint8_t* pData, uint32_t ReadAddr, uint32_t Size)
+{
     uint8_t cmd[4];
 
     /* Configure the command */
@@ -126,7 +133,8 @@ uint8_t W25QXX_Read(uint8_t* pData, uint32_t ReadAddr, uint32_t Size) {
  * @param  Size: Size of data to write,No more than 256byte.
  * @retval QSPI memory status
  */
-uint8_t W25QXX_Write(uint8_t* pData, uint32_t WriteAddr, uint32_t Size) {
+uint8_t W25QXX_Write(uint8_t* pData, uint32_t WriteAddr, uint32_t Size)
+{
     uint8_t  cmd[4];
     uint32_t end_addr, current_size, current_addr;
     uint32_t tickstart = HAL_GetTick();
@@ -194,7 +202,8 @@ uint8_t W25QXX_Write(uint8_t* pData, uint32_t WriteAddr, uint32_t Size) {
  * @param  BlockAddress: Block address to erase
  * @retval QSPI memory status
  */
-uint8_t W25QXX_Erase_Block(uint32_t Address) {
+uint8_t W25QXX_Erase_Block(uint32_t Address)
+{
     uint8_t  cmd[4];
     uint32_t tickstart = HAL_GetTick();
     cmd[0]             = SECTOR_ERASE_CMD;
@@ -228,7 +237,8 @@ uint8_t W25QXX_Erase_Block(uint32_t Address) {
  * @brief  Erases the entire QSPI memory.This function will take a very long time.
  * @retval QSPI memory status
  */
-uint8_t W25QXX_Erase_Chip(void) {
+uint8_t W25QXX_Erase_Chip(void)
+{
     uint8_t  cmd[4];
     uint32_t tickstart = HAL_GetTick();
     cmd[0]             = SECTOR_ERASE_CMD;

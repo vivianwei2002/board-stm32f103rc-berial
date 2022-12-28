@@ -8,7 +8,8 @@ float    beatPeriod;
 float    lastMaxValue;
 uint32_t tsLastBeat;
 
-void BeatDetector() {
+void BeatDetector()
+{
     Beatstate    = BEATDETECTOR_STATE_INIT;
     threshold    = BEATDETECTOR_MIN_THRESHOLD;
     beatPeriod   = 0;
@@ -16,11 +17,13 @@ void BeatDetector() {
     tsLastBeat   = 0;
 }
 
-uint8_t addSample(float sample) {
+uint8_t addSample(float sample)
+{
     return checkForBeat(sample);
 }
 
-float getRate() {
+float getRate()
+{
     if (beatPeriod != 0) {
         return 1 / beatPeriod * 1000 * 60;
     } else {
@@ -28,11 +31,13 @@ float getRate() {
     }
 }
 
-float getCurrentThreshold() {
+float getCurrentThreshold()
+{
     return threshold;
 }
 
-uint8_t checkForBeat(float sample) {
+uint8_t checkForBeat(float sample)
+{
     uint8_t beatDetected = 0;
     float   delta;
     switch (Beatstate) {
@@ -94,7 +99,8 @@ uint8_t checkForBeat(float sample) {
     return beatDetected;
 }
 
-void decreaseThreshold() {
+void decreaseThreshold()
+{
     if (lastMaxValue > 0 && beatPeriod > 0) {
         threshold -= lastMaxValue * (1 - BEATDETECTOR_THRESHOLD_FALLOFF_TARGET) /
                      (beatPeriod / BEATDETECTOR_SAMPLES_PERIOD);
@@ -106,6 +112,7 @@ void decreaseThreshold() {
     }
 }
 
-int min(int a, int b) {
+int min(int a, int b)
+{
     return (a > b) ? b : a;
 }

@@ -1,21 +1,25 @@
 #include "MAX30102.h"
 
-uint8_t MAX30102_ReadReg(uint8_t reg) {
+uint8_t MAX30102_ReadReg(uint8_t reg)
+{
     uint8_t buff;
     HAL_I2C_Mem_Read(&MAX30102_I2C, MAX30102_DEV, reg, I2C_MEMADD_SIZE_8BIT, &buff, 1, HAL_MAX_DELAY);
     return buff;
 }
 
-void MAX30102_WriteReg(uint8_t reg, uint8_t data) {
+void MAX30102_WriteReg(uint8_t reg, uint8_t data)
+{
     HAL_I2C_Mem_Write(&MAX30102_I2C, MAX30102_DEV, reg, I2C_MEMADD_SIZE_8BIT, &data, 1, HAL_MAX_DELAY);
 }
 
-void MAX30102_MaskBits(uint8_t reg, uint8_t mask, uint8_t newval) {
+void MAX30102_MaskBits(uint8_t reg, uint8_t mask, uint8_t newval)
+{
     // Zero-out the portions of the register we're interested in, and then set new value
     MAX30102_WriteReg(reg, MAX30102_ReadReg(reg) & ~mask | newval);
 }
 
-uint8_t MAX30102_WaitBits(uint8_t reg, uint8_t mask, uint32_t timeout) {
+uint8_t MAX30102_WaitBits(uint8_t reg, uint8_t mask, uint32_t timeout)
+{
     uint32_t start = HAL_GetTick();
     while (HAL_GetTick() - start < timeout) {
         if ((MAX30102_ReadReg(reg) & mask) == mask)
@@ -29,7 +33,8 @@ uint8_t MAX30102_WaitBits(uint8_t reg, uint8_t mask, uint32_t timeout) {
 
 uint8_t activeLEDs = 0;
 
-uint8_t MAX30102_CheckDevice() {
+uint8_t MAX30102_CheckDevice()
+{
     // if (HAL_I2C_IsDeviceReady(&MAX30102_I2C, MAX30102_DEV, 3, HAL_MAX_DELAY) != HAL_OK) return HAL_ERROR;
     if (MAX30102_ReadPartID() != 0x15) return HAL_ERROR;
     printf("MAX3010x Revision ID: 0x%2x", MAX30102_ReadRevisionID());
@@ -42,7 +47,8 @@ void MAX30102_Init(
     uint8_t ledMode,
     int     sampleRate,
     int     pulseWidth,
-    int     adcRange) {
+    int     adcRange)
+{
     // Reset all configuration, threshold, and data registers to POR values
     MAX30102_Reset();
 
@@ -105,13 +111,15 @@ void MAX30102_Init(
 
 // Resets all points to start in a known state
 // recommends clearing FIFO before beginning a read
-void MAX30102_ClearFIFO(void) {
+void MAX30102_ClearFIFO(void)
+{
     MAX30102_WriteReg(REG_FIFO_WR_PTR, 0);
     MAX30102_WriteReg(REG_OVF_COUNTER, 0);
     MAX30102_WriteReg(REG_FIFO_RD_PTR, 0);
 }
 
-void MAX30102_SetSlot(uint8_t index /*1~4*/, uint8_t device) {
+void MAX30102_SetSlot(uint8_t index /*1~4*/, uint8_t device)
+{
     switch (index) {
         case 1: MAX30102_MaskBits(REG_MULTI_LED_CTRL1, SLOT1_MASK, device); break;
         case 2: MAX30102_MaskBits(REG_MULTI_LED_CTRL1, SLOT2_MASK, device << 4); break;
@@ -122,14 +130,16 @@ void MAX30102_SetSlot(uint8_t index /*1~4*/, uint8_t device) {
 }
 
 // Clears all slot assignments
-void MAX30102_ClearSlot(void) {
+void MAX30102_ClearSlot(void)
+{
     MAX30102_WriteReg(REG_MULTI_LED_CTRL1, 0);
     MAX30102_WriteReg(REG_MULTI_LED_CTRL2, 0);
 }
 
 // Die Temperature
 // Returns temp in C 返回摄氏度
-float MAX30102_ReadTemperature() {
+float MAX30102_ReadTemperature()
+{
     // 使用前需调用函数 MAX30102_SetIntEnable2(INT_DIE_TEMP_RDY, 1) 使能中断
     // Config die temperature register to take 1 temperature sample
     MAX30102_WriteReg(REG_TEMP_CONFIG, 0x01);
@@ -147,7 +157,8 @@ float MAX30102_ReadTemperature() {
     // return temp;
 }
 
-uint8_t MAX30102_CheckFIFO() {
+uint8_t MAX30102_CheckFIFO()
+{
     // 等待采样结束
 #if HowToCheckFIFO == 1
     // 读取已采样的数据数
@@ -169,7 +180,8 @@ uint8_t MAX30102_CheckFIFO() {
     return HAL_OK;
 }
 
-uint8_t MAX30102_ReadFIFO(uint32_t* red /*out*/, uint32_t* ir /*out*/, uint32_t* green) {
+uint8_t MAX30102_ReadFIFO(uint32_t* red /*out*/, uint32_t* ir /*out*/, uint32_t* green)
+{
     uint8_t data[9];
 
     // 读出的顺序与 REG_MULTI_LED_CTRL1, REG_MULTI_LED_CTRL2 有关
@@ -190,13 +202,15 @@ uint8_t MAX30102_ReadFIFO(uint32_t* red /*out*/, uint32_t* ir /*out*/, uint32_t*
     return HAL_OK;
 }
 
-uint8_t MAX30102_ReadFIFO2(max30102_fifo_t* fifo) {
+uint8_t MAX30102_ReadFIFO2(max30102_fifo_t* fifo)
+{
     return MAX30102_ReadFIFO(&(fifo->Red), &(fifo->IR), &(fifo->Green));
 }
 
 //////////////////////////////////////////////////////////////////
 
-void MAX30102Test_PPG() {  // mini test
+void MAX30102Test_PPG()
+{  // mini test
     // check device
     if (MAX30102_CheckDevice() != HAL_OK) return;
     // init device
@@ -230,7 +244,8 @@ void MAX30102Test_PPG() {  // mini test
     }
 }
 
-void MAX30102Test_PPG2() {
+void MAX30102Test_PPG2()
+{
     // check device
     if (MAX30102_CheckDevice() != HAL_OK) return;
     // init device
@@ -244,7 +259,8 @@ void MAX30102Test_PPG2() {
     }
 }
 
-void MAX30102Test_TEMP() {
+void MAX30102Test_TEMP()
+{
     // check device
     if (MAX30102_CheckDevice() != HAL_OK) return;
     MAX30102_Reset();
@@ -256,7 +272,8 @@ void MAX30102Test_TEMP() {
     }
 }
 
-void MAX30102Test_CalcSampleFreq(void) {  // 实际采样频率 ( freq = SAMPLE_RATE / SAMPLE_AVG )
+void MAX30102Test_CalcSampleFreq(void)
+{  // 实际采样频率 ( freq = SAMPLE_RATE / SAMPLE_AVG )
 
     // Setup to sense up to 18 inches, max LED brightness
 

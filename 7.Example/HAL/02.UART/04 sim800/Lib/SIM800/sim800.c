@@ -9,7 +9,7 @@
 *	修改记录 :
 *		版本号  日期        作者     说明
 *		V1.0    2015-02-01  armfly  正式发布
-*		V1.1    2015-06-21  armfly  
+*		V1.1    2015-06-21  armfly
 *							1.完善代码，修改PowerOn()函数返回值.
 *							2.不用软件定时器判断超时。使用 bsp_GetRunTimer()函数实现
 *
@@ -21,58 +21,58 @@
 #include "bsp.h"
 
 /*
-	安富莱STM32-V6 开发板口线分配：
-	SIM800_TERM_ON   ： PI0/GPRS_TERM_ON
-	SIM800_RESET   	 ： PB7/GPRS_RESET
-	SIM800_RX   	 ： PA2/USART2_TX
-	SIM800_TX   	 ： PA3/USART2_RX
+    安富莱STM32-V6 开发板口线分配：
+    SIM800_TERM_ON   ： PI0/GPRS_TERM_ON
+    SIM800_RESET   	 ： PB7/GPRS_RESET
+    SIM800_RX   	 ： PA2/USART2_TX
+    SIM800_TX   	 ： PA3/USART2_RX
 */
 
 /*
-	AT+CREG?  查询当前网络状态
+    AT+CREG?  查询当前网络状态
 
-	AT+CSQ 查询信号质量命令
+    AT+CSQ 查询信号质量命令
 
-	AT+CIMI 查询SIM 卡的IMSI 号。
+    AT+CIMI 查询SIM 卡的IMSI 号。
 
-	AT+CIND? 读取当前的指示状态
+    AT+CIND? 读取当前的指示状态
 
-	ATA 接听命令
-	ATH 挂断连接命令
-	
-	ATI 显示SIM800模块的硬件信息
-	
-	ATD10086; 拨打10086
+    ATA 接听命令
+    ATH 挂断连接命令
+
+    ATI 显示SIM800模块的硬件信息
+
+    ATD10086; 拨打10086
 */
 
 /* 定义此行，表示使用扩展的IO */
 #define USE_HC574
 
-#ifdef USE_HC574	/* 使用扩展IO */
-	/* STM32和SIM800的PWRKEY引脚间有1个NPN三极管，因此需要反相 */
-	#define PWRKEY_1()		HC574_SetPin(GPRS_TERM_ON, 0)
-	#define PWRKEY_0()		HC574_SetPin(GPRS_TERM_ON, 1)
+#ifdef USE_HC574 /* 使用扩展IO */
+/* STM32和SIM800的PWRKEY引脚间有1个NPN三极管，因此需要反相 */
+#define PWRKEY_1() HC574_SetPin(GPRS_TERM_ON, 0)
+#define PWRKEY_0() HC574_SetPin(GPRS_TERM_ON, 1)
 
-	/* STM32和MG323的RESET引脚间有1个NPN三极管，因此需要反相. MG323的RESET脚是低脉冲复位 */
-	#define MG_RESET_1()	HC574_SetPin(GPRS_RESET, 0)
-	#define MG_RESET_0()	HC574_SetPin(PORT_RESET, 1);
-#else	/* 使用CPU的IO */
-	/* 按键口对应的RCC时钟 */
-	#define RCC_TERM_ON 	RCC_AHB1Periph_GPIOI
-	#define PORT_TERM_ON	GPIOI
-	#define PIN_TERM_ON		GPIO_PIN_0
+/* STM32和MG323的RESET引脚间有1个NPN三极管，因此需要反相. MG323的RESET脚是低脉冲复位 */
+#define MG_RESET_1() HC574_SetPin(GPRS_RESET, 0)
+#define MG_RESET_0() HC574_SetPin(PORT_RESET, 1);
+#else /* 使用CPU的IO */
+/* 按键口对应的RCC时钟 */
+#define RCC_TERM_ON  RCC_AHB1Periph_GPIOI
+#define PORT_TERM_ON GPIOI
+#define PIN_TERM_ON  GPIO_PIN_0
 
-	#define RCC_RESET 		RCC_AHB1Periph_GPIOB
-	#define PORT_RESET		GPIOB
-	#define PIN_RESET		GPIO_PIN_7
+#define RCC_RESET    RCC_AHB1Periph_GPIOB
+#define PORT_RESET   GPIOB
+#define PIN_RESET    GPIO_PIN_7
 
-	/* STM32和SIM800的PWRKEY引脚间有1个NPN三极管，因此需要反相 */
-	#define PWRKEY_1()		GPIO_ResetBits(PORT_TERM_ON, PIN_TERM_ON);
-	#define PWRKEY_0()		GPIO_SetBits(PORT_TERM_ON, PIN_TERM_ON);
+/* STM32和SIM800的PWRKEY引脚间有1个NPN三极管，因此需要反相 */
+#define PWRKEY_1()   GPIO_ResetBits(PORT_TERM_ON, PIN_TERM_ON);
+#define PWRKEY_0()   GPIO_SetBits(PORT_TERM_ON, PIN_TERM_ON);
 
-	/* STM32和MG323的RESET引脚间有1个NPN三极管，因此需要反相. MG323的RESET脚是低脉冲复位 */
-	#define MG_RESET_1()	GPIO_ResetBits(PORT_RESET, PIN_RESET);
-	#define MG_RESET_0()	GPIO_SetBits(PORT_RESET, PIN_RESET);
+/* STM32和MG323的RESET引脚间有1个NPN三极管，因此需要反相. MG323的RESET脚是低脉冲复位 */
+#define MG_RESET_1() GPIO_ResetBits(PORT_RESET, PIN_RESET);
+#define MG_RESET_0() GPIO_SetBits(PORT_RESET, PIN_RESET);
 #endif
 
 /*
@@ -85,29 +85,29 @@
 */
 void bsp_InitSIM800(void)
 {
-#ifdef USE_HC574	/* 使用扩展IO */		
-	PWRKEY_1();
+#ifdef USE_HC574 /* 使用扩展IO */
+    PWRKEY_1();
 #else
-	GPIO_InitTypeDef GPIO_InitStructure;
+    GPIO_InitTypeDef GPIO_InitStructure;
 
-	/* 打开GPIO时钟 */
-	RCC_AHB1PeriphClockCmd(RCC_TERM_ON | RCC_RESET, ENABLE);
+    /* 打开GPIO时钟 */
+    RCC_AHB1PeriphClockCmd(RCC_TERM_ON | RCC_RESET, ENABLE);
 
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;		/* 设为输出口 */
-	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;		/* 设为推挽模式 */
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;	/* 上下拉电阻不使能 */
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;	/* IO口最大速度 */
+    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;     /* 设为输出口 */
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;     /* 设为推挽模式 */
+    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;  /* 上下拉电阻不使能 */
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz; /* IO口最大速度 */
 
-	PWRKEY_1();
-	
-	GPIO_InitStructure.GPIO_Pin = PIN_TERM_ON;
-	GPIO_Init(PORT_TERM_ON, &GPIO_InitStructure);
+    PWRKEY_1();
 
-	GPIO_InitStructure.GPIO_Pin = PIN_RESET;
-	GPIO_Init(PORT_RESET, &GPIO_InitStructure);
-#endif	
+    GPIO_InitStructure.GPIO_Pin = PIN_TERM_ON;
+    GPIO_Init(PORT_TERM_ON, &GPIO_InitStructure);
 
-	/* CPU的串口配置已经由 bsp_uart_fifo.c 中的 bsp_InitUart() 做了 */
+    GPIO_InitStructure.GPIO_Pin = PIN_RESET;
+    GPIO_Init(PORT_RESET, &GPIO_InitStructure);
+#endif
+
+    /* CPU的串口配置已经由 bsp_uart_fifo.c 中的 bsp_InitUart() 做了 */
 }
 
 /*
@@ -120,9 +120,9 @@ void bsp_InitSIM800(void)
 */
 void SIM800_PrintRxData(uint8_t _ch)
 {
-	#ifdef SIM800_TO_COM1_EN
-		comSendChar(COM1, _ch);		/* 将接收到数据打印到调试串口1 */
-	#endif
+#ifdef SIM800_TO_COM1_EN
+    comSendChar(COM1, _ch); /* 将接收到数据打印到调试串口1 */
+#endif
 }
 
 /*
@@ -135,47 +135,42 @@ void SIM800_PrintRxData(uint8_t _ch)
 */
 uint8_t SIM800_PowerOn(void)
 {
-	uint8_t ret_value = 0;
-	uint8_t i;
-	
-	/* 判断是否开机 */
-	for (i = 0; i < 5; i++)
-	{
-		SIM800_SendAT("AT");
-		if (SIM800_WaitResponse("OK", 100))
-		{
-			return 1;
-		}
-	}
-	
-	comClearRxFifo(COM_SIM800);	/* 清零串口接收缓冲区 */
+    uint8_t ret_value = 0;
+    uint8_t i;
 
-	/*  通过拉低 PWRKEY 引脚至少 1.2 秒然后释放，使模块开机。*/
-	PWRKEY_0();
-	bsp_DelayMS(2000);
-	PWRKEY_1();
+    /* 判断是否开机 */
+    for (i = 0; i < 5; i++) {
+        SIM800_SendAT("AT");
+        if (SIM800_WaitResponse("OK", 100)) {
+            return 1;
+        }
+    }
 
-	/* 等待模块完成上电，如果是自动波特率则收不到RDT */
-	//if (SIM800_WaitResponse("RDY", 5000) == 0)
-	{	
-		/* 开始同步波特率: 主机发送AT，只到接收到正确的OK 
-		  当模块开机后建议延迟 2 至 3 秒后再发送同步字符，用户可发送“ AT” (大写、小写均可)来和模块
-		  同步波特率，当主机收到模块返回“ OK”，			
-		*/
-		for (i = 0; i < 50; i++)
-		{
-			SIM800_SendAT("OK");
-			if (SIM800_WaitResponse("OK", 100))
-			{
-				ret_value = 1;
-				break;			/* 模块上电成功 */
-			}
-		}		
-	}
-	
-	return ret_value;
+    comClearRxFifo(COM_SIM800); /* 清零串口接收缓冲区 */
+
+    /*  通过拉低 PWRKEY 引脚至少 1.2 秒然后释放，使模块开机。*/
+    PWRKEY_0();
+    bsp_DelayMS(2000);
+    PWRKEY_1();
+
+    /* 等待模块完成上电，如果是自动波特率则收不到RDT */
+    // if (SIM800_WaitResponse("RDY", 5000) == 0)
+    {
+        /* 开始同步波特率: 主机发送AT，只到接收到正确的OK
+          当模块开机后建议延迟 2 至 3 秒后再发送同步字符，用户可发送“ AT” (大写、小写均可)来和模块
+          同步波特率，当主机收到模块返回“ OK”，
+        */
+        for (i = 0; i < 50; i++) {
+            SIM800_SendAT("OK");
+            if (SIM800_WaitResponse("OK", 100)) {
+                ret_value = 1;
+                break; /* 模块上电成功 */
+            }
+        }
+    }
+
+    return ret_value;
 }
-
 
 /*
 *********************************************************************************************************
@@ -187,21 +182,20 @@ uint8_t SIM800_PowerOn(void)
 */
 void SIM800_PowerOff(void)
 {
-	/*
-	用户可以通过把PWRKEY 信号拉低1.5秒用来关机,拉低时间超过33秒模块会重新开机。
-	
-	关机过程中，模块首先从网络上注销，让内部软件进入安全状态并且保存相关数据，最后关闭内部电
-	源。在最后断电前模块的串口将发送以下字符：
-	NORMAL POWER DOWN
-	这之后模块将不会执行AT命令。模块进入关机模式，仅RTC处于激活状态。关机模式可以通过
-	VDD_EXT引脚来检测，在关机模式下此引脚输出为低电平。
-	*/
-	
-	/* 硬件关机 */
-	PWRKEY_0();
-	bsp_DelayMS(1500);
-	PWRKEY_1();	
-		
+    /*
+    用户可以通过把PWRKEY 信号拉低1.5秒用来关机,拉低时间超过33秒模块会重新开机。
+
+    关机过程中，模块首先从网络上注销，让内部软件进入安全状态并且保存相关数据，最后关闭内部电
+    源。在最后断电前模块的串口将发送以下字符：
+    NORMAL POWER DOWN
+    这之后模块将不会执行AT命令。模块进入关机模式，仅RTC处于激活状态。关机模式可以通过
+    VDD_EXT引脚来检测，在关机模式下此引脚输出为低电平。
+    */
+
+    /* 硬件关机 */
+    PWRKEY_0();
+    bsp_DelayMS(1500);
+    PWRKEY_1();
 }
 
 /*
@@ -213,75 +207,59 @@ void SIM800_PowerOff(void)
 *	返 回 值: 1 表示成功  0 表示失败
 *********************************************************************************************************
 */
-uint8_t SIM800_WaitResponse(char *_pAckStr, uint16_t _usTimeOut)
+uint8_t SIM800_WaitResponse(char* _pAckStr, uint16_t _usTimeOut)
 {
-	uint8_t ucData;
-	uint8_t ucRxBuf[256];
-	uint16_t pos = 0;
-	uint32_t len;
-	uint8_t ret;
+    uint8_t  ucData;
+    uint8_t  ucRxBuf[256];
+    uint16_t pos = 0;
+    uint32_t len;
+    uint8_t  ret;
 
-	len = strlen(_pAckStr);
-	if (len > 255)
-	{
-		return 0;
-	}
+    len = strlen(_pAckStr);
+    if (len > 255) {
+        return 0;
+    }
 
-	/* _usTimeOut == 0 表示无限等待 */
-	if (_usTimeOut > 0)
-	{
-		bsp_StartTimer(SIM800_TMR_ID, _usTimeOut);		/* 使用软件定时器3，作为超时控制 */
-	}
-	while (1)
-	{
-		bsp_Idle();				/* CPU空闲执行的操作， 见 bsp.c 和 bsp.h 文件 */
+    /* _usTimeOut == 0 表示无限等待 */
+    if (_usTimeOut > 0) {
+        bsp_StartTimer(SIM800_TMR_ID, _usTimeOut); /* 使用软件定时器3，作为超时控制 */
+    }
+    while (1) {
+        bsp_Idle(); /* CPU空闲执行的操作， 见 bsp.c 和 bsp.h 文件 */
 
-		if (_usTimeOut > 0)
-		{
-			if (bsp_CheckTimer(SIM800_TMR_ID))
-			{
-				ret = 0;	/* 超时 */
-				break;
-			}
-		}
+        if (_usTimeOut > 0) {
+            if (bsp_CheckTimer(SIM800_TMR_ID)) {
+                ret = 0; /* 超时 */
+                break;
+            }
+        }
 
-		if (comGetChar(COM_SIM800, &ucData))
-		{
-			SIM800_PrintRxData(ucData);		/* 将接收到数据打印到调试串口1 */
+        if (comGetChar(COM_SIM800, &ucData)) {
+            SIM800_PrintRxData(ucData); /* 将接收到数据打印到调试串口1 */
 
-			if (ucData == '\n')
-			{
-				if (pos > 0)	/* 第2次收到回车换行 */
-				{
-					if (memcmp(ucRxBuf, _pAckStr,  len) == 0)
-					{
-						ret = 1;	/* 收到指定的应答数据，返回成功 */
-						break;
-					}
-					else
-					{
-						pos = 0;
-					}
-				}
-				else
-				{
-					pos = 0;
-				}
-			}
-			else
-			{
-				if (pos < sizeof(ucRxBuf))
-				{
-					/* 只保存可见字符 */
-					if (ucData >= ' ')
-					{
-						ucRxBuf[pos++] = ucData;
-					}
-				}
-			}
-		}
-	}
-	return ret;
+            if (ucData == '\n') {
+                if (pos > 0) /* 第2次收到回车换行 */
+                {
+                    if (memcmp(ucRxBuf, _pAckStr, len) == 0) {
+                        ret = 1; /* 收到指定的应答数据，返回成功 */
+                        break;
+                    } else {
+                        pos = 0;
+                    }
+                } else {
+                    pos = 0;
+                }
+            } else {
+                if (pos < sizeof(ucRxBuf)) {
+                    /* 只保存可见字符 */
+                    if (ucData >= ' ') {
+                        ucRxBuf[pos++] = ucData;
+                    }
+                }
+            }
+        }
+    }
+    return ret;
 }
 
 /*
@@ -294,80 +272,68 @@ uint8_t SIM800_WaitResponse(char *_pAckStr, uint16_t _usTimeOut)
 *	返 回 值: 0 表示错误（超时）  > 0 表示应答的数据长度
 *********************************************************************************************************
 */
-uint16_t SIM800_ReadResponse(char *_pBuf, uint16_t _usBufSize, uint16_t _usTimeOut)
+uint16_t SIM800_ReadResponse(char* _pBuf, uint16_t _usBufSize, uint16_t _usTimeOut)
 {
-	uint8_t ucData;
-	uint16_t pos = 0;
-	uint8_t ret;
-	uint8_t status = 0;		/* 接收状态 */
+    uint8_t  ucData;
+    uint16_t pos = 0;
+    uint8_t  ret;
+    uint8_t  status = 0; /* 接收状态 */
 
-	/* _usTimeOut == 0 表示无限等待 */
-	if (_usTimeOut > 0)
-	{
-		bsp_StartTimer(SIM800_TMR_ID, _usTimeOut);		/* 使用软件定时器作为超时控制 */
-	}
-	while (1)
-	{
-		bsp_Idle();				/* CPU空闲执行的操作， 见 bsp.c 和 bsp.h 文件 */
+    /* _usTimeOut == 0 表示无限等待 */
+    if (_usTimeOut > 0) {
+        bsp_StartTimer(SIM800_TMR_ID, _usTimeOut); /* 使用软件定时器作为超时控制 */
+    }
+    while (1) {
+        bsp_Idle(); /* CPU空闲执行的操作， 见 bsp.c 和 bsp.h 文件 */
 
-		if (status == 2)		/* 正在接收有效应答阶段，通过字符间超时判断数据接收完毕 */
-		{
-			if (bsp_CheckTimer(SIM800_TMR_ID))
-			{
-				_pBuf[pos]	 = 0;	/* 结尾加0， 便于函数调用者识别字符串结束 */
-				ret = pos;		/* 成功。 返回数据长度 */
-				break;
-			}
-		}
-		else
-		{
-			if (_usTimeOut > 0)
-			{
-				if (bsp_CheckTimer(SIM800_TMR_ID))
-				{
-					ret = 0;	/* 超时 */
-					break;
-				}
-			}
-		}
-		
-		if (comGetChar(COM_SIM800, &ucData))
-		{			
-			SIM800_PrintRxData(ucData);		/* 将接收到数据打印到调试串口1 */
+        if (status == 2) /* 正在接收有效应答阶段，通过字符间超时判断数据接收完毕 */
+        {
+            if (bsp_CheckTimer(SIM800_TMR_ID)) {
+                _pBuf[pos] = 0;   /* 结尾加0， 便于函数调用者识别字符串结束 */
+                ret        = pos; /* 成功。 返回数据长度 */
+                break;
+            }
+        } else {
+            if (_usTimeOut > 0) {
+                if (bsp_CheckTimer(SIM800_TMR_ID)) {
+                    ret = 0; /* 超时 */
+                    break;
+                }
+            }
+        }
 
-			switch (status)
-			{
-				case 0:			/* 首字符 */
-					if (ucData == AT_CR)		/* 如果首字符是回车，表示 AT命令不会显 */
-					{
-						_pBuf[pos++] = ucData;		/* 保存接收到的数据 */
-						status = 2;	 /* 认为收到模块应答结果 */
-					}
-					else	/* 首字符是 A 表示 AT命令回显 */
-					{
-						status = 1;	 /* 这是主机发送的AT命令字符串，不保存应答数据，直到遇到 CR字符 */
-					}
-					break;
-					
-				case 1:			/* AT命令回显阶段, 不保存数据. 继续等待 */
-					if (ucData == AT_CR)
-					{
-						status = 2;
-					}
-					break;
-					
-				case 2:			/* 开始接收模块应答结果 */
-					/* 只要收到模块的应答字符，则采用字符间超时判断结束，此时命令总超时不起作用 */
-					bsp_StartTimer(SIM800_TMR_ID, 5);
-					if (pos < _usBufSize - 1)
-					{
-						_pBuf[pos++] = ucData;		/* 保存接收到的数据 */
-					}
-					break;
-			}
-		}
-	}
-	return ret;
+        if (comGetChar(COM_SIM800, &ucData)) {
+            SIM800_PrintRxData(ucData); /* 将接收到数据打印到调试串口1 */
+
+            switch (status) {
+                case 0:                  /* 首字符 */
+                    if (ucData == AT_CR) /* 如果首字符是回车，表示 AT命令不会显 */
+                    {
+                        _pBuf[pos++] = ucData; /* 保存接收到的数据 */
+                        status       = 2;      /* 认为收到模块应答结果 */
+                    } else                     /* 首字符是 A 表示 AT命令回显 */
+                    {
+                        status = 1; /* 这是主机发送的AT命令字符串，不保存应答数据，直到遇到 CR字符 */
+                    }
+                    break;
+
+                case 1: /* AT命令回显阶段, 不保存数据. 继续等待 */
+                    if (ucData == AT_CR) {
+                        status = 2;
+                    }
+                    break;
+
+                case 2: /* 开始接收模块应答结果 */
+                    /* 只要收到模块的应答字符，则采用字符间超时判断结束，此时命令总超时不起作用 */
+                    bsp_StartTimer(SIM800_TMR_ID, 5);
+                    if (pos < _usBufSize - 1) {
+                        _pBuf[pos++] = ucData; /* 保存接收到的数据 */
+                    }
+                    break;
+            }
+        }
+    }
+    return ret;
 }
 
 /*
@@ -378,12 +344,12 @@ uint16_t SIM800_ReadResponse(char *_pBuf, uint16_t _usBufSize, uint16_t _usTimeO
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void SIM800_SendAT(char *_Cmd)
+void SIM800_SendAT(char* _Cmd)
 {
-	comClearRxFifo(COM_SIM800);	/* 清零串口接收缓冲区 */	
-	
-	comSendBuf(COM_SIM800, (uint8_t *)_Cmd, strlen(_Cmd));
-	comSendBuf(COM_SIM800, "\r", 1);
+    comClearRxFifo(COM_SIM800); /* 清零串口接收缓冲区 */
+
+    comSendBuf(COM_SIM800, (uint8_t*)_Cmd, strlen(_Cmd));
+    comSendBuf(COM_SIM800, "\r", 1);
 }
 
 /*
@@ -396,10 +362,10 @@ void SIM800_SendAT(char *_Cmd)
 */
 void SIM800_SetEarVolume(uint8_t _ucVolume)
 {
-	char CmdBuf[32];
+    char CmdBuf[32];
 
-	sprintf(CmdBuf, "AT+CLVL=%d", _ucVolume);
-	SIM800_SendAT(CmdBuf);
+    sprintf(CmdBuf, "AT+CLVL=%d", _ucVolume);
+    SIM800_SendAT(CmdBuf);
 }
 
 /*
@@ -413,14 +379,11 @@ void SIM800_SetEarVolume(uint8_t _ucVolume)
 */
 void SIM800_SetMicGain(uint16_t _Channel, uint16_t _iGain)
 {
-	char CmdBuf[32];
-		
-	sprintf(CmdBuf, "AT+CMIC=%d,%d", _Channel, _iGain);
-	SIM800_SendAT(CmdBuf);
-	
-	
-}
+    char CmdBuf[32];
 
+    sprintf(CmdBuf, "AT+CMIC=%d,%d", _Channel, _iGain);
+    SIM800_SendAT(CmdBuf);
+}
 
 /*
 *********************************************************************************************************
@@ -430,12 +393,12 @@ void SIM800_SetMicGain(uint16_t _Channel, uint16_t _iGain)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void SIM800_DialTel(char *_pTel)
+void SIM800_DialTel(char* _pTel)
 {
-	char CmdBuf[32];
+    char CmdBuf[32];
 
-	sprintf(CmdBuf, "ATD%s;", _pTel);
-	SIM800_SendAT(CmdBuf);
+    sprintf(CmdBuf, "ATD%s;", _pTel);
+    SIM800_SendAT(CmdBuf);
 }
 
 /*
@@ -448,7 +411,7 @@ void SIM800_DialTel(char *_pTel)
 */
 void SIM800_Hangup(void)
 {
-	SIM800_SendAT("ATH");
+    SIM800_SendAT("ATH");
 }
 
 /*
@@ -461,7 +424,7 @@ void SIM800_Hangup(void)
 */
 void SIM800_AnswerIncall(void)
 {
-	SIM800_SendAT("ATA");
+    SIM800_SendAT("ATA");
 }
 
 /*
@@ -472,62 +435,59 @@ void SIM800_AnswerIncall(void)
 *	返 回 值: 1 表示成功， 0 表示失败
 *********************************************************************************************************
 */
-uint8_t SIM800_GetHardInfo(SIM800_INFO_T *_pInfo)
+uint8_t SIM800_GetHardInfo(SIM800_INFO_T* _pInfo)
 {
-	/*
-	ATI
-	SIM800 R13.08
+    /*
+    ATI
+    SIM800 R13.08
 
-	OK
-	
-	AT+GSV
-	SIMCOM_Ltd
-	SIMCOM_SIM800
-	Revision:1308B05SIM800M32
-	*/	
-	char buf[64];
-	uint16_t len;
-	char *p1, *p2;
-	
-	SIM800_SendAT("ATI");		/* 发送 ATI 命令 */	
-	len = SIM800_ReadResponse(buf, sizeof(buf), 300);	/* 超时 300ms */
-	if (len == 0)
-	{
-		return 0;		
-	}
-	
-	/* 制造商信息规定填写 SIMCOM_Ltd */
-	sprintf(_pInfo->Manfacture, "SIMCOM_Ltd");	
-	_pInfo->Model[0] = 0;
-	_pInfo->Revision[0] = 0;
+    OK
 
-	/* 应答数据前2个字符是 \r\n */
-	p1 = buf;
-	p2 = strchr(p1, '\n');
-	
-	/* 解析型号 */
-	p1 = p2 + 1;
-	p2 = strchr(p1, ' ');
-	len = p2 - p1;
-	if (len >= sizeof(_pInfo->Model))
-	{
-		len = sizeof(_pInfo->Model) - 1;
-	}		
-	memcpy(_pInfo->Model, p1, len);
-	_pInfo->Model[len] = 0;
+    AT+GSV
+    SIMCOM_Ltd
+    SIMCOM_SIM800
+    Revision:1308B05SIM800M32
+    */
+    char     buf[64];
+    uint16_t len;
+    char *   p1, *p2;
 
-	/* 解析型号 */
-	p1 = p2 + 1;
-	p2 = strchr(p1, '\r');
-	len = p2 - p1;
-	if (len >= sizeof(_pInfo->Revision))
-	{
-		len = sizeof(_pInfo->Revision) - 1;
-	}				
-	memcpy(_pInfo->Revision, p1, len);
-	_pInfo->Revision[len] = 0;	
-	
-	return 1;
+    SIM800_SendAT("ATI");                             /* 发送 ATI 命令 */
+    len = SIM800_ReadResponse(buf, sizeof(buf), 300); /* 超时 300ms */
+    if (len == 0) {
+        return 0;
+    }
+
+    /* 制造商信息规定填写 SIMCOM_Ltd */
+    sprintf(_pInfo->Manfacture, "SIMCOM_Ltd");
+    _pInfo->Model[0]    = 0;
+    _pInfo->Revision[0] = 0;
+
+    /* 应答数据前2个字符是 \r\n */
+    p1 = buf;
+    p2 = strchr(p1, '\n');
+
+    /* 解析型号 */
+    p1  = p2 + 1;
+    p2  = strchr(p1, ' ');
+    len = p2 - p1;
+    if (len >= sizeof(_pInfo->Model)) {
+        len = sizeof(_pInfo->Model) - 1;
+    }
+    memcpy(_pInfo->Model, p1, len);
+    _pInfo->Model[len] = 0;
+
+    /* 解析型号 */
+    p1  = p2 + 1;
+    p2  = strchr(p1, '\r');
+    len = p2 - p1;
+    if (len >= sizeof(_pInfo->Revision)) {
+        len = sizeof(_pInfo->Revision) - 1;
+    }
+    memcpy(_pInfo->Revision, p1, len);
+    _pInfo->Revision[len] = 0;
+
+    return 1;
 }
 
 /*
@@ -540,36 +500,32 @@ uint8_t SIM800_GetHardInfo(SIM800_INFO_T *_pInfo)
 */
 uint8_t SIM800_GetNetStatus(void)
 {
-	/*
-		AT+CREG?
-		+CREG: 0,1
-		
-		OK				
-	*/	
-	char buf[128];
-	uint16_t len, i;
-	uint8_t status = 0;
-	
-	SIM800_SendAT("AT+CREG?");	/* 发送 AT 命令 */
-	
-	len = SIM800_ReadResponse(buf, sizeof(buf), 200);	/* 超时 200ms */
-	if (len == 0)
-	{
-		return 0;		
-	}
-	
-	for (i = 2; i < len; i++)
-	{
-		if (buf[i] == ',')
-		{
-			i++;
-			
-			status = buf[i] - '0';
-			break;
-		}
-	}
-	return status;
-}
+    /*
+        AT+CREG?
+        +CREG: 0,1
 
+        OK
+    */
+    char     buf[128];
+    uint16_t len, i;
+    uint8_t  status = 0;
+
+    SIM800_SendAT("AT+CREG?"); /* 发送 AT 命令 */
+
+    len = SIM800_ReadResponse(buf, sizeof(buf), 200); /* 超时 200ms */
+    if (len == 0) {
+        return 0;
+    }
+
+    for (i = 2; i < len; i++) {
+        if (buf[i] == ',') {
+            i++;
+
+            status = buf[i] - '0';
+            break;
+        }
+    }
+    return status;
+}
 
 /***************************** 安富莱电子 www.armfly.com (END OF FILE) *********************************/

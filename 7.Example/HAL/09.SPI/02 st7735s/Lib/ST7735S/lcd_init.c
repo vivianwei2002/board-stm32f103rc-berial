@@ -1,17 +1,18 @@
 #include "lcd_init.h"
 #include "delay.h"
 
-void LCD_GPIO_Init(void) {
+void LCD_GPIO_Init(void)
+{
     GPIO_InitTypeDef GPIO_InitStructure;
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);  //使能A端口时钟
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);  // 使能A端口时钟
     GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_7;
-    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;  //推挽输出
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;  //速度50MHz
-    GPIO_Init(GPIOA, &GPIO_InitStructure);             //初始化GPIOA
+    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;  // 推挽输出
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;  // 速度50MHz
+    GPIO_Init(GPIOA, &GPIO_InitStructure);             // 初始化GPIOA
     GPIO_SetBits(GPIOA, GPIO_InitStructure.GPIO_Pin);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);  //使能A端口时钟
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);  // 使能A端口时钟
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_10;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);  //初始化GPIOA
+    GPIO_Init(GPIOB, &GPIO_InitStructure);  // 初始化GPIOA
     GPIO_SetBits(GPIOB, GPIO_InitStructure.GPIO_Pin);
 }
 
@@ -20,7 +21,8 @@ void LCD_GPIO_Init(void) {
       入口数据:dat  要写入的串行数据
       返回值:  无
 ******************************************************************************/
-void LCD_Writ_Bus(uint8_t dat) {
+void LCD_Writ_Bus(uint8_t dat)
+{
     uint8_t i;
     LCD_CS_Clr();
     for (i = 0; i < 8; i++) {
@@ -41,7 +43,8 @@ void LCD_Writ_Bus(uint8_t dat) {
       入口数据:dat 写入的数据
       返回值:  无
 ******************************************************************************/
-void LCD_WR_DATA8(uint8_t dat) {
+void LCD_WR_DATA8(uint8_t dat)
+{
     LCD_Writ_Bus(dat);
 }
 
@@ -50,7 +53,8 @@ void LCD_WR_DATA8(uint8_t dat) {
       入口数据:dat 写入的数据
       返回值:  无
 ******************************************************************************/
-void LCD_WR_DATA(uint16_t dat) {
+void LCD_WR_DATA(uint16_t dat)
+{
     LCD_Writ_Bus(dat >> 8);
     LCD_Writ_Bus(dat);
 }
@@ -60,10 +64,11 @@ void LCD_WR_DATA(uint16_t dat) {
       入口数据:dat 写入的命令
       返回值:  无
 ******************************************************************************/
-void LCD_WR_REG(uint8_t dat) {
-    LCD_DC_Clr();  //写命令
+void LCD_WR_REG(uint8_t dat)
+{
+    LCD_DC_Clr();  // 写命令
     LCD_Writ_Bus(dat);
-    LCD_DC_Set();  //写数据
+    LCD_DC_Set();  // 写数据
 }
 
 /******************************************************************************
@@ -72,51 +77,53 @@ void LCD_WR_REG(uint8_t dat) {
                 y1,y2 设置行的起始和结束地址
       返回值:  无
 ******************************************************************************/
-void LCD_Address_Set(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+void LCD_Address_Set(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+{
     if (USE_HORIZONTAL == 0) {
-        LCD_WR_REG(0x2a);  //列地址设置
+        LCD_WR_REG(0x2a);  // 列地址设置
         LCD_WR_DATA(x1 + 24);
         LCD_WR_DATA(x2 + 24);
-        LCD_WR_REG(0x2b);  //行地址设置
+        LCD_WR_REG(0x2b);  // 行地址设置
         LCD_WR_DATA(y1);
         LCD_WR_DATA(y2);
-        LCD_WR_REG(0x2c);  //储存器写
+        LCD_WR_REG(0x2c);  // 储存器写
     } else if (USE_HORIZONTAL == 1) {
-        LCD_WR_REG(0x2a);  //列地址设置
+        LCD_WR_REG(0x2a);  // 列地址设置
         LCD_WR_DATA(x1 + 24);
         LCD_WR_DATA(x2 + 24);
-        LCD_WR_REG(0x2b);  //行地址设置
+        LCD_WR_REG(0x2b);  // 行地址设置
         LCD_WR_DATA(y1);
         LCD_WR_DATA(y2);
-        LCD_WR_REG(0x2c);  //储存器写
+        LCD_WR_REG(0x2c);  // 储存器写
     } else if (USE_HORIZONTAL == 2) {
-        LCD_WR_REG(0x2a);  //列地址设置
+        LCD_WR_REG(0x2a);  // 列地址设置
         LCD_WR_DATA(x1);
         LCD_WR_DATA(x2);
-        LCD_WR_REG(0x2b);  //行地址设置
+        LCD_WR_REG(0x2b);  // 行地址设置
         LCD_WR_DATA(y1 + 24);
         LCD_WR_DATA(y2 + 24);
-        LCD_WR_REG(0x2c);  //储存器写
+        LCD_WR_REG(0x2c);  // 储存器写
     } else {
-        LCD_WR_REG(0x2a);  //列地址设置
+        LCD_WR_REG(0x2a);  // 列地址设置
         LCD_WR_DATA(x1);
         LCD_WR_DATA(x2);
-        LCD_WR_REG(0x2b);  //行地址设置
+        LCD_WR_REG(0x2b);  // 行地址设置
         LCD_WR_DATA(y1 + 24);
         LCD_WR_DATA(y2 + 24);
-        LCD_WR_REG(0x2c);  //储存器写
+        LCD_WR_REG(0x2c);  // 储存器写
     }
 }
 
-void LCD_Init(void) {
-    LCD_GPIO_Init();  //初始化GPIO
+void LCD_Init(void)
+{
+    LCD_GPIO_Init();  // 初始化GPIO
 
-    LCD_RES_Clr();  //复位
+    LCD_RES_Clr();  // 复位
     delay_ms(100);
     LCD_RES_Set();
     delay_ms(100);
 
-    LCD_BLK_Clr();  //打开背光
+    LCD_BLK_Clr();  // 打开背光
     delay_ms(100);
 
     LCD_WR_REG(0x11);  // Sleep exit

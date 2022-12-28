@@ -56,7 +56,7 @@ typedef enum {
 // #define MPU_ADDR MPU_I2CADDRESS_AD0_LOW
 #define MPU_ADDR MPU_I2CADDRESS_AD0_HIGH
 
-#define mpu_bus hi2c2  //<---
+#define mpu_bus  hi2c2  //<---
 #define mpu_addr (MPU_ADDR << 1)
 
 #elif CONFIG_MPU_SPI
@@ -67,7 +67,7 @@ typedef enum {
 #define mpu_bus hspi1  //<---
 
 #define MPU_CS_DISABLE() HAL_GPIO_WritePin(MPU_CS_GPIO_Port, MPU_CS_Pin, GPIO_PIN_SET)
-#define MPU_CS_ENABLE() HAL_GPIO_WritePin(MPU_CS_GPIO_Port, MPU_CS_Pin, GPIO_PIN_RESET)
+#define MPU_CS_ENABLE()  HAL_GPIO_WritePin(MPU_CS_GPIO_Port, MPU_CS_Pin, GPIO_PIN_RESET)
 
 #endif
 
@@ -76,9 +76,9 @@ typedef enum {
 static const char* TAG = "MPU";
 
 typedef HAL_StatusTypeDef mpu_err_t;
-#define MPU_OK HAL_OK
+#define MPU_OK  HAL_OK
 #define MPU_ERR HAL_ERROR
-#define MPU_TO HAL_TIMEOUT
+#define MPU_TO  HAL_TIMEOUT
 
 #define delay_ms HAL_Delay
 

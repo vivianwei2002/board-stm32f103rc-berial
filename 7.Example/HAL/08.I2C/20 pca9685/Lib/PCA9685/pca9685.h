@@ -14,20 +14,20 @@
 
 ////////////////////////////
 
-#define REG_MODE1 0x0
-#define REG_MODE2 0x1
-#define REG_SUBADR1 0x2
-#define REG_SUBADR2 0x3
-#define REG_SUBADR3 0x4
+#define REG_MODE1    0x0
+#define REG_MODE2    0x1
+#define REG_SUBADR1  0x2
+#define REG_SUBADR2  0x3
+#define REG_SUBADR3  0x4
 #define REG_PRESCALE 0xFE
 
-#define REG_LED0_ON_L 0x6
-#define REG_LED0_ON_H 0x7
+#define REG_LED0_ON_L  0x6
+#define REG_LED0_ON_H  0x7
 #define REG_LED0_OFF_L 0x8
 #define REG_LED0_OFF_H 0x9
 
-#define REG_ALLLED_ON_L 0xFA
-#define REG_ALLLED_ON_H 0xFB
+#define REG_ALLLED_ON_L  0xFA
+#define REG_ALLLED_ON_H  0xFB
 #define REG_ALLLED_OFF_L 0xFC
 #define REG_ALLLED_OFF_H 0xFD
 

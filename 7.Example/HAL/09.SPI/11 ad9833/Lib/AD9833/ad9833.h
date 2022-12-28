@@ -7,8 +7,8 @@
 
 #define AD9833_SPI hspi3  // <---
 
-#define AD9833_CS_LOW() HAL_GPIO_WritePin(AD9833_CS_GPIO_Port, AD9833_CS_Pin, GPIO_PIN_RESET)  // <--- FSYNC Pin
-#define AD9833_CS_HIGH() HAL_GPIO_WritePin(AD9833_CS_GPIO_Port, AD9833_CS_Pin, GPIO_PIN_SET)   // <---
+#define AD9833_CS_LOW()  HAL_GPIO_WritePin(AD9833_CS_GPIO_Port, AD9833_CS_Pin, GPIO_PIN_RESET)  // <--- FSYNC Pin
+#define AD9833_CS_HIGH() HAL_GPIO_WritePin(AD9833_CS_GPIO_Port, AD9833_CS_Pin, GPIO_PIN_SET)    // <---
 
 #define FMCLK 25000000UL  // <--- Master Clock On AD9833, 25MHz
 

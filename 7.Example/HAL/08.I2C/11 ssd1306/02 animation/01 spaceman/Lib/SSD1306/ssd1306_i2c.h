@@ -4,7 +4,7 @@
 #include "i2c.h"
 
 // 通过调整0R电阻来改变地址
-#define SSD1306_ADDR_LOW 0X78   // (0x68<<1)+0
+#define SSD1306_ADDR_LOW  0X78  // (0x68<<1)+0
 #define SSD1306_ADDR_HIGH 0X7A  // (0x68<<1)+1
 
 #define SSD1306_DEV SSD1306_ADDR_LOW  // <--- 器件地址

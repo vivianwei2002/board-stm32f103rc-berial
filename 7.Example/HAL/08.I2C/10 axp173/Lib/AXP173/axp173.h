@@ -7,7 +7,8 @@
 #define AXP173_I2C hi2c2        // <------
 #define AXP173_DEV (0x34 << 1)  // <------
 
-static uint16_t clamp(uint16_t v, uint16_t min, uint16_t max) {
+static uint16_t clamp(uint16_t v, uint16_t min, uint16_t max)
+{
     if (min > max) {
         uint16_t t;
         t   = max;

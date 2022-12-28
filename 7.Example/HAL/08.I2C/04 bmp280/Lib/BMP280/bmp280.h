@@ -62,7 +62,7 @@
 
 #include "i2c.h"
 
-#define BMP280_ADDR_LOW 0x76
+#define BMP280_ADDR_LOW  0x76
 #define BMP280_ADDR_HIGH 0x77
 
 #define BMP280_I2C hi2c2                   // <------
@@ -96,16 +96,16 @@
 #define BMP280_DIG_P9_LSB_REG 0x9E
 #define BMP280_DIG_P9_MSB_REG 0x9F
 
-#define BMP280_CHIPID_REG 0xD0           /*Chip ID Register */
-#define BMP280_RESET_REG 0xE0            /*Softreset Register */
-#define BMP280_STATUS_REG 0xF3           /*Status Register */
-#define BMP280_CTRLMEAS_REG 0xF4         /*Ctrl Measure Register */
-#define BMP280_CONFIG_REG 0xF5           /*Configuration Register */
-#define BMP280_PRESSURE_MSB_REG 0xF7     /*Pressure MSB Register */
-#define BMP280_PRESSURE_LSB_REG 0xF8     /*Pressure LSB Register */
-#define BMP280_PRESSURE_XLSB_REG 0xF9    /*Pressure XLSB Register */
-#define BMP280_TEMPERATURE_MSB_REG 0xFA  /*Temperature MSB Reg */
-#define BMP280_TEMPERATURE_LSB_REG 0xFB  /*Temperature LSB Reg */
+#define BMP280_CHIPID_REG           0xD0 /*Chip ID Register */
+#define BMP280_RESET_REG            0xE0 /*Softreset Register */
+#define BMP280_STATUS_REG           0xF3 /*Status Register */
+#define BMP280_CTRLMEAS_REG         0xF4 /*Ctrl Measure Register */
+#define BMP280_CONFIG_REG           0xF5 /*Configuration Register */
+#define BMP280_PRESSURE_MSB_REG     0xF7 /*Pressure MSB Register */
+#define BMP280_PRESSURE_LSB_REG     0xF8 /*Pressure LSB Register */
+#define BMP280_PRESSURE_XLSB_REG    0xF9 /*Pressure XLSB Register */
+#define BMP280_TEMPERATURE_MSB_REG  0xFA /*Temperature MSB Reg */
+#define BMP280_TEMPERATURE_LSB_REG  0xFB /*Temperature LSB Reg */
 #define BMP280_TEMPERATURE_XLSB_REG 0xFC /*Temperature XLSB Reg */
 
 typedef enum {
