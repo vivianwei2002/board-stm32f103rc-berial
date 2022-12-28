@@ -1,16 +1,13 @@
-#ifndef __I2C_DEV_H__
-#define __I2C_DEV_H__
+#ifndef __I2C_BUS_H__
+#define __I2C_BUS_H__
 
-// i2c master
+// <! i2c master
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "utils.h"
+
+// <! config
 
 #include "config.h"
-
-#define LOG(format, ...) printf("[ line: %d | file: %s | function : %s ] " format "\r\n", __LINE__, __FILE__, __FUNCTION__, ##__VA_ARGS__)
-
-///////////////////////////////////////////////////// config
 
 #define CONFIG_SOFTWARE_I2C 1
 #define CONFIG_HARDWARE_I2C 0
@@ -21,45 +18,104 @@
 #define CONFIG_READ_WRITE_UINT16  0
 #define CONFIG_READ_WRITE_BITWISE 0  // 位操作
 
-/////////////////////////////////////////////////////
-
-#if CONFIG_HARDWARE_I2C
-
-#if CONFIG_MCU_STM32
-#include "i2c.h"
-typedef I2C_HandleTypeDef i2c_t;
-#elif CONFIG_MCU_ESP32
-#endif
-#elif CONFIG_SOFTWARE_I2C
-#include "softi2c.h"
-typedef soft_i2c i2c_t;
-#endif
-
-// types
+// <! types
 
 typedef enum {
     I2C_OK  = 0,
     I2C_ERR = 1,
 } i2c_state_t;
 
-// functions
+#if CONFIG_HARDWARE_I2C  // hwi2c
 
-#if CONFIG_ADDRESS_SCANNER
-
-uint8_t i2c_scan(i2c_t* i2c);
+#if CONFIG_MCU_STM32
+#include "i2c.h"
+typedef I2C_HandleTypeDef i2c_t;
+#elif CONFIG_MCU_ESP32
+#elif CONFIG_MCU_RP2040
 
 #endif
 
-// <- core
+#elif CONFIG_SOFTWARE_I2C  // swi2c
+
+#include "gpio.h"
+
+typedef enum {
+    SOFT_I2C_ID_1 = 1,
+    SOFT_I2C_ID_2,
+    SOFT_I2C_ID_3,
+    SOFT_I2C_ID_4,
+    SOFT_I2C_ID_5,
+    SOFT_I2C_ID_6,
+    SOFT_I2C_ID_7,
+    SOFT_I2C_ID_8,
+} soft_i2c_id;
+
+#undef SDA_Pin
+#undef SCL_Pin
+
+typedef struct {  // id
+    soft_i2c_id   ID;
+#if CONFIG_MCU_STM32
+    GPIO_TypeDef* SDA_Port;
+    uint32_t      SDA_Pin;
+    GPIO_TypeDef* SCL_Port;
+    uint32_t      SCL_Pin;
+#elif CONFIG_MCU_ESP32
+#elif CONFIG_MCU_RP2040
+#endif
+    uint32_t      Interval;  // us
+} soft_i2c;
+
+typedef soft_i2c i2c_t;
+
+#endif
+
+///////////////////////////////////////////////////////////// softi2c
+
+#if CONFIG_SOFTWARE_I2C
+// <! soft i2c
+
+// base
+
+void    soft_i2c_init(soft_i2c* i2c);
+void    soft_i2c_start(soft_i2c* i2c);
+void    soft_i2c_stop(soft_i2c* i2c);
+void    soft_i2c_send_ack(soft_i2c* i2c);
+void    soft_i2c_send_nack(soft_i2c* i2c);
+uint8_t soft_i2c_recv_ack(soft_i2c* i2c);
+void    soft_i2c_send_byte(soft_i2c* i2c, uint8_t data);
+uint8_t soft_i2c_recv_byte(soft_i2c* i2c);
+
+// advance
+
+uint8_t soft_i2c_check(soft_i2c* i2c, uint8_t dev);  // is device ready
+
+i2c_state_t soft_i2c_read_mem(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
+i2c_state_t soft_i2c_write_mem(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
+
+#endif
+
+/////////////////////////////////////////////////////////////
+
+// core <
 
 uint8_t i2c_check(i2c_t* i2c, uint8_t dev);  // is device ready
 
 i2c_state_t i2c_read_mem(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
 i2c_state_t i2c_write_mem(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
 
-// core ->
+// > core
+
+// expand <
 
 i2c_state_t i2c_write_mem_ex(i2c_t* i2c, uint8_t dev, uint8_t* buff /* reg,data */, uint16_t len);
+
+#if CONFIG_ADDRESS_SCANNER
+
+// printf 7bits address
+uint8_t i2c_scan(i2c_t* i2c);
+
+#endif
 
 #if CONFIG_READ_WRITE_UINT8
 
@@ -104,5 +160,7 @@ uint8_t     i2c_read_mask_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t mas
 i2c_state_t i2c_write_mask(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t mask, uint8_t data);
 
 #endif
+
+// > core
 
 #endif

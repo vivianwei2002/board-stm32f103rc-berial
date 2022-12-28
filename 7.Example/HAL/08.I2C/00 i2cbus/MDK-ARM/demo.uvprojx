@@ -510,14 +510,9 @@
           <GroupName>Application/Lib</GroupName>
           <Files>
             <File>
-              <FileName>i2cdev.c</FileName>
+              <FileName>i2cbus.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Lib\i2cdev\i2cdev.c</FilePath>
-            </File>
-            <File>
-              <FileName>softi2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Lib\i2cdev\softi2c.c</FilePath>
+              <FilePath>..\Lib\i2cbus\i2cbus.c</FilePath>
             </File>
           </Files>
         </Group>

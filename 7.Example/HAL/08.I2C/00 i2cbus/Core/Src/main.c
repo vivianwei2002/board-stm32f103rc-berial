@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "i2cdev/i2cdev.h"
+#include "i2cbus/i2cbus.h"
 
 /* USER CODE END Includes */
 
