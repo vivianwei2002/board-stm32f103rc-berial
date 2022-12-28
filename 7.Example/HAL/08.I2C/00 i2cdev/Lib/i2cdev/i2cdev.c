@@ -8,6 +8,7 @@ inline i2c_state_t i2c_read_mem(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t* d
 #if CONFIG_MCU_STM32
     return (HAL_I2C_Mem_Read(i2c, dev, reg, I2C_MEMADD_SIZE_8BIT, data, len, 0xFF) == HAL_OK) ? I2C_OK : I2C_ERR;
 #elif CONFIG_MCU_ESP32
+#elif CONFIG_MCU_RP2040
 #endif
 #elif CONFIG_SOFTWARE_I2C
     return (soft_i2c_read_mem(i2c, dev, reg, data, len) == SOFT_I2C_OK) ? I2C_OK : I2C_ERR;
@@ -20,6 +21,7 @@ inline i2c_state_t i2c_write_mem(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t* 
 #if CONFIG_MCU_STM32
     return (HAL_I2C_Mem_Write(i2c, dev, reg, I2C_MEMADD_SIZE_8BIT, data, len, 0xFF) == HAL_OK) ? I2C_OK : I2C_ERR;
 #elif CONFIG_MCU_ESP32
+#elif CONFIG_MCU_RP2040
 #endif
 #elif CONFIG_SOFTWARE_I2C
     return (soft_i2c_write_mem(i2c, dev, reg, data, len) == SOFT_I2C_OK) ? I2C_OK : I2C_ERR;
@@ -60,7 +62,7 @@ uint8_t i2c_scan(i2c_t* i2c)
             ++cnt;
         }
     }
-    printf("scan finished\r\n");
+    printf("%d devices scanned\r\n", cnt);
     return cnt;
 }
 
@@ -105,7 +107,7 @@ uint16_t i2c_read_2byte_fast(i2c_t* i2c, uint8_t dev, uint8_t reg_lsb, uint8_t r
 {
     uint16_t buff;
     if (i2c_read_2byte(i2c, dev, reg_lsb, reg_msb, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -122,7 +124,7 @@ uint16_t i2c_read_2byte_lsb_msb_fast(i2c_t* i2c, uint8_t dev, uint8_t reg)
 {
     uint16_t buff;
     if (i2c_read_2byte_lsb_msb(i2c, dev, reg, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -139,7 +141,7 @@ uint16_t i2c_read_2byte_msb_lsb_fast(i2c_t* i2c, uint8_t dev, uint8_t reg)
 {
     uint16_t buff;
     if (i2c_read_2byte_msb_lsb(i2c, dev, reg, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -202,7 +204,7 @@ uint8_t i2c_read_bits_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t start, 
 {
     uint8_t buff;
     if (i2c_read_bits(i2c, dev, reg, start, len, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -231,7 +233,7 @@ uint8_t i2c_read_bits_ex_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t star
 {
     uint8_t buff;
     if (i2c_read_bits_ex(i2c, dev, reg, start, end, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -256,7 +258,7 @@ uint8_t i2c_read_mask_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t mask)
 {
     uint8_t buff;
     if (i2c_read_mask(i2c, dev, reg, mask, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 

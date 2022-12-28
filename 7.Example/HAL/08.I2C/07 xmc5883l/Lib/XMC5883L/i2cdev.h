@@ -184,7 +184,7 @@ static uint16_t i2c_read_2byte_fast(i2c_t* i2c, uint8_t dev, uint8_t reg_lsb, ui
 {
     uint16_t buff;
     if (i2c_read_2byte(i2c, dev, reg_lsb, reg_msb, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -201,7 +201,7 @@ static uint16_t i2c_read_2byte_lsb_msb_fast(i2c_t* i2c, uint8_t dev, uint8_t reg
 {
     uint16_t buff;
     if (i2c_read_2byte_lsb_msb(i2c, dev, reg, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -218,7 +218,7 @@ static uint16_t i2c_read_2byte_msb_lsb_fast(i2c_t* i2c, uint8_t dev, uint8_t reg
 {
     uint16_t buff;
     if (i2c_read_2byte_msb_lsb(i2c, dev, reg, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -281,7 +281,7 @@ static uint8_t i2c_read_bits_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t 
 {
     uint8_t buff;
     if (i2c_read_bits(i2c, dev, reg, start, len, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -310,7 +310,7 @@ static uint8_t i2c_read_bits_ex_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8
 {
     uint8_t buff;
     if (i2c_read_bits_ex(i2c, dev, reg, start, end, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 
@@ -335,7 +335,7 @@ static uint8_t i2c_read_mask_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t 
 {
     uint8_t buff;
     if (i2c_read_mask(i2c, dev, reg, mask, &buff) == I2C_ERR)
-        return 0;
+        return I2C_ERR;
     return buff;
 }
 

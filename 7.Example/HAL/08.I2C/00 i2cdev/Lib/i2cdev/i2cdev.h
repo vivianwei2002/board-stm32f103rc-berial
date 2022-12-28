@@ -1,15 +1,16 @@
-#ifndef __I2C_MASTER_H__
-#define __I2C_MASTER_H__
+#ifndef __I2C_DEV_H__
+#define __I2C_DEV_H__
+
+// i2c master
 
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "config.h"
+
 #define LOG(format, ...) printf("[ line: %d | file: %s | function : %s ] " format "\r\n", __LINE__, __FILE__, __FUNCTION__, ##__VA_ARGS__)
 
 ///////////////////////////////////////////////////// config
-
-#define CONFIG_MCU_STM32 1
-#define CONFIG_MCU_ESP32 0
 
 #define CONFIG_SOFTWARE_I2C 1
 #define CONFIG_HARDWARE_I2C 0
@@ -49,10 +50,15 @@ uint8_t i2c_scan(i2c_t* i2c);
 
 #endif
 
+// <- core
+
 uint8_t i2c_check(i2c_t* i2c, uint8_t dev);  // is device ready
 
 i2c_state_t i2c_read_mem(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
 i2c_state_t i2c_write_mem(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
+
+// core ->
+
 i2c_state_t i2c_write_mem_ex(i2c_t* i2c, uint8_t dev, uint8_t* buff /* reg,data */, uint16_t len);
 
 #if CONFIG_READ_WRITE_UINT8

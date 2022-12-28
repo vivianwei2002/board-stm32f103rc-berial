@@ -25,58 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "i2cdev/delay.h"
 #include "i2cdev/i2cdev.h"
-
-uint8_t SDA(void) { return HAL_GPIO_ReadPin(SDA_GPIO_Port, SDA_Pin); }
-
-void SDA_IN(void)
-{
-    static GPIO_InitTypeDef GPIO_InitStruct = {
-        .Pin   = SDA_Pin,
-        .Mode  = GPIO_MODE_INPUT,
-        .Pull  = GPIO_NOPULL,
-        .Speed = GPIO_SPEED_FREQ_HIGH,
-    };
-    HAL_GPIO_Init(SDA_GPIO_Port, &GPIO_InitStruct);
-
-    // CRH -> Pin[15:8], CRL -> Pin[7:0]
-    // 16个IO，每个IO占4bit
-
-    // SDA_GPIO_Port->CRH &= 0XFFFF0FFF;
-    // SDA_GPIO_Port->CRH |= (uint32_t)8 << 12;
-}
-
-void SDA_OUT(void)
-{
-    static GPIO_InitTypeDef GPIO_InitStruct = {
-        .Pin   = SDA_Pin,
-        .Mode  = GPIO_MODE_OUTPUT_OD,
-        .Pull  = GPIO_NOPULL,
-        .Speed = GPIO_SPEED_FREQ_HIGH,
-    };
-    HAL_GPIO_Init(SDA_GPIO_Port, &GPIO_InitStruct);
-
-    // SDA_GPIO_Port->CRH &= 0XFFFF0FFF;
-    // SDA_GPIO_Port->CRH |= (uint32_t)1 << 12;
-}
-
-void SDA_0(void) { HAL_GPIO_WritePin(SDA_GPIO_Port, SDA_Pin, GPIO_PIN_RESET); }
-void SDA_1(void) { HAL_GPIO_WritePin(SDA_GPIO_Port, SDA_Pin, GPIO_PIN_SET); }
-void SCL_0(void) { HAL_GPIO_WritePin(SCL_GPIO_Port, SCL_Pin, GPIO_PIN_RESET); }
-void SCL_1(void) { HAL_GPIO_WritePin(SCL_GPIO_Port, SCL_Pin, GPIO_PIN_SET); }
-void delay(void) { HAL_Delay_us(5); }
-
-soft_i2c i2c = {
-    .SDA     = SDA,
-    .SDA_IN  = SDA_IN,
-    .SDA_OUT = SDA_OUT,
-    .SDA_0   = SDA_0,
-    .SDA_1   = SDA_1,
-    .SCL_0   = SCL_0,
-    .SCL_1   = SCL_1,
-    .delay   = delay,
-};
 
 /* USER CODE END Includes */
 
@@ -151,7 +100,14 @@ int main(void)
 
     printf("start\r\n");
 
-    // 0x57(87)
+    soft_i2c i2c = {
+        .ID       = SOFT_I2C_ID_1,
+        .SCL_Port = GPIOB,
+        .SCL_Pin  = GPIO_PIN_10,
+        .SDA_Port = GPIOB,
+        .SDA_Pin  = GPIO_PIN_11,
+        .Interval = 6,
+    };
 
     soft_i2c_init(&i2c);
 
