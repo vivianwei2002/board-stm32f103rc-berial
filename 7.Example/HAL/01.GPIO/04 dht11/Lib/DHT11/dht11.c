@@ -1,35 +1,32 @@
 #include "dht11.h"
 
-void DQ_OUT(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+GPIO_InitTypeDef GPIO_InitStruct = {
+    .Pin   = DHT11_Pin,
+    .Pull  = GPIO_PULLUP,
+    .Speed = GPIO_SPEED_FREQ_LOW,
+};
 
-    GPIO_InitStruct.Pin   = DHT11_Pin;
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-
+void DQ_OUT(void)
+{
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP,
     HAL_GPIO_Init(DHT11_GPIO_Port, &GPIO_InitStruct);
 }
 
 #define DQ_H() HAL_GPIO_WritePin(DHT11_GPIO_Port, DHT11_Pin, GPIO_PIN_SET)
 #define DQ_L() HAL_GPIO_WritePin(DHT11_GPIO_Port, DHT11_Pin, GPIO_PIN_RESET)
 
-void DQ_IN(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-    GPIO_InitStruct.Pin   = DHT11_Pin;
-    GPIO_InitStruct.Mode  = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-
+void DQ_IN(void)
+{
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT,
     HAL_GPIO_Init(DHT11_GPIO_Port, &GPIO_InitStruct);
 }
 
-#define DQ_GET() HAL_GPIO_ReadPin(DHT11_GPIO_Port, DHT11_Pin)
+#define DQ_GET()  HAL_GPIO_ReadPin(DHT11_GPIO_Port, DHT11_Pin)
 #define DQ_IS_L() (HAL_GPIO_ReadPin(DHT11_GPIO_Port, DHT11_Pin) == GPIO_PIN_RESET)
 #define DQ_IS_H() (HAL_GPIO_ReadPin(DHT11_GPIO_Port, DHT11_Pin) == GPIO_PIN_SET)
 
-void HAL_Delay_us(uint32_t us) {
+void HAL_Delay_us(uint32_t us)
+{
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000000);
     HAL_Delay(us - 1);
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
@@ -40,7 +37,8 @@ void HAL_Delay_us(uint32_t us) {
 
 /*********************************************************************************************************/
 
-static uint8_t DHT11_ReadByte(void) {
+static uint8_t DHT11_ReadByte(void)
+{
     uint8_t i, k;
     uint8_t read = 0;
 
@@ -71,7 +69,8 @@ static uint8_t DHT11_ReadByte(void) {
 
 // temp:温度(范围:0~50°)
 // humi:湿度(范围:20%~90%)
-uint8_t DHT11_ReadData(float* temp, float* humi) {
+uint8_t DHT11_ReadData(float* temp, float* humi)
+{
     /*
         时序:
         1. MCU拉低QD持续时间大于 18ms, 然后释放QD = 1
@@ -166,7 +165,8 @@ float ConvertFtoC(float f) { return (f - 32) * 0.55555; }
  * 					true if fahrenheit, false if celcius
  *	@return float heat index
  */
-float ComputeHeatIndex(float temperature, float percentHumidity, bool isFahrenheit /* true */) {
+float ComputeHeatIndex(float temperature, float percentHumidity, bool isFahrenheit /* true */)
+{
     float hi;
 
     if (!isFahrenheit)

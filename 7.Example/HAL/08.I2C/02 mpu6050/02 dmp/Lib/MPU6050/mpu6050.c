@@ -4,23 +4,24 @@
 #include "inv_mpu_dmp_motion_driver.h"
 #include "mpu_i2c.h"
 
-#define PRINT_ACCEL (0x01)
-#define PRINT_GYRO (0x02)
-#define PRINT_QUAT (0x04)
-#define ACCEL_ON (0x01)
-#define GYRO_ON (0x02)
-#define MOTION (0)
-#define NO_MOTION (1)
-#define DEFAULT_MPU_HZ (200)
-#define FLASH_SIZE (512)
+#define PRINT_ACCEL     (0x01)
+#define PRINT_GYRO      (0x02)
+#define PRINT_QUAT      (0x04)
+#define ACCEL_ON        (0x01)
+#define GYRO_ON         (0x02)
+#define MOTION          (0)
+#define NO_MOTION       (1)
+#define DEFAULT_MPU_HZ  (200)
+#define FLASH_SIZE      (512)
 #define FLASH_MEM_START ((void*)0x1800)
-#define q30 1073741824.0f
+#define q30             1073741824.0f
 
 // 陀螺仪方向设置
 static signed char gyro_orientation[9] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
 // static signed char gyro_orientation[9] = {-1, 0, 0, 0, -1, 0, 0, 0, 1};
 
-static unsigned short inv_row_2_scale(const signed char* row) {
+static unsigned short inv_row_2_scale(const signed char* row)
+{
     unsigned short b;
 
     if (row[0] > 0)
@@ -40,7 +41,8 @@ static unsigned short inv_row_2_scale(const signed char* row) {
     return b;
 }
 
-static uint16_t inv_orientation_matrix_to_scalar(const int8_t* mtx) {
+static uint16_t inv_orientation_matrix_to_scalar(const int8_t* mtx)
+{
     uint16_t scalar;
     scalar = inv_row_2_scale(mtx);
     scalar |= inv_row_2_scale(mtx + 3) << 3;
@@ -49,7 +51,8 @@ static uint16_t inv_orientation_matrix_to_scalar(const int8_t* mtx) {
     return scalar;
 }
 
-static uint8_t run_self_test(void) {
+static uint8_t run_self_test(void)
+{
     // return 1;
     int  result;
     long gyro[3], accel[3];
@@ -93,12 +96,14 @@ int16_t Gx_offset = 0, Gy_offset = 0, Gz_offset = 0;
  */
 
 // 设置时钟源
-void MPU6050_SetClockSource(uint8_t source) {
+void MPU6050_SetClockSource(uint8_t source)
+{
     i2c_write_bits(MPU6050_DEV, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_CLKSEL_BIT, MPU6050_PWR1_CLKSEL_LENGTH, source);
 }
 
 // 滤波处理
-void MPU6050_NewValues(int16_t ax, int16_t ay, int16_t az, int16_t gx, int16_t gy, int16_t gz) {
+void MPU6050_NewValues(int16_t ax, int16_t ay, int16_t az, int16_t gx, int16_t gy, int16_t gz)
+{
     uint8_t i, j;
     int32_t sum = 0;
     for (i = 1; i < 10; i++) {  // FIFO 操作
@@ -124,44 +129,52 @@ void MPU6050_NewValues(int16_t ax, int16_t ay, int16_t az, int16_t gx, int16_t g
 }
 
 // 陀螺仪的量程
-void MPU6050_SetFullScaleGyroRange(uint8_t range) {
+void MPU6050_SetFullScaleGyroRange(uint8_t range)
+{
     i2c_write_bits(MPU6050_DEV, MPU6050_RA_GYRO_CONFIG, MPU6050_GCONFIG_FS_SEL_BIT, MPU6050_GCONFIG_FS_SEL_LENGTH, range);
 }
 
 // 加速度计的量程
-void MPU6050_SetFullScaleAccelRange(uint8_t range) {
+void MPU6050_SetFullScaleAccelRange(uint8_t range)
+{
     i2c_write_bits(MPU6050_DEV, MPU6050_RA_ACCEL_CONFIG, MPU6050_ACONFIG_AFS_SEL_BIT, MPU6050_ACONFIG_AFS_SEL_LENGTH, range);
 }
 
 // 睡眠模式(0工作,1睡觉)
-void MPU6050_SetSleepEnabled(uint8_t enabled) {
+void MPU6050_SetSleepEnabled(uint8_t enabled)
+{
     i2c_write_bit(MPU6050_DEV, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_SLEEP_BIT, enabled);
 }
 
 // 读取设备标识（return 0x68）
-uint8_t MPU6050_GetDeviceID(void) {
+uint8_t MPU6050_GetDeviceID(void)
+{
     memset(buffer, 0, sizeof(buffer));
     i2c_read(MPU6050_DEV, MPU6050_RA_WHO_AM_I, 1, buffer);
     return buffer[0];
 }
 
 // 检查器件是否存在
-uint8_t MPU6050_TestConnection(void) {
+uint8_t MPU6050_TestConnection(void)
+{
     return (MPU6050_GetDeviceID() == 0x68);  // 0b01101000
 }
 
 //  设置 MPU6050 是否为 AUXI2C 的主机
-void MPU6050_SetI2CMasterModeEnabled(uint8_t enabled) {
+void MPU6050_SetI2CMasterModeEnabled(uint8_t enabled)
+{
     i2c_write_bit(MPU6050_DEV, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_I2C_MST_EN_BIT, enabled);
 }
 
 //  设置 MPU6050 是否为 AUXI2C 的主机
-void MPU6050_SetI2CBypassEnabled(uint8_t enabled) {
+void MPU6050_SetI2CBypassEnabled(uint8_t enabled)
+{
     i2c_write_bit(MPU6050_DEV, MPU6050_RA_INT_PIN_CFG, MPU6050_INTCFG_I2C_BYPASS_EN_BIT, enabled);
 }
 
 // 初始化 MPU6050
-void MPU6050_Init(void) {
+void MPU6050_Init(void)
+{
     MPU6050_SetClockSource(MPU6050_CLOCK_PLL_YGYRO);
     MPU6050_SetFullScaleGyroRange(MPU6050_GYRO_FS_2000);
     MPU6050_SetFullScaleAccelRange(MPU6050_ACCEL_FS_16);
@@ -171,7 +184,8 @@ void MPU6050_Init(void) {
 }
 
 // 初始化 DMP
-uint8_t MPU6050_DMP_Init(void) {
+uint8_t MPU6050_DMP_Init(void)
+{
     if (MPU6050_GetDeviceID() != 0x68)
         NVIC_SystemReset();
     if (mpu_init(NULL) == 0) {
@@ -262,7 +276,8 @@ uint8_t MPU6050_DMP_Init(void) {
 // }
 
 // 读取内置DMP姿态信息
-void MPU6050_Read_DMP(float* pitch, float* roll, float* yaw) {
+void MPU6050_Read_DMP(float* pitch, float* roll, float* yaw)
+{
     float         q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;
     unsigned long sensor_timestamp;
     unsigned char more;
@@ -287,7 +302,8 @@ void MPU6050_Read_DMP(float* pitch, float* roll, float* yaw) {
 }
 
 // 读取温度
-int MPU6050_Read_Temperature(void) {
+int MPU6050_Read_Temperature(void)
+{
     float   Temp;
     uint8_t H, L;
     i2c_read(MPU6050_DEV, MPU6050_RA_TEMP_OUT_H, 1, &H);

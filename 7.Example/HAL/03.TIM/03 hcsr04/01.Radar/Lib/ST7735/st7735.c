@@ -62,15 +62,18 @@ static const uint8_t
         ST7735_DISPON, DELAY,                                                                                                 //  4: Main screen turn on, no args w/delay
         100};                                                                                                                 //     100 ms delay
 
-static void ST7735_Select() {
+static void ST7735_Select()
+{
     HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
 }
 
-void ST7735_Unselect() {
+void ST7735_Unselect()
+{
     HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
 }
 
-static void ST7735_Reset() {
+static void ST7735_Reset()
+{
     HAL_GPIO_WritePin(LCD_RES_GPIO_Port, LCD_RES_Pin, GPIO_PIN_RESET);
     HAL_Delay(5);
     HAL_GPIO_WritePin(LCD_RES_GPIO_Port, LCD_RES_Pin, GPIO_PIN_SET);
@@ -79,17 +82,20 @@ static void ST7735_Reset() {
     HAL_Delay(20);
 }
 
-static void ST7735_WriteCommand(uint8_t cmd) {
+static void ST7735_WriteCommand(uint8_t cmd)
+{
     HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_RESET);
     HAL_SPI_Transmit(&LCD_SPI_PORT, &cmd, sizeof(cmd), HAL_MAX_DELAY);
 }
 
-static void ST7735_WriteData(uint8_t* buff, size_t buff_size) {
+static void ST7735_WriteData(uint8_t* buff, size_t buff_size)
+{
     HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_SET);
     HAL_SPI_Transmit(&LCD_SPI_PORT, buff, buff_size, HAL_MAX_DELAY);
 }
 
-static void ST7735_ExecuteCommandList(const uint8_t* addr) {
+static void ST7735_ExecuteCommandList(const uint8_t* addr)
+{
     uint8_t  numCommands, numArgs;
     uint16_t ms;
 
@@ -115,7 +121,8 @@ static void ST7735_ExecuteCommandList(const uint8_t* addr) {
     }
 }
 
-static void ST7735_SetAddressWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1) {
+static void ST7735_SetAddressWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1)
+{
     // column address set
     ST7735_WriteCommand(ST7735_CASET);
     uint8_t data[] = {0x00, x0 + ST7735_XSTART, 0x00, x1 + ST7735_XSTART};
@@ -131,7 +138,8 @@ static void ST7735_SetAddressWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t 
     ST7735_WriteCommand(ST7735_RAMWR);
 }
 
-void ST7735_Init() {
+void ST7735_Init()
+{
     ST7735_Select();
     ST7735_Reset();
     ST7735_ExecuteCommandList(init_cmds1);
@@ -140,7 +148,8 @@ void ST7735_Init() {
     ST7735_Unselect();
 }
 
-void ST7735_DrawPixel(uint16_t x, uint16_t y, uint16_t color) {
+void ST7735_DrawPixel(uint16_t x, uint16_t y, uint16_t color)
+{
     if ((x >= ST7735_WIDTH) || (y >= ST7735_HEIGHT))
         return;
 
@@ -153,7 +162,8 @@ void ST7735_DrawPixel(uint16_t x, uint16_t y, uint16_t color) {
     ST7735_Unselect();
 }
 
-static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color, uint16_t bgcolor) {
+static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint16_t color, uint16_t bgcolor)
+{
     uint32_t i, b, j;
     ST7735_SetAddressWindow(x, y, x + font.width - 1, y + font.height - 1);
     for (i = 0; i < font.height; ++i) {
@@ -187,7 +197,8 @@ static void ST7735_WriteChar(uint16_t x, uint16_t y, char ch, FontDef font, uint
 }
 */
 
-void ST7735_DrawString(uint16_t x, uint16_t y, const char* str, FontDef font, uint16_t color, uint16_t bgcolor) {
+void ST7735_DrawString(uint16_t x, uint16_t y, const char* str, FontDef font, uint16_t color, uint16_t bgcolor)
+{
     ST7735_Select();
 
     while (*str) {
@@ -210,7 +221,8 @@ void ST7735_DrawString(uint16_t x, uint16_t y, const char* str, FontDef font, ui
     ST7735_Unselect();
 }
 
-void ST7735_FillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
+void ST7735_FillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
+{
     // clipping
     if ((x >= ST7735_WIDTH) || (y >= ST7735_HEIGHT)) return;
     if ((x + w - 1) >= ST7735_WIDTH) w = ST7735_WIDTH - x;
@@ -228,11 +240,13 @@ void ST7735_FillRectangle(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16
     ST7735_Unselect();
 }
 
-void ST7735_FillScreen(uint16_t color) {
+void ST7735_FillScreen(uint16_t color)
+{
     ST7735_FillRectangle(0, 0, ST7735_WIDTH, ST7735_HEIGHT, color);
 }
 
-void ST7735_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data) {
+void ST7735_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t* data)
+{
     if ((x >= ST7735_WIDTH) || (y >= ST7735_HEIGHT)) return;
     if ((x + w - 1) >= ST7735_WIDTH) return;
     if ((y + h - 1) >= ST7735_HEIGHT) return;
@@ -243,7 +257,8 @@ void ST7735_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint
     ST7735_Unselect();
 }
 
-void ST7735_InvertColors(bool invert) {
+void ST7735_InvertColors(bool invert)
+{
     ST7735_Select();
     ST7735_WriteCommand(invert ? ST7735_INVON : ST7735_INVOFF);
     ST7735_Unselect();
@@ -252,7 +267,8 @@ void ST7735_InvertColors(bool invert) {
 ///////////////////////////////////////////////////////
 
 // Bresenham 画圆
-void Gui_DrawCircle(uint16_t X, uint16_t Y, uint16_t R, uint16_t fc) {
+void Gui_DrawCircle(uint16_t X, uint16_t Y, uint16_t R, uint16_t fc)
+{
     uint16_t a, b;
     int      c;
     a = 0;
@@ -289,7 +305,8 @@ void Gui_DrawCircle(uint16_t X, uint16_t Y, uint16_t R, uint16_t fc) {
 }
 
 // Bresenham 画线
-void Gui_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t Color) {
+void Gui_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t Color)
+{
     int dx,   // difference in x's
         dy,   // difference in y's
         dx2,  // dx,dy * 2
@@ -375,7 +392,8 @@ void Gui_DrawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t C
     }      // end else |slope| > 1
 }
 
-void Gui_DrawBox(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t mode) {
+void Gui_DrawBox(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t mode)
+{
     if (mode == 0) {
         Gui_DrawLine(x, y, x + w, y, 0xEF7D);
         Gui_DrawLine(x + w, y, x + w, y + h, 0x2965);
@@ -397,7 +415,8 @@ void Gui_DrawBox(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t mode) {
 }
 
 // 凸起的按钮框
-void DisplayButtonDown(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+void DisplayButtonDown(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+{
     Gui_DrawLine(x1, y1, x2, y1, ST7735_GRAY2);              // H
     Gui_DrawLine(x1 + 1, y1 + 1, x2, y1 + 1, ST7735_GRAY1);  // H
     Gui_DrawLine(x1, y1, x1, y2, ST7735_GRAY2);              // V
@@ -407,7 +426,8 @@ void DisplayButtonDown(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
 }
 
 // 凹下的按钮框
-void DisplayButtonUp(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2) {
+void DisplayButtonUp(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2)
+{
     Gui_DrawLine(x1, y1, x2, y1, ST7735_WHITE);              // H
     Gui_DrawLine(x1, y1, x1, y2, ST7735_WHITE);              // V
     Gui_DrawLine(x1 + 1, y2 - 1, x2, y2 - 1, ST7735_GRAY1);  // H

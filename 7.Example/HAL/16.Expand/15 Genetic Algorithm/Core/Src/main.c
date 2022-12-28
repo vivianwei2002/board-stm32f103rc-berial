@@ -65,15 +65,15 @@ void SystemClock_Config(void);
 
 // 符号常数的定义
 
-#define MAXVALUE 100                    // 重量和价值的最大值
-#define N 30                            // 行李个数
+#define MAXVALUE    100                 // 重量和价值的最大值
+#define N           30                  // 行李个数
 #define WEIGHTLIMIT (N * MAXVALUE / 4)  // 重量限制
-#define POOLSIZE 30                     // 染色体个数
-#define LASTG 50                        // 终止后代
-#define MRATE 0.01                      // 突变的概率
-#define SEED 32767                      // 随机数的seed
-#define YES 1                           // yes对应的整数值
-#define NO 0                            // no对应的整数值
+#define POOLSIZE    30                  // 染色体个数
+#define LASTG       50                  // 终止后代
+#define MRATE       0.01                // 突变的概率
+#define SEED        32767               // 随机数的seed
+#define YES         1                   // yes对应的整数值
+#define NO          0                   // no对应的整数值
 
 // 行李的初始化
 void initparcel();
@@ -140,13 +140,15 @@ int parcel[N][2] = {
     {24, 97}};  // 行李
 
 // 行李的初始化
-void initparcel() {
+void initparcel()
+{
     // int i = 0;
     // while ((i < N) && (scanf("%d %d", &parcel[i][0], &parcel[i][1]) != EOF)) ++i;
 }
 
 // 选择下一代
-void selectng(int ngpool[POOLSIZE * 2][N], int pool[POOLSIZE][N]) {
+void selectng(int ngpool[POOLSIZE * 2][N], int pool[POOLSIZE][N])
+{
     int i, j, c;                 // 循环控制参数
     int totalfitness = 0;        // 适应度的总计值
     int roulette[POOLSIZE * 2];  // 存放适应度
@@ -177,7 +179,8 @@ void selectng(int ngpool[POOLSIZE * 2][N], int pool[POOLSIZE][N]) {
 }
 
 // 父代的选择
-int selectp(int roulette[POOLSIZE], int totalfitness) {
+int selectp(int roulette[POOLSIZE], int totalfitness)
+{
     int i;        // 循环的控制变量
     int ball;     // 球（选择位置的数值）
     int acc = 0;  // 评价值的累积值
@@ -191,7 +194,8 @@ int selectp(int roulette[POOLSIZE], int totalfitness) {
 }
 
 // 交叉
-void mating(int pool[POOLSIZE][N], int ngpool[POOLSIZE * 2][N]) {
+void mating(int pool[POOLSIZE][N], int ngpool[POOLSIZE * 2][N])
+{
     int i;                   // 循环的控制变量
     int totalfitness = 0;    // 评价值的总计值
     int roulette[POOLSIZE];  // 存放评价值
@@ -217,7 +221,8 @@ void mating(int pool[POOLSIZE][N], int ngpool[POOLSIZE * 2][N]) {
 }
 
 // 特定2染色体的交叉
-void crossing(int m[], int p[], int c1[], int c2[]) {
+void crossing(int m[], int p[], int c1[], int c2[])
+{
     int j;   // 循环控制变量
     int cp;  // 交叉的点
 
@@ -237,7 +242,8 @@ void crossing(int m[], int p[], int c1[], int c2[]) {
 }
 
 // 计算评价值
-int evalfit(int g[]) {
+int evalfit(int g[])
+{
     int pos;         // 指定基因位点
     int value  = 0;  // 评价值
     int weight = 0;  // 重量
@@ -253,7 +259,8 @@ int evalfit(int g[]) {
 }
 
 // 输出结果
-void printp(int pool[POOLSIZE][N]) {
+void printp(int pool[POOLSIZE][N])
+{
     int    i, j;                // 循环的控制变量
     int    fitness;             // 评价值
     double totalfitness = 0;    // 评价值的总计值
@@ -277,7 +284,8 @@ void printp(int pool[POOLSIZE][N]) {
 }
 
 // 生成初始染色体集合
-void initpool(int pool[POOLSIZE][N]) {
+void initpool(int pool[POOLSIZE][N])
+{
     int i, j;  // 循环控制变量
     for (i = 0; i < POOLSIZE; ++i)
         for (j = 0; j < N; ++j)
@@ -285,14 +293,16 @@ void initpool(int pool[POOLSIZE][N]) {
 }
 
 // n以下随机数的生成
-int rndn(int l) {
+int rndn(int l)
+{
     int rndno;
     while ((rndno = ((double)rand() / RAND_MAX) * l) == l) {}
     return rndno;
 }
 
 // 突变
-void mutation(int ngpool[POOLSIZE * 2][N]) {
+void mutation(int ngpool[POOLSIZE * 2][N])
+{
     for (int i = 0; i < POOLSIZE * 2; ++i)
         for (int j = 0; j < N; ++j)
             if ((double)rndn(100) / 100.0 <= MRATE)  // 反转的突变
@@ -300,7 +310,8 @@ void mutation(int ngpool[POOLSIZE * 2][N]) {
 }
 
 // 真值的反转
-int notval(int v) {
+int notval(int v)
+{
     return (v == YES) ? NO : YES;
 }
 
@@ -308,7 +319,8 @@ int pool[POOLSIZE][N];        // 染色体集合
 int ngpool[POOLSIZE * 2][N];  // 下一代染色体集合
 int generation;               // 现在的代数
 
-void dsp_test(void) {
+void dsp_test(void)
+{
     srand(SEED);
 
     // 行李的初始化
@@ -333,7 +345,8 @@ void dsp_test(void) {
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -378,7 +391,8 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -415,7 +429,8 @@ void SystemClock_Config(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
@@ -430,7 +445,8 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t* file, uint32_t line)
+{
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

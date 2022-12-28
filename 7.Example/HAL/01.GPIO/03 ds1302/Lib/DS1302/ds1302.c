@@ -7,11 +7,11 @@
 // [bit7]CH: 0 时钟工作; 1 时钟停振，进入低功耗态;
 
 #define DS1302_MINUTE 0x82  // 分 0-59
-#define DS1302_HOUR 0x84    // 时 1-12/1-24
-#define DS1302_DATE 0x86    // 日 1-31
-#define DS1302_MONTH 0x88   // 月 1-12
-#define DS1302_DAY 0x8A     // 星期 1-7
-#define DS1302_YEAR 0x8C    // 年 0-99
+#define DS1302_HOUR   0x84  // 时 1-12/1-24
+#define DS1302_DATE   0x86  // 日 1-31
+#define DS1302_MONTH  0x88  // 月 1-12
+#define DS1302_DAY    0x8A  // 星期 1-7
+#define DS1302_YEAR   0x8C  // 年 0-99
 
 #define DS1302_CONTROL 0x8E  // [bit7] WP: 0不保护 1保护
 
@@ -21,37 +21,38 @@
 // [bit1-0]RS:  二极管串联电阻选择。00，不充电；01，2KΩ电阻；10，4KΩ电阻；11，8KΩ电阻。
 
 #define DS1302_CLOCK_BURST 0xBE
-#define DS1302_RAM_BURST 0xFE
+#define DS1302_RAM_BURST   0xFE
 // burst mode 就是必须1次读写全部
 
-#define DS1302_RAMSIZE 0x31
+#define DS1302_RAMSIZE  0x31
 #define DS1302_RAMSTART 0xC0
-#define DS1302_RAMEND 0xFC
+#define DS1302_RAMEND   0xFC
 
 // uint8_t HEX2BCD(uint8_t hex) { return hex % 10 + hex / 10 * 16; }
 // uint8_t BCD2HEX(uint8_t bcd) { return bcd % 16 + bcd / 16 * 10; }
 uint8_t HEX2BCD(uint8_t hex) { return ((hex / 10) << 4) + (hex % 10); }
 uint8_t BCD2HEX(uint8_t bcd) { return ((bcd >> 4) * 10) + (bcd & 0x0f); }
 
-void DAT_OUT() {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin              = DS1302_DAT_Pin;
-    GPIO_InitStruct.Mode             = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull             = GPIO_NOPULL;
-    GPIO_InitStruct.Speed            = GPIO_SPEED_FREQ_HIGH;
+GPIO_InitTypeDef GPIO_InitStruct = {
+    .Pin   = DS1302_DAT_Pin,
+    .Pull  = GPIO_PULLUP,
+    .Speed = GPIO_SPEED_FREQ_HIGH,
+};
+
+void DAT_OUT()
+{
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     HAL_GPIO_Init(DS1302_DAT_GPIO_Port, &GPIO_InitStruct);
 }
 
-void DAT_IN() {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin              = DS1302_DAT_Pin;
-    GPIO_InitStruct.Mode             = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull             = GPIO_PULLUP;
-    GPIO_InitStruct.Speed            = GPIO_SPEED_FREQ_HIGH;
+void DAT_IN()
+{
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     HAL_GPIO_Init(DS1302_DAT_GPIO_Port, &GPIO_InitStruct);
 }
 
-static void DS1302_Write(uint8_t addr, uint8_t data) {
+static void DS1302_Write(uint8_t addr, uint8_t data)
+{
     uint8_t i;
 
     DAT_OUT();
@@ -81,7 +82,8 @@ static void DS1302_Write(uint8_t addr, uint8_t data) {
     DAT_W(0);
 }
 
-static uint8_t DS1302_Read(uint8_t addr) {
+static uint8_t DS1302_Read(uint8_t addr)
+{
     uint8_t data = 0, i;
 
     DAT_OUT();
@@ -113,7 +115,8 @@ static uint8_t DS1302_Read(uint8_t addr) {
     return data;
 }
 
-void DS1302_Init() {
+void DS1302_Init()
+{
     RST_W(0);
     CLK_W(0);
     DAT_W(0);
@@ -126,7 +129,8 @@ uint8_t DS1302_GetHour() { return BCD2HEX(DS1302_Read(DS1302_HOUR)); }
 uint8_t DS1302_GetMinite() { return BCD2HEX(DS1302_Read(DS1302_MINUTE)); }
 uint8_t DS1302_GetSecond() { return BCD2HEX(DS1302_Read(DS1302_SECOND)); }
 
-void DS1302_SetTime(uint8_t time[]) {
+void DS1302_SetTime(uint8_t time[])
+{
     DS1302_Write(DS1302_CONTROL, 0x00);  // Disable write protection
     DS1302_Write(DS1302_SECOND, 0x80);   // [bit7] the clock halt flag: 1 stop clock
     DS1302_Write(DS1302_YEAR, HEX2BCD(time[0]));
@@ -138,7 +142,8 @@ void DS1302_SetTime(uint8_t time[]) {
     DS1302_Write(DS1302_CONTROL, 0x80);  // Enable write protection
 }
 
-void DS1302_GetTime(uint8_t time[]) {
+void DS1302_GetTime(uint8_t time[])
+{
     time[0] = BCD2HEX(DS1302_Read(DS1302_YEAR));
     time[1] = BCD2HEX(DS1302_Read(DS1302_MONTH));
     time[2] = BCD2HEX(DS1302_Read(DS1302_DATE));
@@ -147,30 +152,35 @@ void DS1302_GetTime(uint8_t time[]) {
     time[5] = BCD2HEX(DS1302_Read(DS1302_SECOND) & 0x7F);  // clear hsb
 }
 
-void DS1302_StopTime() {  // 停止计时
+void DS1302_StopTime()
+{  // 停止计时
     DS1302_Write(DS1302_CONTROL, 0x00);
     DS1302_Write(DS1302_SECOND, DS1302_Read(DS1302_SECOND) | 0x80);
     DS1302_Write(DS1302_CONTROL, 0x80);
 }
 
-void DS1302_WriteRam(uint8_t addr, uint8_t val) {
+void DS1302_WriteRam(uint8_t addr, uint8_t val)
+{
     DS1302_Write(DS1302_CONTROL, 0x00);
     if (addr >= DS1302_RAMSIZE) return;
     DS1302_Write(DS1302_RAMSTART + (2 * addr), val);
     DS1302_Write(DS1302_CONTROL, 0x80);
 }
 
-uint8_t DS1302_ReadRam(uint8_t addr) {
+uint8_t DS1302_ReadRam(uint8_t addr)
+{
     if (addr >= DS1302_RAMSIZE) return 0;
     return DS1302_Read(DS1302_RAMSTART + (2 * addr));
 }
 
-void DS1302_ClearRam(void) {
+void DS1302_ClearRam(void)
+{
     for (uint8_t i = 0; i < DS1302_RAMSIZE; i++)
         DS1302_WriteRam(i, 0x00);
 }
 
-void DS1302_Write_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len) {
+void DS1302_Write_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len)
+{
     uint8_t i, j;
     uint8_t data;
 
@@ -203,7 +213,8 @@ void DS1302_Write_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len) {
     DS1302_Write(DS1302_CONTROL, 0x80);
 }
 
-void DS1302_Read_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len) {
+void DS1302_Read_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len)
+{
     uint8_t i, j;
     uint8_t data;
 
@@ -237,7 +248,8 @@ void DS1302_Read_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len) {
     DAT_OUT();
 }
 
-void DS1302_GetTime_Brust(uint8_t time[]) {
+void DS1302_GetTime_Brust(uint8_t time[])
+{
     uint8_t temp[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     DS1302_Read_Brust(DS1302_CLOCK_BURST, temp, 8);
     time[0] = BCD2HEX(temp[6]);  // Year
@@ -250,7 +262,8 @@ void DS1302_GetTime_Brust(uint8_t time[]) {
     time[7] = temp[7];           // Control, bit7 is WP bit
 }
 
-void DS1302_SetTime_Brust(uint8_t time[]) {
+void DS1302_SetTime_Brust(uint8_t time[])
+{
     uint8_t temp[8];
 
     temp[0] = HEX2BCD(time[5]);  // Sec
@@ -265,7 +278,8 @@ void DS1302_SetTime_Brust(uint8_t time[]) {
     DS1302_Write_Brust(DS1302_CLOCK_BURST, temp, 8);
 }
 
-void DS1302_ReadRam_Brust(uint8_t len, uint8_t* buf) {
+void DS1302_ReadRam_Brust(uint8_t len, uint8_t* buf)
+{
     uint8_t i;
 
     if (len > DS1302_RAMSIZE)
@@ -277,7 +291,8 @@ void DS1302_ReadRam_Brust(uint8_t len, uint8_t* buf) {
     DS1302_Read_Brust(DS1302_RAM_BURST, buf, len);
 }
 
-void DS1302_WriteRam_Brust(uint8_t len, uint8_t* buf) {
+void DS1302_WriteRam_Brust(uint8_t len, uint8_t* buf)
+{
     if (len > DS1302_RAMSIZE)
         len = DS1302_RAMSIZE;
     DS1302_Write_Brust(DS1302_RAM_BURST, buf, len);

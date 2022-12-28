@@ -59,7 +59,7 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 #define F_COUNT 512
-#define M 16
+#define M       16
 
 /* xn:输入的信号序列（列向量）
  * itr:迭代次数，标量，默认为xn的长度，M<itr<sizeof(xn)
@@ -71,7 +71,8 @@ void SystemClock_Config(void);
  * yn:实际输出序列（列向量）*/
 
 // float* LMS_Filter(int itr, const float *xn, const float *dn, float mu, int length);
-void LMS_Filter(int itr, const float* xn, const float* dn, float mu, int length, float* yn) {
+void LMS_Filter(int itr, const float* xn, const float* dn, float mu, int length, float* yn)
+{
     static int   i = 0;
     static int   k = 0;
     static float y = 0.0;
@@ -131,7 +132,8 @@ void LMS_Filter(int itr, const float* xn, const float* dn, float mu, int length,
 
 float xn[512] = {0.}, dn[512] = {0.}, yn[512] = {0.};
 
-void dsp_test(void) {
+void dsp_test(void)
+{
     uint16_t i = 0;
     for (i = 0; i < 512; i++)
         xn[i] = 1.5f * arm_sin_f32(100 * PI * i / 6400) + 0.5f * arm_sin_f32(900 * PI * i / 6400);
@@ -151,7 +153,8 @@ void dsp_test(void) {
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -196,7 +199,8 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -233,7 +237,8 @@ void SystemClock_Config(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
@@ -248,7 +253,8 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t* file, uint32_t line)
+{
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

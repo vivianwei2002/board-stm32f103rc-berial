@@ -59,7 +59,8 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void GuiTest() {
+void GuiTest()
+{
     DisplayButtonDown(10, 10, 40, 30);
     DisplayButtonUp(10, 40, 40, 70);
     HAL_Delay(2000);
@@ -73,13 +74,15 @@ void GuiTest() {
     ST7735_FillScreen(ST7735_BLACK);
 }
 
-void HAL_Delay_us(uint32_t us) {
+void HAL_Delay_us(uint32_t us)
+{
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000000);
     HAL_Delay(us - 1);
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
 }
 
-float HCSR04_Measure(TIM_HandleTypeDef* htim) {
+float HCSR04_Measure(TIM_HandleTypeDef* htim)
+{
     uint32_t tick_us;
 
     HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_SET);
@@ -110,21 +113,24 @@ float HCSR04_Measure(TIM_HandleTypeDef* htim) {
     return (distance > 450) ? 0 : distance;
 }
 
-void DrawRadarLine(double angle, int r) {
+void DrawRadarLine(double angle, int r)
+{
     double x, y;
     x = 80 + r * (double)cos(angle / 180 * 3.1415926);
     y = 108 - r * (double)sin(angle / 180 * 3.1415926);
     Gui_DrawLine(80, 108, x, y, ST7735_GREEN);
 }
 
-void DrawRadarPoint(double angle, int r) {
+void DrawRadarPoint(double angle, int r)
+{
     double x, y;
     x = 80 + r * (double)cos(angle / 180 * 3.1415926);
     y = 100 - r * (double)sin(angle / 180 * 3.1415926);
     Gui_DrawPoint(x, y, ST7735_RED);
 }
 
-void DrawRadar() {
+void DrawRadar()
+{
     ST7735_FillScreen(ST7735_BLACK);
 
     Gui_DrawCircle(80, 100, 76, ST7735_GREEN);
@@ -145,7 +151,8 @@ void DrawRadar() {
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -211,7 +218,8 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -250,7 +258,8 @@ void SystemClock_Config(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
@@ -265,7 +274,8 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t* file, uint32_t line)
+{
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

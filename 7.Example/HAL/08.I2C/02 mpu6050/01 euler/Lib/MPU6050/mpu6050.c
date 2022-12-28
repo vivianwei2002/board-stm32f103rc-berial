@@ -1,20 +1,24 @@
 #include "mpu6050.h"
 
-void MPU6050_WriteByte(uint8_t mem_addr, uint8_t data) {
+void MPU6050_WriteByte(uint8_t mem_addr, uint8_t data)
+{
     HAL_I2C_Mem_Write(&MPU6050_I2C, MPU6050_DEV, mem_addr, I2C_MEMADD_SIZE_8BIT, &data, 1, 0xFF);
 }
 
-uint8_t MPU6050_ReadByte(uint8_t mem_addr) {
+uint8_t MPU6050_ReadByte(uint8_t mem_addr)
+{
     uint8_t buff = 0;
     HAL_I2C_Mem_Read(&MPU6050_I2C, MPU6050_DEV, mem_addr, I2C_MEMADD_SIZE_8BIT, &buff, 1, 0xFF);
     return buff;
 }
 
-void MPU6050_ReadBytes(uint8_t mem_addr, uint8_t* buff, uint8_t len) {
+void MPU6050_ReadBytes(uint8_t mem_addr, uint8_t* buff, uint8_t len)
+{
     HAL_I2C_Mem_Read(&MPU6050_I2C, MPU6050_DEV, mem_addr, I2C_MEMADD_SIZE_8BIT, buff, len, 0xFF);
 }
 
-void MPU6050_Init(void) {
+void MPU6050_Init(void)
+{
 MPU6050_RESET:
     MPU6050_WriteByte(MPU6050_PWR_MGMT_1, 0x80);  // ¸´Î»
     HAL_Delay(100);
@@ -35,11 +39,13 @@ MPU6050_RESET:
     MPU6050_WriteByte(MPU6050_PWR_MGMT_2, 0x00);  // enable accel & gyro
 }
 
-int toInt(uint8_t firstbyte, uint8_t secondbyte) {
+int toInt(uint8_t firstbyte, uint8_t secondbyte)
+{
     return (firstbyte & 0x80) ? (-(((firstbyte ^ 255) << 8) | (secondbyte ^ 255) + 1)) : (firstbyte << 8 | secondbyte);
 }
 
-void MPU6050_Read(MPU6050_DATA* buff) {
+void MPU6050_Read(MPU6050_DATA* buff)
+{
     uint8_t data[14] = {0};
 
     MPU6050_ReadBytes(MPU6050_ACCEL_XOUT, data, 14);

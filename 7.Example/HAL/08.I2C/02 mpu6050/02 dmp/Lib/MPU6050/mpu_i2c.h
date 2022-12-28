@@ -13,12 +13,13 @@
 #define TRACE
 
 #ifdef STM32_HAL
-#define fabs fabsf
-#define min(a, b) ((a < b) ? a : b)
-#define delay_ms HAL_Delay
+#define fabs              fabsf
+#define min(a, b)         ((a < b) ? a : b)
+#define delay_ms          HAL_Delay
 #define get_ms(timestamp) (*timestamp = HAL_GetTick())
-#define __no_operation() (0)
-static inline int reg_int_cb(struct int_param_s* int_param) {
+#define __no_operation()  (0)
+static inline int reg_int_cb(struct int_param_s* int_param)
+{
     UNUSED(int_param);
     return 0;
 }

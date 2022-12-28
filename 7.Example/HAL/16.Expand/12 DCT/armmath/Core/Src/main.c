@@ -61,7 +61,7 @@ void SystemClock_Config(void);
 void __aeabi_f2h() {}
 void __aeabi_h2f() {}
 // void __aeabi_d2h() {}
-	
+
 static arm_dct4_instance_f32        S;                  // DCT 实例化结构体
 static arm_rfft_instance_f32        S_RFFT;             // 实序列傅里叶变换实例化结构体
 static arm_cfft_radix4_instance_f32 S_CFFT;             // 复数序列傅里叶变换实例化结构体
@@ -70,7 +70,8 @@ static float32_t                    normalize = 0.125;  // 归一化因子
 static float32_t pInlineBuffer[128], in[128];  // 输入输出
 static float32_t pState[128];                  // state 缓存
 
-void dsp_test(void) {
+void dsp_test(void)
+{
     uint16_t i;
 
     for (i = 0; i < 128; ++i)
@@ -90,7 +91,8 @@ void dsp_test(void) {
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -135,7 +137,8 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -172,7 +175,8 @@ void SystemClock_Config(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
@@ -187,7 +191,8 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t* file, uint32_t line)
+{
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

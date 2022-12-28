@@ -1,36 +1,31 @@
 #include "ds18b20.h"
+GPIO_InitTypeDef GPIO_InitStruct = {
+    .Pin   = DS18B20_Pin,
+    .Pull  = GPIO_PULLUP,
+    .Speed = GPIO_SPEED_FREQ_LOW,
+};
 
-
-void DQ_OUT(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-    GPIO_InitStruct.Pin   = DS18B20_Pin;
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-
+void DQ_OUT(void)
+{
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
     HAL_GPIO_Init(DS18B20_GPIO_Port, &GPIO_InitStruct);
 }
 
 #define DQ_H() HAL_GPIO_WritePin(DS18B20_GPIO_Port, DS18B20_Pin, GPIO_PIN_SET)
 #define DQ_L() HAL_GPIO_WritePin(DS18B20_GPIO_Port, DS18B20_Pin, GPIO_PIN_RESET)
 
-void DQ_IN(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-    GPIO_InitStruct.Pin   = DS18B20_Pin;
-    GPIO_InitStruct.Mode  = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-
+void DQ_IN(void)
+{
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
     HAL_GPIO_Init(DS18B20_GPIO_Port, &GPIO_InitStruct);
 }
 
-#define DQ_GET() HAL_GPIO_ReadPin(DS18B20_GPIO_Port, DS18B20_Pin)
+#define DQ_GET()  HAL_GPIO_ReadPin(DS18B20_GPIO_Port, DS18B20_Pin)
 #define DQ_IS_L() (HAL_GPIO_ReadPin(DS18B20_GPIO_Port, DS18B20_Pin) == GPIO_PIN_RESET)
 #define DQ_IS_H() (HAL_GPIO_ReadPin(DS18B20_GPIO_Port, DS18B20_Pin) == GPIO_PIN_SET)
 
-void HAL_Delay_us(uint32_t us) {
+void HAL_Delay_us(uint32_t us)
+{
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000000);
     HAL_Delay(us - 1);
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
@@ -44,7 +39,8 @@ void HAL_Delay_us(uint32_t us) {
 #include "stdio.h"
 
 // reutrn 0:器件不存在 1:器件存在
-uint8_t DS18B20_Reset() {
+uint8_t DS18B20_Reset()
+{
     // reset
 
     DQ_OUT();
@@ -78,7 +74,8 @@ uint8_t DS18B20_Reset() {
     return 1;
 }
 
-uint8_t DS18b20_ReadBit(void) {
+uint8_t DS18b20_ReadBit(void)
+{
     uint8_t dat;
     DQ_OUT();
     DQ_L();
@@ -89,7 +86,8 @@ uint8_t DS18b20_ReadBit(void) {
     return dat;
 }
 
-uint8_t DS18B20_ReadByte(void) {
+uint8_t DS18B20_ReadByte(void)
+{
     uint8_t data = 0x00, mask;
     for (mask = 0x01; mask != 0; mask <<= 1)
         if (DS18b20_ReadBit() == GPIO_PIN_SET)
@@ -97,7 +95,8 @@ uint8_t DS18B20_ReadByte(void) {
     return data;
 }
 
-void DS18B20_WriteByte(uint8_t data) {
+void DS18B20_WriteByte(uint8_t data)
+{
     DQ_OUT();
     for (uint8_t mask = 0x01; mask != 0; mask <<= 1) {
         if ((data & mask) == GPIO_PIN_RESET) {
@@ -117,7 +116,8 @@ void DS18B20_WriteByte(uint8_t data) {
 }
 
 // 读温度寄存器的值（原始数据）
-int16_t DS18B20_ReadTempReg(void) {
+int16_t DS18B20_ReadTempReg(void)
+{
     uint8_t temp1, temp2;
 
     if (DS18B20_Reset() == 0) return 0;  // 总线复位
@@ -136,7 +136,8 @@ int16_t DS18B20_ReadTempReg(void) {
     return (temp2 << 8) | temp1;
 }
 
-int16_t DS18B20_ReadTempRegByID(uint8_t* id) {
+int16_t DS18B20_ReadTempRegByID(uint8_t* id)
+{
     uint8_t temp1, temp2;
     uint8_t i;
 
@@ -163,13 +164,15 @@ int16_t DS18B20_ReadTempRegByID(uint8_t* id) {
     return ((temp2 << 8) | temp1); /* 返回16位寄存器值 */
 }
 
-float DS18B20_ConvertTemp(int16_t temp /*eg: DS18B20_ReadTempReg()*/) {
+float DS18B20_ConvertTemp(int16_t temp /*eg: DS18B20_ReadTempReg()*/)
+{
     return ((temp < 0) ? (~temp + 1) : temp) * 0.0625;  // 0.0625*16=1
 }
 
 // 读DS18B20的ROM里的ID
 // return: 0 表示失败， 1表示检测到正确ID
-uint8_t DS18B20_ReadID(uint8_t* id) {
+uint8_t DS18B20_ReadID(uint8_t* id)
+{
     uint8_t i;
 
     if (DS18B20_Reset() == 0) return 0;
@@ -184,7 +187,8 @@ uint8_t DS18B20_ReadID(uint8_t* id) {
     return 1;
 }
 
-void DS18B20_SetResolution(uint8_t res /*9`12*/) {  // 精度设置
+void DS18B20_SetResolution(uint8_t res /*9`12*/)
+{  // 精度设置
     switch (res) {
         case 9: res = 0; break;
         case 10: res = 1; break;
@@ -205,7 +209,8 @@ void DS18B20_SetResolution(uint8_t res /*9`12*/) {  // 精度设置
     DS18B20_WriteByte(0x1f | (res << 5));
 }
 
-uint8_t dallas_crc8(uint8_t* data, uint8_t size) {
+uint8_t dallas_crc8(uint8_t* data, uint8_t size)
+{
     uint8_t  crc = 0, inbyte, j, mix;
     uint32_t i;
 
@@ -223,7 +228,8 @@ uint8_t dallas_crc8(uint8_t* data, uint8_t size) {
 }
 
 // 成功率不高，可能是改变GPIO方向时调用了HAL_GPIO_Init函数，占用了大部分延时
-uint8_t DS18B20_ReadTempRegCRC(int16_t* _temp) {
+uint8_t DS18B20_ReadTempRegCRC(int16_t* _temp)
+{
     uint8_t i;
     uint8_t temp[10], crc;
 
