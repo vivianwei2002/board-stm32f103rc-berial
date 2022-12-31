@@ -175,7 +175,7 @@ HAL_UART_Receive_IT(&huart1, &aRxBuffer, 1);
 
 ```c
 int fputc(int ch, FILE *f){ // 重定向 printf
-  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xffff);
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xff);
   return ch;
 }
 
