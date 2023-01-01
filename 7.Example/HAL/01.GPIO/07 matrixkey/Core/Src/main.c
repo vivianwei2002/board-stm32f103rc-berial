@@ -24,7 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "KeyMatrix/keymatrix.h"
+#include "MatrixKey/matrixkey.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

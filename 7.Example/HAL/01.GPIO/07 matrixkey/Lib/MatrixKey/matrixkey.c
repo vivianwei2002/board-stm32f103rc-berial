@@ -1,4 +1,4 @@
-#include "keymatrix.h"
+#include "matrixkey.h"
 
 void matrix_key_write(uint8_t index, key_state_t state)
 {

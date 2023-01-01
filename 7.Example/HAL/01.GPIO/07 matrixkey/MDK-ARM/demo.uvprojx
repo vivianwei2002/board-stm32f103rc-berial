@@ -510,9 +510,9 @@
           <GroupName>Application/Lib</GroupName>
           <Files>
             <File>
-              <FileName>keymatrix.c</FileName>
+              <FileName>matrixkey.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Lib\KeyMatrix\keymatrix.c</FilePath>
+              <FilePath>..\Lib\MatrixKey\matrixkey.c</FilePath>
             </File>
           </Files>
         </Group>
