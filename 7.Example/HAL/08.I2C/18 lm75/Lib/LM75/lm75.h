@@ -1,5 +1,5 @@
-#ifndef _LM75_I2C_H_
-#define _LM75_I2C_H_
+#ifndef _LM75_H_
+#define _LM75_H_
 
 #include "i2cbus/i2cbus.h"
 
