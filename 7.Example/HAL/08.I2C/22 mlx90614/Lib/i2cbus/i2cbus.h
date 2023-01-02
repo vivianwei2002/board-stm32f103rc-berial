@@ -16,11 +16,11 @@
 
 #define CONFIG_READ_UINT8   1
 #define CONFIG_READ_UINT16  0
-#define CONFIG_READ_BITWISE 0  // 位操作
+#define CONFIG_READ_BITWISE 1  // 位操作
 
 #define CONFIG_WRITE_UINT8   1
 #define CONFIG_WRITE_UINT16  0
-#define CONFIG_WRITE_BITWISE 0
+#define CONFIG_WRITE_BITWISE 1
 
 // <! types
 
@@ -124,7 +124,7 @@ uint8_t i2c_scan(i2c_t* i2c);
 #if CONFIG_READ_UINT8
 
 i2c_state_t i2c_read_1byte(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t* data);
-uint8_t     i2c_read_1byte_fast(i2c_t* i2c, uint8_t dev, uint8_t reg);
+uint8_t     i2c_read_1byte_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t def /* default */);
 
 #endif
 
@@ -136,14 +136,14 @@ i2c_state_t i2c_write_1byte(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t data);
 
 #if CONFIG_READ_UINT16
 
-i2c_state_t i2c_read_2byte(i2c_t* i2c, uint8_t dev, uint8_t reg_lsb, uint8_t reg_msb, uint16_t* data);
-uint16_t    i2c_read_2byte_fast(i2c_t* i2c, uint8_t dev, uint8_t reg_lsb, uint8_t reg_msb);
+i2c_state_t i2c_read_2byte(i2c_t* i2c, uint8_t dev, uint8_t lsb, uint8_t msb, uint16_t* data);
+uint16_t    i2c_read_2byte_fast(i2c_t* i2c, uint8_t dev, uint8_t lsb, uint8_t msb, uint16_t def);
 
 i2c_state_t i2c_read_2byte_lsb_msb(i2c_t* i2c, uint8_t dev, uint8_t reg, uint16_t* data);
-uint16_t    i2c_read_2byte_lsb_msb_fast(i2c_t* i2c, uint8_t dev, uint8_t reg);
+uint16_t    i2c_read_2byte_lsb_msb_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint16_t def);
 
 i2c_state_t i2c_read_2byte_msb_lsb(i2c_t* i2c, uint8_t dev, uint8_t reg, uint16_t* data);
-uint16_t    i2c_read_2byte_msb_lsb_fast(i2c_t* i2c, uint8_t dev, uint8_t reg);
+uint16_t    i2c_read_2byte_msb_lsb_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint16_t def);
 
 #endif
 
@@ -157,16 +157,16 @@ i2c_state_t i2c_write_2byte_msb_lsb(i2c_t* i2c, uint8_t dev, uint8_t reg, uint16
 #if CONFIG_READ_BITWISE
 
 i2c_state_t i2c_read_bit(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t idx, uint8_t* data);
-uint8_t     i2c_read_bit_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t idx);
+uint8_t     i2c_read_bit_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t idx, uint8_t def);
 
 i2c_state_t i2c_read_bits(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t len, uint8_t* data);
-uint8_t     i2c_read_bits_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t len);
+uint8_t     i2c_read_bits_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t len, uint8_t def);
 
 i2c_state_t i2c_read_bits_ex(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t end, uint8_t* data);
-uint8_t     i2c_read_bits_ex_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t end);
+uint8_t     i2c_read_bits_ex_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t start, uint8_t end, uint8_t def);
 
 i2c_state_t i2c_read_mask(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t mask, uint8_t* data);
-uint8_t     i2c_read_mask_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t mask);
+uint8_t     i2c_read_mask_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t mask, uint8_t def);
 
 #endif
 

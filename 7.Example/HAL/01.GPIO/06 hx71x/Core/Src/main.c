@@ -19,14 +19,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "i2c.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "max30102/max30102.h"
-
+#include "hx71x/hx71x.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -89,7 +87,7 @@ int main(void)
 
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
-    MX_I2C2_Init();
+    MX_USART1_UART_Init();
     MX_USART2_UART_Init();
     /* USER CODE BEGIN 2 */
 
@@ -98,13 +96,15 @@ int main(void)
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
 
-    // max30102_test_die_temperature_c();
-    // max30102_test_ppg_mini();
-    max30102_test_ppg_full();
-    // max30102_test_calc_sample_frequency();
+    // 拿手按住气压孔（值变大）
 
-    // println("err");
+    hx71x_set_mode(HX71X_MODE_CHANNEL_A_GAIN_128);
     while (1) {
+        int32_t value   = hx71x_read_raw_average(5);
+        float   voltage = hx71x_convert_to_voltage(value);
+        printv("%.4f", voltage);
+        float pressure = hx71x_convert_to_pressure(value);
+        HAL_Delay(200);
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */

@@ -52,13 +52,13 @@ typedef enum {
 
 ////////////////////////////////////////////
 
-#define lm75_read_1byte(reg)                   i2c_read_1byte_fast(&LM75_I2C, LM75_DEV, reg)
-#define lm75_read_2byte(reg)                   i2c_read_2byte_msb_lsb_fast(&LM75_I2C, LM75_DEV, reg)
+#define lm75_read_1byte(reg)                   i2c_read_1byte_fast(&LM75_I2C, LM75_DEV, reg, 0)
+#define lm75_read_2byte(reg)                   i2c_read_2byte_msb_lsb_fast(&LM75_I2C, LM75_DEV, reg, 0)
 #define lm75_write_1byte(reg, data)            i2c_write_1byte(&LM75_I2C, LM75_DEV, reg, data)
 #define lm75_write_2byte(reg, data)            i2c_write_2byte_msb_lsb(&LM75_I2C, LM75_DEV, reg, data)
-#define lm75_read_bit(reg, index)              i2c_read_bit_fast(&LM75_I2C, LM75_DEV, reg, index)
+#define lm75_read_bit(reg, index)              i2c_read_bit_fast(&LM75_I2C, LM75_DEV, reg, index, 0)
 #define lm75_write_bit(reg, index, data)       i2c_write_bit(&LM75_I2C, LM75_DEV, reg, index, data)
-#define lm75_read_bits(reg, start, len)        i2c_read_bits_fast(&LM75_I2C, LM75_DEV, reg, start, len)
+#define lm75_read_bits(reg, start, len)        i2c_read_bits_fast(&LM75_I2C, LM75_DEV, reg, start, len, 0)
 #define lm75_write_bits(reg, start, len, data) i2c_write_bits(&LM75_I2C, LM75_DEV, reg, start, len, data)
 
 ////////////////////////////////////////////

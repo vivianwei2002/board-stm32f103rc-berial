@@ -110,7 +110,7 @@ typedef enum {
 
 //////////////////////////////////////////// functions
 
-#define mlx90614_read_1byte(reg)        i2c_read_1byte_fast(&MLX90614_I2C, MLX90614_DEV, reg)
+#define mlx90614_read_1byte(reg)        i2c_read_1byte_fast(&MLX90614_I2C, MLX90614_DEV, reg, 0)
 #define mlx90614_write_1byte(reg, data) i2c_write_1byte(&MLX90614_I2C, MLX90614_DEV, reg, data)
 
 uint8_t mlx90614_calculate_crc(uint8_t arr[], uint8_t len);

@@ -157,7 +157,7 @@ int main(void)
     while (1) {
 #define MLX90614_TEST 2
 #if MLX90614_TEST == 1
-        // 原始数据，不知道有扫描用
+        // 原始数据，不知道有什么用
         uint16_t raw_ir[2];
         mlx90614_get_raw_ir_channel_1(&raw_ir[0]);
         mlx90614_get_raw_ir_channel_2(&raw_ir[1]);

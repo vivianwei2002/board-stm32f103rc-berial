@@ -57,8 +57,10 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define MAX30102_INT_Pin GPIO_PIN_9
-#define MAX30102_INT_GPIO_Port GPIOB
+#define HX71X_DT_Pin GPIO_PIN_0
+#define HX71X_DT_GPIO_Port GPIOB
+#define HX71X_SCK_Pin GPIO_PIN_1
+#define HX71X_SCK_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

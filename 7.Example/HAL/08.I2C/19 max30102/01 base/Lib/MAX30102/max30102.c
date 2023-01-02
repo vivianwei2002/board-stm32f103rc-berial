@@ -1,153 +1,392 @@
 #include "MAX30102.h"
 
-uint8_t MAX30102_ReadReg(uint8_t reg)
+bool max30102_is_ppg_data_ready(uint32_t timeout)
 {
-    uint8_t buff;
-    HAL_I2C_Mem_Read(&MAX30102_I2C, MAX30102_DEV, reg, I2C_MEMADD_SIZE_8BIT, &buff, 1, HAL_MAX_DELAY);
-    return buff;
-}
-
-void MAX30102_WriteReg(uint8_t reg, uint8_t data)
-{
-    HAL_I2C_Mem_Write(&MAX30102_I2C, MAX30102_DEV, reg, I2C_MEMADD_SIZE_8BIT, &data, 1, HAL_MAX_DELAY);
-}
-
-void MAX30102_MaskBits(uint8_t reg, uint8_t mask, uint8_t newval)
-{
-    // Zero-out the portions of the register we're interested in, and then set new value
-    MAX30102_WriteReg(reg, MAX30102_ReadReg(reg) & ~mask | newval);
-}
-
-uint8_t MAX30102_WaitBits(uint8_t reg, uint8_t mask, uint32_t timeout)
-{
-    uint32_t start = HAL_GetTick();
-    while (HAL_GetTick() - start < timeout) {
-        if ((MAX30102_ReadReg(reg) & mask) == mask)
-            return HAL_OK;
+#if MAX30102_CHECK_DATA_READY
+    // 读取模块中断引脚电平(需连接模块的INT引脚到IO口)
+    while (timeout) {
+        if (HAL_GPIO_ReadPin(MAX30102_INT_GPIO_Port, MAX30102_INT_Pin) == GPIO_PIN_SET) {
+            // read and clear status register
+            max30102_read_1byte(MAX30102_REG_INTR_STATUS_1);
+            return true;
+        }
+        --timeout;
         HAL_Delay(1);
     }
-    return HAL_TIMEOUT;
+    return false;
+#else
+    // 读取中断状态寄存器(需调用 max30102_set_interrupt_enable(MAX30102_INTERRUPT_PPG_RDY, true) 使能该中断)
+    return max30102_wait_interrupt_status(MAX30102_INTERRUPT_STATUS_PPG_RDY, true, timeout);
+#endif
 }
 
-//////////////////////////////////////////////////////////////////
-
-uint8_t activeLEDs = 0;
-
-uint8_t MAX30102_CheckDevice()
+void max30102_test_ppg_mini(void)
 {
-    // if (HAL_I2C_IsDeviceReady(&MAX30102_I2C, MAX30102_DEV, 3, HAL_MAX_DELAY) != HAL_OK) return HAL_ERROR;
-    if (MAX30102_ReadPartID() != 0x15) return HAL_ERROR;
-    printf("MAX3010x Revision ID: 0x%2x", MAX30102_ReadRevisionID());
-    return HAL_OK;
-}
+    // check device
+    if (max30102_check_device()) {
+        // init device
+        uint8_t cmds_init[] = {
+            MAX30102_REG_MODE_CONFIG, 0x40,    // Reset
+            MAX30102_REG_INTR_ENABLE_1, 0xc0,  // INTR1 setting
+            MAX30102_REG_INTR_ENABLE_2, 0x00,  // INTR2 setting
+            MAX30102_REG_FIFO_WR_PTR, 0x00,    // FIFO_WR_PTR[4:0]
+            MAX30102_REG_OVF_COUNTER, 0x00,    // OVF_COUNTER[4:0]
+            MAX30102_REG_FIFO_RD_PTR, 0x00,    // FIFO_RD_PTR[4:0]
+            MAX30102_REG_FIFO_CONFIG, 0x0f,    // sample avg = 1, fifo rollover=false, fifo almost full = 17
+            MAX30102_REG_MODE_CONFIG, 0x03,    // 0x02 for Red only, 0x03 for SpO2 mode 0x07 multimode LED
+            MAX30102_REG_SPO2_CONFIG, 0x27,    // SPO2_ADC range = 4096nA, SPO2 sample rate (100 Hz), LED pulseWidth (400uS)
+            MAX30102_REG_LED1_PA, 0x24,        // Choose value for ~ 7mA for LED1
+            MAX30102_REG_LED2_PA, 0x24,        // Choose value for ~ 7mA for LED2
+            MAX30102_REG_PILOT_PA, 0x7f,       // Choose value for ~ 25mA for Pilot LED
+        };
+        i2c_write_mem_ex(&MAX30102_I2C, MAX30102_DEV, cmds_init, sizeof(cmds_init) / sizeof(uint8_t));
+        // max30102_set_interrupt_enable(MAX30102_INTERRUPT_PPG_RDY_EN, true);
 
-void MAX30102_Init(
-    uint8_t powerLevel,  // 0=Off, 255=50mA, I≈50.0mA/powerLevel
-    uint8_t sampleAverage,
-    uint8_t ledMode,
-    int     sampleRate,
-    int     pulseWidth,
-    int     adcRange)
-{
-    // Reset all configuration, threshold, and data registers to POR values
-    MAX30102_Reset();
-
-    /******************** FIFO Configuration ********************/
-
-    // The chip will average multiple samples of same type together if you wish
-    MAX30102_SetSampleAverage(sampleAverage);
-    // Set to 17 samples to trigger an 'Almost Full' interrupt
-    MAX30102_SetAlmostFull(15);
-    // Allow FIFO to wrap/roll over
-    MAX30102_SetRollOverEnable(1);
-    // Enable data ready intr
-    MAX30102_SetIntEnable1(INT_DATA_RDY, 1);
-
-    /******************** Led Mode Configuration ********************/
-
-    // used to control how many bytes to read from FIFO buffer
-    switch (ledMode) {
-        case LED_MODE_REDONLY: activeLEDs = 1; break;
-        case LED_MODE_REDIRONLY: activeLEDs = 2; break;
-        case LED_MODE_MULTILED: activeLEDs = 3; break;
+        // read data
+        uint8_t  data_fifo[6];
+        uint32_t red, ir;
+        while (1) {
+            // wait interrupt
+            if (max30102_wait_interrupt_status(MAX30102_INTERRUPT_STATUS_A_FULL, true, 50)) {
+                // read fifo
+                if (max30102_read_bytes(MAX30102_REG_FIFO_DATA, data_fifo, 6) == I2C_OK) {
+                    red = ((data_fifo[0] & 0x03) << 16) | (data_fifo[1] << 8) | (data_fifo[2]);  // Mask MSB [23:18], 0x03FFFF
+                    ir  = ((data_fifo[3] & 0x03) << 16) | (data_fifo[4] << 8) | (data_fifo[5]);
+                    printf("%i,%i\r\n", red, ir);
+                    // printf("red = %i, ir = %i\r\n", red, ir);
+                }
+            }
+        }
     }
+}
 
-    // Set which LEDs are used for sampling -- Red only, RED+IR only, or custom.
-    MAX30102_SetLedMode(ledMode);
-
-    /******************** Particle Sensing Configuration ********************/
-
-    // - The longer the pulse width the longer range of detection you'll have, 脉冲宽度越长，检测范围越长
-    // - At 69us and 0.4mA it's about 2 inches
-    // - At 411us and 0.4mA it's about 6 inches
-
-    MAX30102_WriteReg(REG_SPO2_CONFIG, adcRange | sampleRate | pulseWidth);
-
-    /**************** LED Pulse Amplitude Configuration ****************/
-
-    // - 0x02, 0.4mA - Presence detection of ~4 inch
-    // - 0x1F, 6.4mA - Presence detection of ~8 inch (default)
-    // - 0x7F, 25.4mA - Presence detection of ~8 inch
-    // - 0xFF, 50.0mA - Presence detection of ~12 inch (typical)
-
-    MAX30102_WriteReg(REG_LED1_PA, powerLevel);                      // Red
-    if (activeLEDs > 1) MAX30102_WriteReg(REG_LED2_PA, powerLevel);  // IR
-    if (activeLEDs > 2) MAX30102_WriteReg(REG_LED3_PA, powerLevel);  // Green
-    MAX30102_WriteReg(REG_PILOT_PA, powerLevel);                     // Proximity
-
-    // 设置采样值保存的位置
-
-    MAX30102_SetSlot(1, SLOT_RED_LED);                        // RED_LED 放在前3个字节
-    if (activeLEDs > 1) MAX30102_SetSlot(2, SLOT_IR_LED);     // IR_LED 放在中间3个字节
-    if (activeLEDs > 2) MAX30102_SetSlot(3, SLOT_GREEN_LED);  // GREEN_LED 放在后3个字节
-
-    // MAX30102_SetDevSlot(4, SLOT_NONE);
-
-    /**************** Clear FIFO ****************/
+void max30102_test_ppg_full(void)
+{
+    if (!max30102_check_device()) return;
+    // Reset all configuration, threshold, and data registers to POR values
+    max30102_reset();
+    // The chip will average multiple samples of same type together if you wish
+    max30102_set_fifo_sample_average(MAX30102_SAMPLE_AVERAGE_4);
+    // Set to 17 samples to trigger an 'Almost Full' interrupt
+    max30102_set_fifo_almost_full(15);
+    // Allow FIFO to wrap/roll over
+    max30102_set_fifo_roll_over(true);
+    // Enable data ready intr
+    max30102_set_interrupt_enable(MAX30102_INTERRUPT_PPG_RDY_EN, true);
+    // Enable proximity intr
+    max30102_set_interrupt_enable(MAX30102_INTERRUPT_PROX_INT_EN, false);
+    // led mode
+    max30102_set_mode(MAX30102_MODE_MULTI_LED);
+    // spo2 config
+    max30102_set_spo2_adc_range(MAX30102_ADC_RANGE_2048);
+    max30102_set_spo2_sample_rate(MAX30102_SAMPLE_RATE_800_HZ);
+    max30102_set_spo2_adc_resolution(MAX30102_ADC_RESOLUTION_17_BIT);
+    // led current
+    max30102_set_led_current(MAX30102_LED_RED, MAX30102_LED_CURRENT_6_4MA);
+    max30102_set_led_current(MAX30102_LED_IR, MAX30102_LED_CURRENT_6_4MA);
+    max30102_set_led_current(MAX30102_LED_PILOT, MAX30102_LED_CURRENT_25_4MA);
+    // samples order (vaild when mode = MAX30102_MODE_MULTI_LED)
+    max30102_set_slot(MAX30102_SLOT_NUM_1, MAX30102_SLOT_LED_RED);
+    max30102_set_slot(MAX30102_SLOT_NUM_2, MAX30102_SLOT_LED_IR);
+    max30102_set_slot(MAX30102_SLOT_NUM_3, MAX30102_SLOT_LED_RED_PILOT);
+    max30102_set_slot(MAX30102_SLOT_NUM_4, MAX30102_SLOT_LED_IR_PILOT);
 
     // Reset the FIFO before we begin checking the sensor
-    MAX30102_ClearFIFO();
+    max30102_clear_fifo();
+
+    uint32_t               buff[64];
+    max30102_fifo_params_t p = max30102_generate_fifo_params(sizeof(buff) / sizeof(uint32_t));
+    while (1) {
+        if (max30102_is_ppg_data_ready(50)) {
+            max30102_read_fifo(buff, &p);
+            for (uint8_t i = 0, j = 0; i < p.length; ++i, j += p.unitsize) {
+                switch (p.unitsize) {
+                    case 1: println("%i", buff[j + 0]); break;
+                    case 2: println("%i,%i", buff[j + 0], buff[j + 1]); break;
+                    case 3: println("%i,%i,%i", buff[j + 0], buff[j + 1], buff[j + 2]); break;
+                    case 4: println("%i,%i,%i,%i", buff[j + 0], buff[j + 1], buff[j + 2], buff[j + 3]); break;
+                }
+            }
+        }
+    }
 }
 
-// Resets all points to start in a known state
-// recommends clearing FIFO before beginning a read
-void MAX30102_ClearFIFO(void)
+void max30102_test_die_temperature_c()
 {
-    MAX30102_WriteReg(REG_FIFO_WR_PTR, 0);
-    MAX30102_WriteReg(REG_OVF_COUNTER, 0);
-    MAX30102_WriteReg(REG_FIFO_RD_PTR, 0);
+    // check device
+    if (max30102_check_device()) {
+        max30102_reset();
+        max30102_set_interrupt_enable(MAX30102_INTERRUPT_DIE_TEMP_RDY_EN, true);
+        while (1) {
+            printf("%.2f\r\n", max30102_read_die_temperature_c());
+            // printf("temp = %.2f\r\n", max30102_read_die_temperature_c());
+            HAL_Delay(50);
+        }
+    }
 }
 
-void MAX30102_SetSlot(uint8_t index /*1~4*/, uint8_t device)
+void max30102_test_calc_sample_frequency(void)
 {
-    switch (index) {
-        case 1: MAX30102_MaskBits(REG_MULTI_LED_CTRL1, SLOT1_MASK, device); break;
-        case 2: MAX30102_MaskBits(REG_MULTI_LED_CTRL1, SLOT2_MASK, device << 4); break;
-        case 3: MAX30102_MaskBits(REG_MULTI_LED_CTRL2, SLOT1_MASK, device); break;
-        case 4: MAX30102_MaskBits(REG_MULTI_LED_CTRL2, SLOT2_MASK, device << 4); break;
+    // 实际采样频率 ( freq = SAMPLE_RATE / SAMPLE_AVG )
+
+    // Setup to sense up to 18 inches, max LED brightness
+
+    if (max30102_check_device()) {
+        max30102_set_interrupt_enable(MAX30102_INTERRUPT_PPG_RDY_EN, true);
+        max30102_set_mode(MAX30102_MODE_SPO2);
+        max30102_set_spo2_adc_range(MAX30102_ADC_RANGE_2048);
+        // max30102_set_fifo_sample_average(MAX30102_SAMPLE_AVERAGE_2);
+        max30102_set_fifo_sample_average(MAX30102_SAMPLE_AVERAGE_4);
+        max30102_set_spo2_sample_rate(MAX30102_SAMPLE_RATE_400_HZ);
+        // max30102_set_spo2_sample_rate(MAX30102_SAMPLE_RATE_800_HZ);
+        max30102_set_spo2_adc_resolution(MAX30102_ADC_RESOLUTION_16_BIT);
+        max30102_set_led_current(MAX30102_LED_RED, MAX30102_LED_CURRENT_0MA);
+        max30102_set_led_current(MAX30102_LED_IR, MAX30102_LED_CURRENT_50MA);
+        max30102_set_led_current(MAX30102_LED_PILOT, MAX30102_LED_CURRENT_0MA);
+
+        uint32_t               buff[2];  // red + ir
+        max30102_fifo_params_t p = max30102_generate_fifo_params(sizeof(buff) / sizeof(uint32_t));
+
+        uint32_t average_value_ir = 0;  // Average IR at power up
+
+        uint8_t x = 32;
+        while (x) {
+            if (max30102_is_ppg_data_ready(50)) {
+                max30102_read_fifo(buff, &p);
+                average_value_ir += p.buffaddr[1];
+                --x;
+            }
+        }
+        average_value_ir /= 32;
+
+        uint32_t samplesTaken = 0;              // Counter for calculating the Hz or read rate
+        uint32_t startTime    = HAL_GetTick();  // Used to calculate measurement rate
+
+        while (1) {
+            if (max30102_is_ppg_data_ready(50)) {
+                max30102_read_fifo(buff, &p);
+                println("IR[%i] delta[%i] Hz[%.2f]",
+                        p.buffaddr[1], p.buffaddr[1] - average_value_ir,
+                        (float)++samplesTaken / ((HAL_GetTick() - startTime) / 1000.0));
+                // Hz ≈ SAMPLERATE_400 / SAMPLEAVG_4 = 100
+            }
+        }
+    }
+}
+
+void max30102_wakeup(void) { max30102_write_1byte(MAX30102_REG_MODE_CONFIG, 0x00); }
+void max30102_shutdown(void) { max30102_write_1byte(MAX30102_REG_MODE_CONFIG, 0x80); }  // bit[7]
+void max30102_reset(void) { max30102_write_1byte(MAX30102_REG_MODE_CONFIG, 0x40); }     // bit[6]
+
+max30102_mode_t max30102_get_mode(void) { return max30102_read_bits(MAX30102_REG_MODE_CONFIG, 0, 3); }  // bit[2:0]
+void            max30102_set_mode(max30102_mode_t mode) { max30102_write_bits(MAX30102_REG_MODE_CONFIG, 0, 3, mode); }
+
+bool max30102_check_device(void)
+{
+    if (i2c_check(&MAX30102_I2C, MAX30102_DEV) == I2C_OK && max30102_get_part_id() == 0x15) {
+        println("MAX3010x Revision ID: 0x%02x", max30102_get_revision_id());
+        return true;
+    } else {
+        println("fail to check max30102");
+        i2c_scan(&MAX30102_I2C);
+        return false;
+    }
+}
+
+bool max30102_get_interrupt_enable(max30102_interrupt_enable_t type) { return max30102_read_bit(type == MAX30102_INTERRUPT_DIE_TEMP_RDY_EN ? MAX30102_REG_INTR_ENABLE_2 : MAX30102_REG_INTR_ENABLE_1, type); }
+void max30102_set_interrupt_enable(max30102_interrupt_enable_t type, bool enable) { max30102_write_bit(type == MAX30102_INTERRUPT_DIE_TEMP_RDY_EN ? MAX30102_REG_INTR_ENABLE_2 : MAX30102_REG_INTR_ENABLE_1, type, enable); }
+bool max30102_get_interrupt_status(max30102_interrupt_status_t type) { return max30102_read_bit((type == MAX30102_INTERRUPT_STATUS_DIE_TEMP_RDY) ? MAX30102_REG_INTR_STATUS_2 : MAX30102_REG_INTR_STATUS_1, type); }
+bool max30102_wait_interrupt_status(max30102_interrupt_status_t type, bool status, uint32_t timeout /* ms */)
+{
+    while (timeout) {
+        if (max30102_get_interrupt_status(type) == status)
+            return true;
+        --timeout;
+        HAL_Delay(1);
+    }
+    return false;
+}
+
+uint8_t max30102_get_revision_id(void) { return max30102_read_1byte(MAX30102_REG_REV_ID); }
+uint8_t max30102_get_part_id(void) { return max30102_read_1byte(MAX30102_REG_PART_ID); }  // return 0x15
+
+max30102_adc_range_t max30102_get_spo2_adc_range(void) { return max30102_read_bits(MAX30102_REG_SPO2_CONFIG, 5, 2); }  // 2bit[6:5]
+void                 max30102_set_spo2_adc_range(max30102_adc_range_t range) { max30102_write_bits(MAX30102_REG_SPO2_CONFIG, 5, 2, range); }
+
+max30102_sample_rate_t max30102_get_spo2_sample_rate() { return max30102_read_bits(MAX30102_REG_SPO2_CONFIG, 2, 3); }  // 3bit[4:2]
+void                   max30102_set_spo2_sample_rate(max30102_sample_rate_t rate) { max30102_write_bits(MAX30102_REG_SPO2_CONFIG, 2, 3, rate); }
+
+max30102_adc_resolution_t max30102_get_spo2_adc_resolution() { return max30102_read_bits(MAX30102_REG_SPO2_CONFIG, 0, 2); }  // 2bit[1:0]
+void                      max30102_set_spo2_adc_resolution(max30102_adc_resolution_t resolution) { max30102_write_bits(MAX30102_REG_SPO2_CONFIG, 0, 2, resolution); }
+
+uint8_t max30102_get_led_current(max30102_led_t led)
+{
+    switch (led) {
+        case MAX30102_LED_RED: return max30102_read_1byte(MAX30102_REG_LED1_PA);
+        case MAX30102_LED_IR: return max30102_read_1byte(MAX30102_REG_LED2_PA);
+        case MAX30102_LED_PILOT: return max30102_read_1byte(MAX30102_REG_PILOT_PA);
+        default: return 0;
+    }
+}
+void max30102_set_led_current(max30102_led_t led, uint8_t current)
+{
+    switch (led) {
+        case MAX30102_LED_RED: max30102_write_1byte(MAX30102_REG_LED1_PA, current); break;
+        case MAX30102_LED_IR: max30102_write_1byte(MAX30102_REG_LED2_PA, current); break;
+        case MAX30102_LED_PILOT: max30102_write_1byte(MAX30102_REG_PILOT_PA, current); break;
         default: break;
     }
 }
 
-// Clears all slot assignments
-void MAX30102_ClearSlot(void)
+void max30102_set_slot(max30102_slot_num_t slot, max30102_slot_led_t led /**/)
 {
-    MAX30102_WriteReg(REG_MULTI_LED_CTRL1, 0);
-    MAX30102_WriteReg(REG_MULTI_LED_CTRL2, 0);
+    switch (slot) {
+        case MAX30102_SLOT_NUM_1: max30102_write_bits(MAX30102_REG_MULTI_LED_CTRL1, 0, 3, led); break;
+        case MAX30102_SLOT_NUM_2: max30102_write_bits(MAX30102_REG_MULTI_LED_CTRL1, 4, 3, led); break;
+        case MAX30102_SLOT_NUM_3: max30102_write_bits(MAX30102_REG_MULTI_LED_CTRL2, 0, 3, led); break;
+        case MAX30102_SLOT_NUM_4: max30102_write_bits(MAX30102_REG_MULTI_LED_CTRL2, 4, 3, led); break;
+    }
+}
+max30102_led_t max30102_get_slot(max30102_slot_num_t slot)
+{
+    switch (slot) {
+        case MAX30102_SLOT_NUM_1: return max30102_read_bits(MAX30102_REG_MULTI_LED_CTRL1, 0, 3);
+        case MAX30102_SLOT_NUM_2: return max30102_read_bits(MAX30102_REG_MULTI_LED_CTRL1, 4, 3);
+        case MAX30102_SLOT_NUM_3: return max30102_read_bits(MAX30102_REG_MULTI_LED_CTRL2, 0, 3);
+        case MAX30102_SLOT_NUM_4: return max30102_read_bits(MAX30102_REG_MULTI_LED_CTRL2, 4, 3);
+    }
+    return MAX30102_LED_NONE;
+}
+void max30102_clear_slot(void)
+{
+    max30102_write_1byte(MAX30102_REG_MULTI_LED_CTRL1, 0x00);
+    max30102_write_1byte(MAX30102_REG_MULTI_LED_CTRL2, 0x00);
 }
 
-// Die Temperature
-// Returns temp in C 返回摄氏度
-float MAX30102_ReadTemperature()
+uint8_t max30102_get_proximity_threshold(void) { return max30102_read_1byte(MAX30102_REG_PROX_INT_THRESH); }
+void    max30102_set_proximity_threshold(uint8_t threshold) { max30102_write_1byte(MAX30102_REG_PROX_INT_THRESH, threshold); }
+
+max30102_sample_average_t max30102_get_fifo_sample_average(void) { return max30102_read_bits(MAX30102_REG_FIFO_CONFIG, 5, 3); }  // 3bit[7:5]
+void                      max30102_set_fifo_sample_average(max30102_sample_average_t sample) { max30102_write_bits(MAX30102_REG_FIFO_CONFIG, 5, 3, sample); }
+
+bool max30102_get_fifo_roll_over(void) { return max30102_read_bit(MAX30102_REG_FIFO_CONFIG, 4); }  // 1bit[4]
+void max30102_set_fifo_roll_over(bool enable) { max30102_write_bit(MAX30102_REG_FIFO_CONFIG, 5, enable); }
+
+uint8_t max30102_get_fifo_almost_full(void) { return max30102_read_bits(MAX30102_REG_FIFO_CONFIG, 0, 4); }  // 4bit[3:0]
+void    max30102_set_fifo_almost_full(uint8_t value) { max30102_write_bits(MAX30102_REG_FIFO_CONFIG, 0, 4, value); }
+
+void max30102_clear_fifo(void)
 {
-    // 使用前需调用函数 MAX30102_SetIntEnable2(INT_DIE_TEMP_RDY, 1) 使能中断
+    max30102_write_1byte(MAX30102_REG_FIFO_WR_PTR, 0);
+    max30102_write_1byte(MAX30102_REG_OVF_COUNTER, 0);
+    max30102_write_1byte(MAX30102_REG_FIFO_RD_PTR, 0);
+}
+
+uint8_t max30102_get_fifo_overflow_counter(void) { return max30102_read_bits(MAX30102_REG_OVF_COUNTER, 0, 5); }
+void    max30102_set_fifo_overflow_counter(uint8_t counter) { max30102_write_bits(MAX30102_REG_OVF_COUNTER, 0, 5, counter); }
+
+uint8_t max30102_get_fifo_read_pointer(void) { return max30102_read_bits(MAX30102_REG_FIFO_RD_PTR, 0, 5); }
+void    max30102_set_fifo_read_pointer(uint8_t pointer) { max30102_write_bits(MAX30102_REG_FIFO_RD_PTR, 0, 5, pointer); }
+
+uint8_t max30102_get_fifo_write_pointer(void) { return max30102_read_bits(MAX30102_REG_FIFO_WR_PTR, 0, 5); }
+void    max30102_set_fifo_write_pointer(uint8_t pointer) { max30102_write_bits(MAX30102_REG_FIFO_WR_PTR, 0, 5, pointer); }
+
+max30102_fifo_params_t max30102_generate_fifo_params(uint8_t buffsize)
+{
+    max30102_fifo_params_t p;
+
+    p.buffaddr = (void*)0;
+
+    // number of active slot
+
+    p.unitsize = 0;
+
+    if (p.unitsize == 0) {
+        switch (max30102_get_mode()) {
+            case MAX30102_MODE_HEART_RATE: p.unitsize = 1; break;  // red
+            case MAX30102_MODE_SPO2: p.unitsize = 2; break;        // red + ir
+            case MAX30102_MODE_MULTI_LED: {                        // custom
+                if (max30102_get_slot(MAX30102_SLOT_NUM_1) != MAX30102_SLOT_LED_NONE)
+                    if (++p.unitsize, max30102_get_slot(MAX30102_SLOT_NUM_2) != MAX30102_SLOT_LED_NONE)
+                        if (++p.unitsize, max30102_get_slot(MAX30102_SLOT_NUM_3) != MAX30102_SLOT_LED_NONE)
+                            if (++p.unitsize, max30102_get_slot(MAX30102_SLOT_NUM_4) != MAX30102_SLOT_LED_NONE)
+                                ++p.unitsize;
+                break;
+            }
+        }
+    }
+
+    // right shift amount
+
+    switch (max30102_get_spo2_adc_resolution()) {
+        case MAX30102_ADC_RESOLUTION_18_BIT: p.rshift = 0; break;
+        case MAX30102_ADC_RESOLUTION_17_BIT: p.rshift = 1; break;
+        case MAX30102_ADC_RESOLUTION_16_BIT: p.rshift = 2; break;
+        case MAX30102_ADC_RESOLUTION_15_BIT: p.rshift = 3; break;
+    }
+
+    // maximum readable length
+
+    p.capacity = buffsize / p.unitsize;
+
+    return p;
+}
+
+// read raw
+static uint8_t buff[32 * 12];
+
+uint8_t max30102_read_fifo(uint32_t* data, max30102_fifo_params_t* param)
+{
+    param->buffaddr = data;
+
+    // size of read
+
+    uint8_t wp = max30102_get_fifo_write_pointer(),
+            rp = max30102_get_fifo_read_pointer();
+
+    uint8_t len;
+
+    if (wp > rp) {
+        len = wp - rp;
+    } else {
+        // The circular FIFO depth is 32
+        len = 32 + wp - rp;
+    }
+
+    if (len > param->capacity)
+        len = param->capacity;
+
+    param->length = len;
+
+    // read fifo
+    max30102_read_bytes(MAX30102_REG_FIFO_DATA, buff, len * param->unitsize * 3);
+
+    uint8_t  i, j;
+    uint16_t s = 0, ss = 0;
+    for (i = 0; i < len; ++i) {
+        for (j = 0; j < param->unitsize; ++j) {
+            data[ss] = (buff[s + 0] << 16) |
+                       (buff[s + 1] << 8) |
+                       (buff[s + 2] << 0);
+            data[ss] >>= param->rshift;
+            s += 3;
+            ++ss;
+        }
+    }
+
+    return len;
+}
+
+float max30102_read_die_temperature_c(void)
+{
+    // 使用前需调用函数 max30102_set_interrupt_enable(MAX30102_INTERRUPT_STATUS_DIE_TEMP_RDY, true); 使能温度转换完成中断
     // Config die temperature register to take 1 temperature sample
-    MAX30102_WriteReg(REG_TEMP_CONFIG, 0x01);
+    max30102_write_bit(MAX30102_REG_TEMP_CONFIG, 0, 1);
     // Poll for bit to clear, reading is then complete
-    if (MAX30102_WaitIntState2(INT_DIE_TEMP_RDY)) return -999.0;
-    //  Read die temperature register (integer)
-    int8_t  tempInt  = MAX30102_ReadReg(REG_TEMP_INTR);
-    uint8_t tempFrac = MAX30102_ReadReg(REG_TEMP_FRAC);  // Causes the clearing of the DIE_TEMP_RDY interrupt
+    if (!max30102_wait_interrupt_status(MAX30102_INTERRUPT_STATUS_DIE_TEMP_RDY, true, 10)) return -999.0;
+    // Read die temperature register (integer)
+    int8_t  tempInt  = max30102_read_1byte(MAX30102_REG_TEMP_INTR);
+    uint8_t tempFrac = max30102_read_bits(MAX30102_REG_TEMP_FRAC, 0, 4);  // Causes the clearing of the DIE_TEMP_RDY interrupt
     // Calculate temperature
     return (float)tempInt + ((float)tempFrac * 0.0625);
 
@@ -155,152 +394,4 @@ float MAX30102_ReadTemperature()
     // float temp = MAX30102_ReadTemperature();
     // if (temp != -999.0) temp = temp * 1.8 + 32.0;
     // return temp;
-}
-
-uint8_t MAX30102_CheckFIFO()
-{
-    // 等待采样结束
-#if HowToCheckFIFO == 1
-    // 读取已采样的数据数
-    int8_t count;
-    do {
-        // Calculate the number of readings we need to get from sensor
-        count = MAX30102_GetWritePointer() - MAX30102_GetReadPointer();
-        if (count < 0) count += 32;  // Wrap condition
-    } while (count >= activeLEDs * 3);
-#elif HowToCheckFIFO == 2
-    // 读取模块中断引脚电平(需连接模块的INT引脚到IO口)
-    while (HAL_GPIO_ReadPin(MAX30102_INT_GPIO_Port, MAX30102_INT_Pin) == GPIO_PIN_SET) {}
-    // read and clear status register
-    MAX30102_ReadReg(REG_INTR_STATUS_1);
-#else
-    // 读取中断状态寄存器(需调用MAX30102_SetIntEnable1(INT_DATA_RDY, 1)使能该中断)
-    if (MAX30102_WaitIntState1(INT_DATA_RDY) != HAL_OK) return HAL_TIMEOUT;
-#endif
-    return HAL_OK;
-}
-
-uint8_t MAX30102_ReadFIFO(uint32_t* red /*out*/, uint32_t* ir /*out*/, uint32_t* green)
-{
-    uint8_t data[9];
-
-    // 读出的顺序与 REG_MULTI_LED_CTRL1, REG_MULTI_LED_CTRL2 有关
-
-    // 需调用以下函数以确保数据读出的顺序为:Red,IR,Green
-    // MAX30102_SetSlot(1, SLOT_RED_LED);
-    // MAX30102_SetSlot(2, SLOT_IR_LED);
-    // MAX30102_SetSlot(3, SLOT_GREEN_LED);
-
-    if (HAL_I2C_Mem_Read(&MAX30102_I2C, MAX30102_DEV, REG_FIFO_DATA, I2C_MEMADD_SIZE_8BIT, data, activeLEDs * 3, HAL_MAX_DELAY) != HAL_OK) return HAL_ERROR;
-
-    // 因为采样宽度最大位 18bit，所以部分比特位是无效的 (注：采样宽度为16bit时也是以下写法)
-
-    *red   = ((data[0] & 0x03) << 16) | (data[1] << 8) | (data[2]);  // Zero MSB [31:18], 0x0003FFFF
-    *ir    = (activeLEDs > 1) ? (((data[3] & 0x03) << 16) | (data[4] << 8) | (data[5])) : 0;
-    *green = (activeLEDs > 2) ? (((data[6] & 0x03) << 16) | (data[7] << 8) | (data[8])) : 0;
-
-    return HAL_OK;
-}
-
-uint8_t MAX30102_ReadFIFO2(max30102_fifo_t* fifo)
-{
-    return MAX30102_ReadFIFO(&(fifo->Red), &(fifo->IR), &(fifo->Green));
-}
-
-//////////////////////////////////////////////////////////////////
-
-void MAX30102Test_PPG()
-{  // mini test
-    // check device
-    if (MAX30102_CheckDevice() != HAL_OK) return;
-    // init device
-    uint8_t cmds_init[] = {
-        REG_MODE_CONFIG, 0x40,    // Reset
-        REG_INTR_ENABLE_1, 0xc0,  // INTR1 setting
-        REG_INTR_ENABLE_2, 0x00,  // INTR2 setting
-        REG_FIFO_WR_PTR, 0x00,    // FIFO_WR_PTR[4:0]
-        REG_OVF_COUNTER, 0x00,    // OVF_COUNTER[4:0]
-        REG_FIFO_RD_PTR, 0x00,    // FIFO_RD_PTR[4:0]
-        REG_FIFO_CONFIG, 0x0f,    // sample avg = 1, fifo rollover=false, fifo almost full = 17
-        REG_MODE_CONFIG, 0x03,    // 0x02 for Red only, 0x03 for SpO2 mode 0x07 multimode LED
-        REG_SPO2_CONFIG, 0x27,    // SPO2_ADC range = 4096nA, SPO2 sample rate (100 Hz), LED pulseWidth (400uS)
-        REG_LED1_PA, 0x24,        // Choose value for ~ 7mA for LED1
-        REG_LED2_PA, 0x24,        // Choose value for ~ 7mA for LED2
-        REG_PILOT_PA, 0x7f,       // Choose value for ~ 25mA for Pilot LED
-    };
-    for (uint8_t i = 0; i < sizeof(cmds_init); i += 2)
-        MAX30102_WriteReg(cmds_init[i], cmds_init[i + 1]);
-    // read data
-    uint8_t  data_fifo[6];
-    uint32_t red, ir;
-    while (1) {
-        // wait interrupt
-        if (MAX30102_WaitIntState1(INT_DATA_RDY) != HAL_OK) continue;
-        // read fifo
-        if (HAL_I2C_Mem_Read(&MAX30102_I2C, MAX30102_DEV, REG_FIFO_DATA, I2C_MEMADD_SIZE_8BIT, data_fifo, 6, HAL_MAX_DELAY) != HAL_OK) return;
-        red = ((data_fifo[0] & 0x03) << 16) | (data_fifo[1] << 8) | (data_fifo[2]);  // Mask MSB [23:18], 0x03FFFF
-        ir  = ((data_fifo[3] & 0x03) << 16) | (data_fifo[4] << 8) | (data_fifo[5]);
-        printf("%i,%i\r\n", red, ir);  // printf("red = %i, ir = %i\r\n", red, ir);
-    }
-}
-
-void MAX30102Test_PPG2()
-{
-    // check device
-    if (MAX30102_CheckDevice() != HAL_OK) return;
-    // init device
-    MAX30102_Init(0x1F, SAMPLE_AVERAGE_4, LED_MODE_MULTILED, SAMPLE_RATE_100, PULSE_WIDTH_118, ADC_RANGE_4096);
-    // read data
-    max30102_fifo_t fifo;
-    while (1) {
-        if (MAX30102_CheckFIFO() == HAL_OK)
-            if (MAX30102_ReadFIFO2(&fifo) == HAL_OK)
-                printf("%i,%i,%i\r\n", fifo.Red, fifo.IR, fifo.Green);
-    }
-}
-
-void MAX30102Test_TEMP()
-{
-    // check device
-    if (MAX30102_CheckDevice() != HAL_OK) return;
-    MAX30102_Reset();
-    MAX30102_SetIntEnable2(INT_DIE_TEMP_RDY, 1);
-    while (1) {
-        printf("%.2f\r\n", MAX30102_ReadTemperature());
-        // printf("temp = %.2f\r\n", MAX30102_ReadTemperature());
-        HAL_Delay(50);
-    }
-}
-
-void MAX30102Test_CalcSampleFreq(void)
-{  // 实际采样频率 ( freq = SAMPLE_RATE / SAMPLE_AVG )
-
-    // Setup to sense up to 18 inches, max LED brightness
-
-    MAX30102_Init(0xFF, SAMPLE_AVERAGE_4, LED_MODE_REDIRONLY, SAMPLE_RATE_400, PULSE_WIDTH_411, ADC_RANGE_2048);
-    MAX30102_SetPulseAmplitude(1, 0);  // Turn off Red LED
-    MAX30102_SetPulseAmplitude(3, 0);  // Turn off Green LED
-
-    // Take an average of IR readings at power up
-    uint32_t unblockedValue = 0;  // Average IR at power up
-
-    uint32_t red, ir, green;
-    for (uint8_t x = 0; x < 32; x++)
-        if (MAX30102_CheckFIFO() == HAL_OK)
-            if (MAX30102_ReadFIFO(&red, &ir, &green) == HAL_OK)
-                unblockedValue += ir;
-    unblockedValue /= 32;
-
-    uint32_t samplesTaken = 0;              // Counter for calculating the Hz or read rate
-    uint32_t startTime    = HAL_GetTick();  // Used to calculate measurement rate
-
-    while (1) {
-        if (MAX30102_CheckFIFO() == HAL_OK) {
-            if (MAX30102_ReadFIFO(&red, &ir, &green) == HAL_OK) {
-                ++samplesTaken;
-                printf("IR[%i] Hz[%.2f] delta[%i]\r\n", ir, (float)samplesTaken / ((HAL_GetTick() - startTime) / 1000.0), ir - unblockedValue);
-                // Hz ≈ SAMPLERATE_400 / SAMPLEAVG_4 = 100
-            }
-        }
-    }
 }
