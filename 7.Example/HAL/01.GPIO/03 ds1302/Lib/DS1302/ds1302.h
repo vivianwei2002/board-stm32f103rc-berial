@@ -1,5 +1,5 @@
-#ifndef _DS1302_H
-#define _DS1302_H
+#ifndef __DS1302_H__
+#define __DS1302_H__
 
 #include "gpio.h"
 
@@ -9,40 +9,31 @@
 
 #define DAT_R() HAL_GPIO_ReadPin(DS1302_DAT_GPIO_Port, DS1302_DAT_Pin)
 
-uint8_t BCD2HEX(uint8_t bcd);
-uint8_t DEC2BCD(uint8_t dec);
+void ds1302_init(void);
 
-void DS1302_Init();
+void ds1302_start_time(void);
+void ds1302_stop_time(void);
 
-uint8_t DS1302_GetYear();
-uint8_t DS1302_GetMonth();
-uint8_t DS1302_GetDate();
-uint8_t DS1302_GetHour();
-uint8_t DS1302_GetMinite();
-uint8_t DS1302_GetSecond();
+uint8_t ds1302_get_year(void);
+uint8_t ds1302_get_month(void);
+uint8_t ds1302_get_date(void);
+uint8_t ds1302_get_hour(void);
+uint8_t ds1302_get_minite(void);
+uint8_t ds1302_get_second(void);
 
-void DS1302_SetTime(uint8_t time[]);
-void DS1302_GetTime(uint8_t time[]);
+void ds1302_set_time(uint8_t time[]);
+void ds1302_get_time(uint8_t time[]);
 
-/* Ram addresses range from 0 to 30 */
-void DS1302_WriteRam(uint8_t addr, uint8_t val);
+// ram addresses range from 0 to 30
+void    ds1302_write_ram(uint8_t addr, uint8_t val);
+uint8_t ds1302_read_ram(uint8_t addr);
+// fill ram with 0
+void ds1302_clear_ram(void);
 
-/* Reads ram address 'addr' */
-uint8_t DS1302_ReadRam(uint8_t addr);
+void ds1302_get_time_brust(uint8_t time[]);
+void ds1302_set_time_brust(uint8_t time[]);
 
-/* Clears the entire ram writing 0 */
-void DS1302_ClearRam(void);
-
-/* Reads time in burst mode, includes control byte */
-void DS1302_GetTime_Brust(uint8_t time[]);
-
-/* Writes time in burst mode, includes control byte */
-void DS1302_SetTime_Brust(uint8_t time[]);
-
-/* Reads ram in burst mode 'len' bytes into 'buf' */
-void DS1302_ReadRam_Brust(uint8_t len, uint8_t* buf);
-
-/* Writes ram in burst mode 'len' bytes from 'buf' */
-void DS1302_WriteRam_Brust(uint8_t len, uint8_t* buf);
+void ds1302_read_ram_brust(uint8_t len, uint8_t* buf);
+void ds1302_write_ram_brust(uint8_t len, uint8_t* buf);
 
 #endif

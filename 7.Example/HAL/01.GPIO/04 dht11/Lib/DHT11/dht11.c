@@ -69,7 +69,7 @@ static uint8_t DHT11_ReadByte(void)
 
 // temp:温度(范围:0~50°)
 // humi:湿度(范围:20%~90%)
-uint8_t DHT11_ReadData(float* temp, float* humi)
+uint8_t dht11_read(float* temp, float* humi)
 {
     /*
         时序:
@@ -143,7 +143,7 @@ uint8_t DHT11_ReadData(float* temp, float* humi)
  *					value in Celcius
  *	@return float value in Fahrenheit
  */
-float ConvertCtoF(float c) { return c * 1.8 + 32; }
+float convert_c_to_f(float c) { return c * 1.8 + 32; }
 
 /*!
  *  @brief  Converts Fahrenheit to Celcius
@@ -151,12 +151,12 @@ float ConvertCtoF(float c) { return c * 1.8 + 32; }
  *					value in Fahrenheit
  *	@return float value in Celcius
  */
-float ConvertFtoC(float f) { return (f - 32) * 0.55555; }
+float convert_f_to_c(float f) { return (f - 32) * 0.55555; }
 
 /*!
  *  @brief  Compute Heat Index
- *  				Using both Rothfusz and Steadman's equations
- *					(http://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml)
+ *  		Using both Rothfusz and Steadman's equations
+ *			(http://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml)
  *  @param  temperature
  *          temperature in selected scale
  *  @param  percentHumidity
@@ -165,12 +165,12 @@ float ConvertFtoC(float f) { return (f - 32) * 0.55555; }
  * 					true if fahrenheit, false if celcius
  *	@return float heat index
  */
-float ComputeHeatIndex(float temperature, float percentHumidity, bool isFahrenheit /* true */)
+float compute_heat_index(float temperature, float percentHumidity, bool isFahrenheit /* true */)
 {
     float hi;
 
     if (!isFahrenheit)
-        temperature = ConvertCtoF(temperature);
+        temperature = convert_c_to_f(temperature);
 
     hi = 0.5 * (temperature + 61.0 + ((temperature - 68.0) * 1.2) +
                 (percentHumidity * 0.094));
@@ -187,12 +187,12 @@ float ComputeHeatIndex(float temperature, float percentHumidity, bool isFahrenhe
         if ((percentHumidity < 13) && (temperature >= 80.0) &&
             (temperature <= 112.0))
             hi -= ((13.0 - percentHumidity) * 0.25) *
-                  sqrt((17.0 - abs(temperature - 95.0)) * 0.05882);
+                  sqrt((17.0 - fabs(temperature - 95.0)) * 0.05882);
 
         else if ((percentHumidity > 85.0) && (temperature >= 80.0) &&
                  (temperature <= 87.0))
             hi += ((percentHumidity - 85.0) * 0.1) * ((87.0 - temperature) * 0.2);
     }
 
-    return isFahrenheit ? hi : ConvertFtoC(hi);
+    return isFahrenheit ? hi : convert_f_to_c(hi);
 }

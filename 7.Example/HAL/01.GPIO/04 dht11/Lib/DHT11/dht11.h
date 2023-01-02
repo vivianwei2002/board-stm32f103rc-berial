@@ -3,12 +3,13 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <math.h>
 #include "gpio.h"
 
-uint8_t DHT11_ReadData(float* temp, float* humi);
+uint8_t dht11_read(float* temp, float* humi);
 
-float ConvertCtoF(float);
-float ConvertFtoC(float);
-float ComputeHeatIndex(float temperature, float percentHumidity, bool isFahrenheit);
+float convert_c_to_f(float);
+float convert_f_to_c(float);
+float compute_heat_index(float temperature, float percentHumidity, bool isFahrenheit);
 
 #endif

@@ -51,7 +51,7 @@ void DAT_IN()
     HAL_GPIO_Init(DS1302_DAT_GPIO_Port, &GPIO_InitStruct);
 }
 
-static void DS1302_Write(uint8_t addr, uint8_t data)
+static void ds1302_write(uint8_t addr, uint8_t data)
 {
     uint8_t i;
 
@@ -82,7 +82,7 @@ static void DS1302_Write(uint8_t addr, uint8_t data)
     DAT_W(0);
 }
 
-static uint8_t DS1302_Read(uint8_t addr)
+static uint8_t ds1302_read(uint8_t addr)
 {
     uint8_t data = 0, i;
 
@@ -115,76 +115,81 @@ static uint8_t DS1302_Read(uint8_t addr)
     return data;
 }
 
-void DS1302_Init()
+void ds1302_init(void)
 {
     RST_W(0);
     CLK_W(0);
     DAT_W(0);
 }
 
-uint8_t DS1302_GetYear() { return BCD2HEX(DS1302_Read(DS1302_YEAR)); }
-uint8_t DS1302_GetMonth() { return BCD2HEX(DS1302_Read(DS1302_MONTH)); }
-uint8_t DS1302_GetDate() { return BCD2HEX(DS1302_Read(DS1302_DATE)); }
-uint8_t DS1302_GetHour() { return BCD2HEX(DS1302_Read(DS1302_HOUR)); }
-uint8_t DS1302_GetMinite() { return BCD2HEX(DS1302_Read(DS1302_MINUTE)); }
-uint8_t DS1302_GetSecond() { return BCD2HEX(DS1302_Read(DS1302_SECOND)); }
+uint8_t ds1302_get_year(void) { return BCD2HEX(ds1302_read(DS1302_YEAR)); }
+uint8_t ds1302_get_month(void) { return BCD2HEX(ds1302_read(DS1302_MONTH)); }
+uint8_t ds1302_get_date(void) { return BCD2HEX(ds1302_read(DS1302_DATE)); }
+uint8_t ds1302_get_hour(void) { return BCD2HEX(ds1302_read(DS1302_HOUR)); }
+uint8_t ds1302_get_minite(void) { return BCD2HEX(ds1302_read(DS1302_MINUTE)); }
+uint8_t ds1302_get_second(void) { return BCD2HEX(ds1302_read(DS1302_SECOND)); }
 
-void DS1302_SetTime(uint8_t time[])
+void ds1302_set_time(uint8_t time[])
 {
-    DS1302_Write(DS1302_CONTROL, 0x00);  // Disable write protection
-    DS1302_Write(DS1302_SECOND, 0x80);   // [bit7] the clock halt flag: 1 stop clock
-    DS1302_Write(DS1302_YEAR, HEX2BCD(time[0]));
-    DS1302_Write(DS1302_MONTH, HEX2BCD(time[1]));
-    DS1302_Write(DS1302_DATE, HEX2BCD(time[2]));
-    DS1302_Write(DS1302_HOUR, HEX2BCD(time[3]));  // [bit7] 0:24小时制 1:12小时制,
-    DS1302_Write(DS1302_MINUTE, HEX2BCD(time[4]));
-    DS1302_Write(DS1302_SECOND, HEX2BCD(time[5]));
-    DS1302_Write(DS1302_CONTROL, 0x80);  // Enable write protection
+    ds1302_write(DS1302_CONTROL, 0x00);  // Disable write protection
+    ds1302_write(DS1302_SECOND, 0x80);   // [bit7] the clock halt flag: 1 stop clock
+    ds1302_write(DS1302_YEAR, HEX2BCD(time[0]));
+    ds1302_write(DS1302_MONTH, HEX2BCD(time[1]));
+    ds1302_write(DS1302_DATE, HEX2BCD(time[2]));
+    ds1302_write(DS1302_HOUR, HEX2BCD(time[3]));  // [bit7] 0:24小时制 1:12小时制,
+    ds1302_write(DS1302_MINUTE, HEX2BCD(time[4]));
+    ds1302_write(DS1302_SECOND, HEX2BCD(time[5]));
+    ds1302_write(DS1302_CONTROL, 0x80);  // Enable write protection
 }
 
-void DS1302_GetTime(uint8_t time[])
+void ds1302_get_time(uint8_t time[])
 {
-    time[0] = BCD2HEX(DS1302_Read(DS1302_YEAR));
-    time[1] = BCD2HEX(DS1302_Read(DS1302_MONTH));
-    time[2] = BCD2HEX(DS1302_Read(DS1302_DATE));
-    time[3] = BCD2HEX(DS1302_Read(DS1302_HOUR));
-    time[4] = BCD2HEX(DS1302_Read(DS1302_MINUTE));
-    time[5] = BCD2HEX(DS1302_Read(DS1302_SECOND) & 0x7F);  // clear hsb
+    time[0] = BCD2HEX(ds1302_read(DS1302_YEAR));
+    time[1] = BCD2HEX(ds1302_read(DS1302_MONTH));
+    time[2] = BCD2HEX(ds1302_read(DS1302_DATE));
+    time[3] = BCD2HEX(ds1302_read(DS1302_HOUR));
+    time[4] = BCD2HEX(ds1302_read(DS1302_MINUTE));
+    time[5] = BCD2HEX(ds1302_read(DS1302_SECOND) & 0x7F);  // clear hsb
 }
 
-void DS1302_StopTime()
-{  // 停止计时
-    DS1302_Write(DS1302_CONTROL, 0x00);
-    DS1302_Write(DS1302_SECOND, DS1302_Read(DS1302_SECOND) | 0x80);
-    DS1302_Write(DS1302_CONTROL, 0x80);
+void ds1302_start_time(void)  // 开始计时
+{
+    ds1302_write(DS1302_SECOND, ds1302_read(DS1302_SECOND) | 0x80);
 }
 
-void DS1302_WriteRam(uint8_t addr, uint8_t val)
+void ds1302_stop_time(void)  // 停止计时
 {
-    DS1302_Write(DS1302_CONTROL, 0x00);
+    ds1302_write(DS1302_CONTROL, 0x00);
+    ds1302_write(DS1302_SECOND, ds1302_read(DS1302_SECOND) | 0x80);
+    ds1302_write(DS1302_CONTROL, 0x80);
+}
+
+void ds1302_write_ram(uint8_t addr, uint8_t val)
+{
+    ds1302_write(DS1302_CONTROL, 0x00);
     if (addr >= DS1302_RAMSIZE) return;
-    DS1302_Write(DS1302_RAMSTART + (2 * addr), val);
-    DS1302_Write(DS1302_CONTROL, 0x80);
+    ds1302_write(DS1302_RAMSTART + (2 * addr), val);
+    ds1302_write(DS1302_CONTROL, 0x80);
 }
 
-uint8_t DS1302_ReadRam(uint8_t addr)
+uint8_t ds1302_read_ram(uint8_t addr)
 {
     if (addr >= DS1302_RAMSIZE) return 0;
-    return DS1302_Read(DS1302_RAMSTART + (2 * addr));
+    return ds1302_read(DS1302_RAMSTART + (2 * addr));
 }
 
-void DS1302_ClearRam(void)
+void ds1302_clear_ram(void)
 {
     for (uint8_t i = 0; i < DS1302_RAMSIZE; i++)
-        DS1302_WriteRam(i, 0x00);
+        ds1302_write_ram(i, 0x00);
 }
 
-void DS1302_Write_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len)
+void ds1302_write_brust(uint8_t addr, uint8_t* pbuf, uint8_t len)
 {
     uint8_t i, j;
     uint8_t data;
 
-    DS1302_Write(DS1302_CONTROL, 0x00);
+    ds1302_write(DS1302_CONTROL, 0x00);
 
     DAT_OUT();
     CLK_W(0);
@@ -210,15 +215,15 @@ void DS1302_Write_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len)
     RST_W(0);
     DAT_W(0);
 
-    DS1302_Write(DS1302_CONTROL, 0x80);
+    ds1302_write(DS1302_CONTROL, 0x80);
 }
 
-void DS1302_Read_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len)
+void ds1302_read_brust(uint8_t addr, uint8_t* pbuf, uint8_t len)
 {
     uint8_t i, j;
     uint8_t data;
 
-    DS1302_Write(DS1302_CONTROL, 0x00);  // disable write protection
+    ds1302_write(DS1302_CONTROL, 0x00);  // disable write protection
 
     DAT_OUT();
     CLK_W(0);
@@ -248,10 +253,10 @@ void DS1302_Read_Brust(uint8_t addr, uint8_t* pbuf, uint8_t len)
     DAT_OUT();
 }
 
-void DS1302_GetTime_Brust(uint8_t time[])
+void ds1302_get_time_brust(uint8_t time[])
 {
     uint8_t temp[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-    DS1302_Read_Brust(DS1302_CLOCK_BURST, temp, 8);
+    ds1302_read_brust(DS1302_CLOCK_BURST, temp, 8);
     time[0] = BCD2HEX(temp[6]);  // Year
     time[1] = BCD2HEX(temp[4]);  // Month
     time[2] = BCD2HEX(temp[3]);  // Date
@@ -262,7 +267,7 @@ void DS1302_GetTime_Brust(uint8_t time[])
     time[7] = temp[7];           // Control, bit7 is WP bit
 }
 
-void DS1302_SetTime_Brust(uint8_t time[])
+void ds1302_set_time_brust(uint8_t time[])
 {
     uint8_t temp[8];
 
@@ -275,10 +280,10 @@ void DS1302_SetTime_Brust(uint8_t time[])
     temp[6] = HEX2BCD(time[0]);  // Year
     temp[7] = 0;                 // Control
 
-    DS1302_Write_Brust(DS1302_CLOCK_BURST, temp, 8);
+    ds1302_write_brust(DS1302_CLOCK_BURST, temp, 8);
 }
 
-void DS1302_ReadRam_Brust(uint8_t len, uint8_t* buf)
+void ds1302_read_ram_brust(uint8_t len, uint8_t* buf)
 {
     uint8_t i;
 
@@ -288,12 +293,12 @@ void DS1302_ReadRam_Brust(uint8_t len, uint8_t* buf)
     for (i = 0; i < len; i++)
         buf[i] = 0;
 
-    DS1302_Read_Brust(DS1302_RAM_BURST, buf, len);
+    ds1302_read_brust(DS1302_RAM_BURST, buf, len);
 }
 
-void DS1302_WriteRam_Brust(uint8_t len, uint8_t* buf)
+void ds1302_write_ram_brust(uint8_t len, uint8_t* buf)
 {
     if (len > DS1302_RAMSIZE)
         len = DS1302_RAMSIZE;
-    DS1302_Write_Brust(DS1302_RAM_BURST, buf, len);
+    ds1302_write_brust(DS1302_RAM_BURST, buf, len);
 }

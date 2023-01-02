@@ -63,7 +63,8 @@ void SystemClock_Config(void);
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -91,22 +92,22 @@ int main(void) {
     /* USER CODE BEGIN 2 */
 
     uint8_t time[8]   = {12, 12, 20, 23, 59, 30};
-    uint8_t flag_init = DS1302_ReadRam(0x12) == 0x1F;
+    uint8_t flag_init = ds1302_read_ram(0x12) == 0x1F;
 
-    DS1302_Init();
+    ds1302_init();
 
     if (flag_init) {
-        DS1302_ClearRam();
-        DS1302_WriteRam(0x12, 0x1F);
-        DS1302_SetTime(time);  // 初始化时间
+        ds1302_clear_ram();
+        ds1302_write_ram(0x12, 0x1F);
+        ds1302_set_time(time);  // 初始化时间
     }
 
-    DS1302_GetTime_Brust(time);
+    ds1302_get_time_brust(time);
     printf("[brust_1] %d/%d/%d %d:%d:%d\r\n", time[0], time[1], time[2], time[3], time[4], time[5]);
 
-    DS1302_SetTime_Brust(time);
+    ds1302_set_time_brust(time);
 
-    DS1302_GetTime_Brust(time);
+    ds1302_get_time_brust(time);
     printf("[brust_2] %d/%d/%d %d:%d:%d\r\n", time[0], time[1], time[2], time[3], time[4], time[5]);
 
     /* USER CODE END 2 */
@@ -114,7 +115,7 @@ int main(void) {
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1) {
-        DS1302_GetTime(time);
+        ds1302_get_time(time);
         printf("%d/%d/%d %d:%d:%d\r\n", time[0], time[1], time[2], time[3], time[4], time[5]);
         HAL_Delay(1000);
 
@@ -129,7 +130,8 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -168,7 +170,8 @@ void SystemClock_Config(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
@@ -183,7 +186,8 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t* file, uint32_t line)
+{
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
