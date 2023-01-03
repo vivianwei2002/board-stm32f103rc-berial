@@ -12,5 +12,6 @@ RTE_Components.h
 *.mxproject
 5.Toolchain/ProgramLogs.txt
 *.dbgconf
-7.Example/HAL/08.I2C/03 lis3dsh/MDK-ARM/.vscode/keil-assistant.log
-7.Example/HAL/08.I2C/03 lis3dsh/MDK-ARM/.vscode/c_cpp_properties.json
+keil-assistant.log
+c_cpp_properties.json
+.lst

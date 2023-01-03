@@ -14,7 +14,7 @@
  */
 
 #define MATRIX_KEY_ROW_COUNT 4  // number of rows
-#define MATRIX_KEY_COL_COUNT 4  // number of columns
+#define MATRIX_KEY_COL_COUNT 3  // number of columns
 
 typedef GPIO_PinState key_state_t;
 #define KEY_STATE_RELEASED GPIO_PIN_SET    // released

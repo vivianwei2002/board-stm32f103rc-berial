@@ -24,6 +24,10 @@ https://github.com/olikraus/u8g2
 
 ![image-20230104001126290](README.assets/image-20230104001126290.png)
 
+找到 `u8g2_d_memory.c`，把 `u8g2_m_16_8_f` 以外的函数全部屏蔽掉。
+
+![image-20230104012317069](README.assets/image-20230104012317069.png)
+
 ③
 
 写接口（直接写在 `main.c` 中也行）：
