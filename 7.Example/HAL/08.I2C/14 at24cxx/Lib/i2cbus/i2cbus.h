@@ -14,13 +14,13 @@
 
 #define CONFIG_ADDRESS_SCANNER 1  // 地址扫描
 
-#define CONFIG_READ_UINT8   1
-#define CONFIG_READ_UINT16  1
-#define CONFIG_READ_BITWISE 1  // 位操作
+#define CONFIG_READ_UINT8   0
+#define CONFIG_READ_UINT16  0
+#define CONFIG_READ_BITWISE 0  // 位操作
 
-#define CONFIG_WRITE_UINT8   1
-#define CONFIG_WRITE_UINT16  1
-#define CONFIG_WRITE_BITWISE 1
+#define CONFIG_WRITE_UINT8   0
+#define CONFIG_WRITE_UINT16  0
+#define CONFIG_WRITE_BITWISE 0
 
 // <! types
 

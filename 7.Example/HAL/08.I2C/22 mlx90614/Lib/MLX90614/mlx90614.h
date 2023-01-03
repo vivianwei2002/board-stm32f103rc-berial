@@ -1,5 +1,5 @@
-#ifndef _MLX90614_H_
-#define _MLX90614_H_
+#ifndef __MLX90614_H__
+#define __MLX90614_H__
 
 // IR temperature sensor
 

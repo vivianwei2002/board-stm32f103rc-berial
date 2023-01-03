@@ -15,11 +15,11 @@
 #define CONFIG_ADDRESS_SCANNER 1  // 地址扫描
 
 #define CONFIG_READ_UINT8   1
-#define CONFIG_READ_UINT16  0
+#define CONFIG_READ_UINT16  1
 #define CONFIG_READ_BITWISE 1  // 位操作
 
 #define CONFIG_WRITE_UINT8   1
-#define CONFIG_WRITE_UINT16  0
+#define CONFIG_WRITE_UINT16  1
 #define CONFIG_WRITE_BITWISE 1
 
 // <! types
@@ -92,7 +92,7 @@ uint8_t soft_i2c_recv_byte(soft_i2c* i2c);
 
 // advance
 
-uint8_t soft_i2c_check(soft_i2c* i2c, uint8_t dev);  // is device ready
+i2c_state_t soft_i2c_check(soft_i2c* i2c, uint8_t dev);  // is device ready
 
 i2c_state_t soft_i2c_read_mem(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
 i2c_state_t soft_i2c_write_mem(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
@@ -103,7 +103,7 @@ i2c_state_t soft_i2c_write_mem(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t*
 
 // core <
 
-uint8_t i2c_check(i2c_t* i2c, uint8_t dev);  // is device ready
+i2c_state_t i2c_check(i2c_t* i2c, uint8_t dev);  // is device ready
 
 i2c_state_t i2c_read_mem(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);
 i2c_state_t i2c_write_mem(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t* data, uint16_t len);

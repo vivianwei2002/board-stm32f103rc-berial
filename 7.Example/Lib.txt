@@ -2,3 +2,4 @@ i2c
 - max30102
 - lm75
 - mlx90614
+- at24cxx

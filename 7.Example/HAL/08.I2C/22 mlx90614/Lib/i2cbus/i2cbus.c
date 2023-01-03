@@ -171,7 +171,7 @@ uint8_t soft_i2c_recv_byte(soft_i2c* i2c)
     return data;
 }
 
-uint8_t soft_i2c_check(soft_i2c* i2c, uint8_t dev)
+i2c_state_t soft_i2c_check(soft_i2c* i2c, uint8_t dev)
 {
     uint8_t ack;
     soft_i2c_start(i2c);
@@ -243,7 +243,7 @@ i2c_state_t soft_i2c_write_mem(soft_i2c* i2c, uint8_t dev, uint8_t reg, uint8_t*
 
 // core <
 
-inline uint8_t i2c_check(i2c_t* i2c, uint8_t dev)
+inline i2c_state_t i2c_check(i2c_t* i2c, uint8_t dev)
 {
 #if CONFIG_HARDWARE_I2C
 #if CONFIG_MCU_STM32
@@ -486,7 +486,7 @@ i2c_state_t i2c_read_mask(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t mask, ui
 uint8_t i2c_read_mask_fast(i2c_t* i2c, uint8_t dev, uint8_t reg, uint8_t mask, uint8_t def)
 {
     uint8_t buff;
-    
+
     if (i2c_read_mask(i2c, dev, reg, mask, &buff) == I2C_ERR)
         return def;
 
