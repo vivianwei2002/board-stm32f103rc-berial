@@ -4,7 +4,7 @@ import shutil
 DIR_PREFIX = []
 DIR_SUFFIX = []
 
-FILE_PREFIX = ["startup_"]
+FILE_PREFIX = ["startup_stm32f103xe.s"]
 FILE_SUFFIX = [".uvprojx", ".uvoptx", ".hex"]
 
 

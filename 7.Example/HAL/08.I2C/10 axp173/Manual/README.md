@@ -14,7 +14,9 @@ http://www.x-powers.com/index.php/Info/product_detail/article_id/27
 
 接VBUS是自动开机，接VBAT是不会自动开机的
 
-长按PWRON关机(4s以上，可配置)，再短按几秒开机(4s以下)，发生短路会关机
+长按PWRON关机(4s以上，可配置)，再短按几秒开机(4s以下)
+
+发生短路会关机
 
 关机状态下，LDO1仍然有效
 

@@ -19,7 +19,7 @@
 * I2S：SoftI2S、MP34DT05、MAX98357
 * SPI：SoftSPI、W5500、LAN8720、NRF24L01、MCP2551、ST7789、WS2812
 * Fafts：内部 Flash
-* RTOS：uCOS-III、FreeRTOS、TencentOS
+* RTOS：uCOS-III、FreeRTOS、TencentOS、RTThread
 * 电机控制：FOC、BLDC、SVPWM
 * GUI：LVGL，emWin，GuiLite，Pico3D
 * 数据结构：链表、队列、堆、栈、哈希表、二分法
