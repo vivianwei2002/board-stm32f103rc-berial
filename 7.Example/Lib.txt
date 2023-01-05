@@ -3,3 +3,4 @@ i2c
 - lm75
 - mlx90614
 - at24cxx
+- pcf8574

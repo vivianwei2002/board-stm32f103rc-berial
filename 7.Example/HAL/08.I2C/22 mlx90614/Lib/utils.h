@@ -24,10 +24,21 @@ static void HAL_Delay_us(uint32_t us)
 #define SEPARATOR60 "----------------------------------------------------------"
 
 // print with newline
-#define println(format, ...) printf(format "\r\n", ##__VA_ARGS__)
+#define println(fmt, ...) printf(fmt "\r\n", ##__VA_ARGS__)
 
 // print variable
-#define printv(format, var) printf("[ line: %d | function: %s ] %s = " format "\r\n", __LINE__, __FUNCTION__, #var, var)
+#define printv(fmt, var) printf("[ line: %d | function: %s ] %s = " fmt "\r\n", __LINE__, __FUNCTION__, #var, var)
+
+// print code
+// #define print_code(code) printf("[ " #code "]"), code
+#define print_code(code) println("[ " #code "]"), code
+
+static void print_binary(uint8_t n)
+{
+    for (uint8_t i = 0x80; i > 0; i >>= 1)
+        printf("%c", n & i ? '1' : '0');
+    printf("\r\n");
+}
 
 ///////////////////////////////////////////////// other
 
