@@ -47,10 +47,10 @@ for root, dirs, files in os.walk('.'):
     for dir in dirs:
         if dir in DIR_FULLNAME:
             # if dir in black list, remove it
-            shutil.rmtree(dir)
+            shutil.rmtree(os.path.join(root, dir))
         elif dir == "MDK-ARM":
             clear(os.path.join(root, dir))
     for file in files:
         if file in FILE_FULLNAME:
             # if file in black list, remove it
-            os.remove(file)
+            os.remove(os.path.join(root, file))
