@@ -2,6 +2,17 @@
 
 重要！！开发环境不能含有 JDK8 以外的 JDK 版本！否则每次 CubeMX 生成 Keil 项目时都提示找不到设备 / 目标芯片。
 
+---
+
+设置环境变量，防止生成代码时，中文注释乱码：
+
+```
+JAVA_TOOL_OPTIONS
+-Dfile.encoding=UTF-8
+```
+
+![image-20230107025509637](README.assets/image-20230107025509637.png)
+
 ### CubeMX
 
 创建项目：

@@ -4,98 +4,295 @@
 
 #include "tcs3472x.h"
 
-#ifdef USE_GAMMA_TABLE
-
-uint8_t gammatable[256];
-
-void InitGammaTable(uint8_t commonAnode /*1*/) {
-    for (int i = 0; i < 256; ++i) {
-        float x       = pow(i / 255.f, 2.5) * 255;
-        gammatable[i] = commonAnode ? (255 - x) : x;
-    }
-}
-
-#endif
-
-float powf(const float x, const float y) {
-    return (float)(pow((double)x, (double)y));
-}
-
-void TCS3472X_WriteReg(uint8_t reg, uint8_t value) {
-    HAL_I2C_Mem_Write(&TCS3472X_I2C, TCS3472X_DEV, reg | TCS3472X_COMMAND_BIT, I2C_MEMADD_SIZE_8BIT, &value, 1, 0XFF);
-}
-
-uint8_t TCS3472X_ReadReg(uint8_t reg) {
-    uint8_t buffer;
-    HAL_I2C_Mem_Read(&TCS3472X_I2C, TCS3472X_DEV, reg | TCS3472X_COMMAND_BIT, I2C_MEMADD_SIZE_8BIT, &buffer, 1, 0XFF);
-    return buffer;
-}
-
-uint16_t TCS3472X_ReadRegWord(uint8_t reg) {
-    uint8_t buffer[2];
-    HAL_I2C_Mem_Read(&TCS3472X_I2C, TCS3472X_DEV, reg | TCS3472X_COMMAND_BIT, I2C_MEMADD_SIZE_8BIT, buffer, 2, 0XFF);
-    return (buffer[1] << 8) | buffer[0];
-}
-
-void TCS3472X_Enable(void) {
-    TCS3472X_WriteReg(TCS3472X_ENABLE, TCS3472X_ENABLE_PON);
-    TCS3472X_WriteReg(TCS3472X_ENABLE, TCS3472X_ENABLE_PON | TCS3472X_ENABLE_AEN);
-    HAL_Delay(3);
-}
-
-void TCS3472X_Disable(void) {
-    /* Turn the device off to save power */
-    TCS3472X_WriteReg(TCS3472X_ENABLE, TCS3472X_ReadReg(TCS3472X_ENABLE) & ~(TCS3472X_ENABLE_PON | TCS3472X_ENABLE_AEN));
-}
-
-uint8_t TCS3472X_Init(void) {
-    uint8_t id = TCS3472X_ReadReg(TCS3472X_ID);  // get device id
-    printf("tcs3472x id: %x\r\n", id);
-    if ((id == TCS3472_REG_ID_34721_34725) | (id == TCS3472_REG_ID_34723_34727)) {
+bool tcs3472x_init(void)
+{
+    // get device id
+    uint8_t id = tcs3472x_read_1byte(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ID);
+    printv("0x%02x", id);
+    if ((id == TCS347X_ID_34721_34725) || (id == TCS347X_ID_34723_34727)) {
         /* Set default integration time and gain */
-        TCS3472X_SetIntegrationTime(TCS3472X_INTEGRATIONTIME_50MS);
-        TCS3472X_SetGain(TCS3472X_GAIN_1X);
+        tcs3472x_set_integration_time(TCS3472X_INTEGRATION_TIME_50MS);
+        tcs3472x_set_gain(TCS3472X_GAIN_1X);
         /* Note: by default, the device is in power down mode on bootup */
-        TCS3472X_Enable();
-        return 1;
-    }
-    return 0;
-}
-
-void TCS3472X_SetIntegrationTime(uint8_t IntegrationTime) {
-    /* Update the timing register */
-    TCS3472X_WriteReg(TCS3472X_ATIME, IntegrationTime);
-}
-
-void TCS3472X_SetGain(uint8_t gain) {
-    /* Update the timing register */
-    TCS3472X_WriteReg(TCS3472X_CONTROL, gain);
-}
-
-uint8_t TCS3472X_GetRGBC(uint16_t* r, uint16_t* g, uint16_t* b, uint16_t* c /*清晰光感应值*/) {
-    if (TCS3472X_ReadReg(TCS3472X_STATUS) & TCS3472X_STATUS_AVALID) {
-        *c = TCS3472X_ReadRegWord(TCS3472X_CDATAL);
-        *r = TCS3472X_ReadRegWord(TCS3472X_RDATAL);
-        *g = TCS3472X_ReadRegWord(TCS3472X_GDATAL);
-        *b = TCS3472X_ReadRegWord(TCS3472X_BDATAL);
-        return 1;
+        tcs3472x_set_interrupt_enable(false);
+        tcs3472x_set_wait_enable(false);
+        tcs3472x_set_rgbc_enable(true);
+        tcs3472x_set_power_on();
+        return true;
     } else {
-        *c = *r = *g = *b = 0;
-        return 0;
+        return false;
     }
-
-    /* Set a delay for the integration time */
-    // switch (TCS3472X_IntegrationTime) {
-    //     case TCS3472X_INTEGRATIONTIME_2_4MS: HAL_Delay(3); break;
-    //     case TCS3472X_INTEGRATIONTIME_24MS: HAL_Delay(24); break;
-    //     case TCS3472X_INTEGRATIONTIME_50MS: HAL_Delay(50); break;
-    //     case TCS3472X_INTEGRATIONTIME_101MS: HAL_Delay(101); break;
-    //     case TCS3472X_INTEGRATIONTIME_154MS: HAL_Delay(154); break;
-    //     case TCS3472X_INTEGRATIONTIME_700MS: HAL_Delay(700); break;
-    // }
 }
 
-uint16_t TCS3472X_CalculateColorTemperature(uint16_t r, uint16_t g, uint16_t b) {
+bool tcs3472x_read_rgbc(uint16_t* red, uint16_t* green, uint16_t* blue, uint16_t* clear)
+{
+    // read status
+    uint8_t status = tcs3472x_read_1byte(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_STATUS);
+    // print_binary(status);
+
+    // find rgbc clean channel interrupt
+    if ((status >> 4) & 0x01) {
+        // clear interrupt, 每次TCS3472X产生中断后,都需要清除中断标志
+        tcs3472x_write_1byte(TCS3472X_CMD_CLEAR, 0x00);
+    }
+
+    // if data ready (这位一直为1,不知道怎么回事)
+    if (status & 0x01) {
+        uint8_t buf[8];
+        tcs3472x_read_bytes(TCS3472X_CMD_TYPE_AUTO_INCREMENT | TCS3472X_REG_CDATAL, buf, 8);
+        *clear = ((uint16_t)buf[1] << 8) | buf[0];
+        *red   = ((uint16_t)buf[3] << 8) | buf[2];
+        *green = ((uint16_t)buf[5] << 8) | buf[4];
+        *blue  = ((uint16_t)buf[7] << 8) | buf[6];
+        return true;
+    }
+    return false;
+}
+
+void tcs3472x_set_wait_enable(bool enable) { tcs3472x_write_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ENABLE, 3, enable); }
+bool tcs3472x_get_wait_enable(void) { return tcs3472x_read_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ENABLE, 3); }
+void tcs3472x_set_rgbc_enable(bool enable) { tcs3472x_write_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ENABLE, 1, enable); }
+bool tcs3472x_get_rgbc_enable(void) { return tcs3472x_read_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ENABLE, 1); }
+void tcs3472x_set_power_on(void) { tcs3472x_write_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ENABLE, 0, 1); }
+void tcs3472x_set_power_off(void) { tcs3472x_write_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ENABLE, 0, 0); }
+bool tcs3472x_get_power_mode(void) { return tcs3472x_read_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ENABLE, 0); }
+
+void                        tcs3472x_set_integration_time(tcs3472x_integration_time_t t) { tcs3472x_write_1byte(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ATIME, t); }
+tcs3472x_integration_time_t tcs3472x_get_integration_time(void) { return tcs3472x_read_1byte(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ATIME); }
+
+void tcs3472x_delay_integration_time(void)
+{
+    switch (tcs3472x_get_integration_time()) {
+        case TCS3472X_INTEGRATION_TIME_2P4MS: delay_ms(3); break;
+        case TCS3472X_INTEGRATION_TIME_24MS: delay_ms(24); break;
+        case TCS3472X_INTEGRATION_TIME_50MS: delay_ms(50); break;
+        case TCS3472X_INTEGRATION_TIME_101MS: delay_ms(101); break;
+        case TCS3472X_INTEGRATION_TIME_154MS: delay_ms(154); break;
+        case TCS3472X_INTEGRATION_TIME_700MS: delay_ms(700); break;
+        default: break;
+    }
+}
+
+void tcs3472x_set_wait_time(tcs3472x_wait_time_t t)
+{
+    tcs3472x_write_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_CONFIG, 1, (t & 0x100) >> 8);
+    tcs3472x_write_1byte(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_WTIME, t & 0xFF);
+}
+tcs3472x_wait_time_t tcs3472x_get_wait_time(void)
+{
+    return (tcs3472x_read_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_CONFIG, 1) << 8) |
+           tcs3472x_read_1byte(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_WTIME);
+}
+
+void tcs3472x_delay_wait_time(void)
+{
+    if (tcs3472x_get_wait_enable()) {
+        switch (tcs3472x_get_wait_time()) {
+            case TCS3472X_WAIT_TIME_2P4MS: delay_ms(3); break;
+            case TCS3472X_WAIT_TIME_204MS: delay_ms(204); break;
+            case TCS3472X_WAIT_TIME_614MS: delay_ms(614); break;
+            case TCS3472X_WAIT_TIME_29MS: delay_ms(29); break;
+            case TCS3472X_WAIT_TIME_2450MS: delay_ms(2450); break;
+            case TCS3472X_WAIT_TIME_7400MS: delay_ms(7400); break;
+            default: break;
+        }
+    }
+}
+
+void            tcs3472x_set_gain(tcs3472x_gain_t gain) { tcs3472x_write_bits(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_CONTROL, 0, 2, gain); }
+tcs3472x_gain_t tcs3472x_get_gain(void) { return tcs3472x_read_bits(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_CONTROL, 0, 2); }
+
+void tcs3472x_set_interrupt_enable(bool enable) { tcs3472x_write_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ENABLE, 4, enable); }
+bool tcs3472x_get_interrupt_enable(void) { return tcs3472x_read_bit(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_ENABLE, 4); }
+
+void                   tcs3472x_set_interrupt_mode(tcs3472x_persistence_t mode) { tcs3472x_write_bits(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_PERS, 0, 4, mode); }
+tcs3472x_persistence_t tcs3472x_get_interrupt_mode(void) { return tcs3472x_read_bits(TCS3472X_CMD_TYPE_REPEATED_BYTE | TCS3472X_REG_PERS, 0, 4); }
+
+void     tcs3472x_set_clear_low_limit(uint16_t threshold) { tcs3472x_write_2byte(TCS3472X_CMD_TYPE_AUTO_INCREMENT | TCS3472X_REG_AILTL, threshold); }
+uint16_t tcs3472x_get_clear_low_limit(void) { return tcs3472x_read_2byte(TCS3472X_CMD_TYPE_AUTO_INCREMENT | TCS3472X_REG_AILTL); }
+void     tcs3472x_set_clear_high_limit(uint16_t threshold) { tcs3472x_write_2byte(TCS3472X_CMD_TYPE_AUTO_INCREMENT | TCS3472X_REG_AILTH, threshold); }
+uint16_t tcs3472x_get_clear_high_limit(void) { return tcs3472x_read_2byte(TCS3472X_CMD_TYPE_AUTO_INCREMENT | TCS3472X_REG_AILTH); }
+
+// https://www.waveshare.net/wiki/TCS34725_Color_Sensor
+
+#define TCS3472X_R_COEF    0.136
+#define TCS3472X_G_COEF    1.000
+#define TCS3472X_B_COEF    -0.444
+#define TCS3472X_GA        1.0
+#define TCS3472X_DF        310.0
+#define TCS3472X_CT_COEF   3810.0
+#define TCS3472X_CT_OFFSET 1391.0
+
+// 色温（单位K）
+uint16_t tcs3472x_calculate_color_temperature(uint16_t r, uint16_t g, uint16_t b, uint16_t c)
+{
+    uint16_t ir;
+
+    ir = r + g + b;
+    ir = (ir > c) ? ((ir - c) / 2) : 0;
+
+    return TCS3472X_CT_COEF * (b - ir) / (r - ir) + TCS3472X_CT_OFFSET;
+}
+
+uint16_t tcs3472x_calculate_lux(uint16_t r, uint16_t g, uint16_t b, uint16_t c)
+{
+    float    atime;
+    uint16_t ir;
+    uint8_t  gain;
+
+    atime = (256 - tcs3472x_get_integration_time()) * 2.4;  // ms
+
+    ir = r + g + b;
+    ir = (ir > c) ? ((ir - c) / 2) : 0;
+
+    switch (tcs3472x_get_gain()) {
+        case TCS3472X_GAIN_1X: gain = 1; break;
+        case TCS3472X_GAIN_4X: gain = 4; break;
+        case TCS3472X_GAIN_16X: gain = 16; break;
+        case TCS3472X_GAIN_60X: gain = 60; break;
+    }
+
+    return (TCS3472X_R_COEF * (r - ir) +
+            TCS3472X_G_COEF * (g - ir) +
+            TCS3472X_B_COEF * (b - ir)) /
+           ((atime * gain) / (TCS3472X_GA * TCS3472X_DF));
+}
+
+void tcs3472x_get_rgb565_rgb888(uint16_t r, uint16_t g, uint16_t b, uint16_t* rgb565, uint32_t* rgb888)
+{
+    float i = 1;
+
+    if (r >= g && r >= b) {
+        i = r / 255 + 1;
+    } else if (g >= r && g >= b) {
+        i = g / 255 + 1;
+    } else if (b >= g && b >= r) {
+        i = b / 255 + 1;
+    }
+
+    if (i != 0) {
+        r /= i;
+        g /= i;
+        b /= i;
+    }
+
+    if (r > 30) r -= 30;
+    if (g > 30) g -= 30;
+    if (b > 30) b -= 30;
+
+    r = r * 255 / 225;
+    g = g * 255 / 225;
+    b = b * 255 / 225;
+
+    if (r > 255) r = 255;
+    if (g > 255) g = 255;
+    if (b > 255) b = 255;
+
+    *rgb565 = (r << 11) | (g << 5) | (b);
+    *rgb888 = (r << 16) | (g << 8) | (b);
+}
+
+// RGB 转 HSL
+
+typedef struct color_rgbc {
+    uint16_t c;  //[0-65536]
+    uint16_t r;
+    uint16_t g;
+    uint16_t b;
+} color_rgbc_t;  // RGBC
+
+typedef struct color_hsl {
+    uint16_t h;  //[0,360]
+    uint8_t  s;  //[0,100]
+    uint8_t  l;  //[0,100]
+} color_hsl_t;   // HSL
+
+#define max3v(v1, v2, v3) ((v1) < (v2) ? ((v2) < (v3) ? (v3) : (v2)) : ((v1) < (v3) ? (v3) : (v1)))
+#define min3v(v1, v2, v3) ((v1) > (v2) ? ((v2) > (v3) ? (v3) : (v2)) : ((v1) > (v3) ? (v3) : (v1)))
+
+void rgb_to_hsl(color_rgbc_t* rgb, color_hsl_t* hsl)
+{
+    uint8_t maxVal, minVal, difVal;
+    uint8_t r = rgb->r * 100 / rgb->c;  //[0-100]
+    uint8_t g = rgb->g * 100 / rgb->c;
+    uint8_t b = rgb->b * 100 / rgb->c;
+
+    maxVal = max3v(r, g, b);
+    minVal = min3v(r, g, b);
+    difVal = maxVal - minVal;
+
+    // 计算亮度
+    hsl->l = (maxVal + minVal) / 2;  //[0-100]
+
+    if (maxVal == minVal)  // 若r=g=b,灰度
+    {
+        hsl->s = hsl->h = 0;
+    } else {
+        // 计算色调
+        if (maxVal == r) {
+            if (g >= b)
+                hsl->h = 60 * (g - b) / difVal;
+            else
+                hsl->h = 60 * (g - b) / difVal + 360;
+        } else {
+            if (maxVal == g)
+                hsl->h = 60 * (b - r) / difVal + 120;
+            else if (maxVal == b)
+                hsl->h = 60 * (r - g) / difVal + 240;
+        }
+        // 计算饱和度
+        if (hsl->l <= 50)
+            hsl->s = difVal * 100 / (maxVal + minVal);  //[0-100]
+        else
+            hsl->s = difVal * 100 / (200 - (maxVal + minVal));
+    }
+}
+
+double calculate_color_temperature(uint16_t r, uint16_t g, uint16_t b)
+{
+    static double M[3][3] =
+        {{2.789, 1.7517, 1.1302},
+         {1, 4.5907, 0.0601},
+         {0, 0.0565, 5.5943}};
+
+    double X = 0, Y = 0, Z = 0;
+    double x = 0, y = 0;
+    double CCT = 0;
+    double n   = 0;
+
+    // 三刺激值
+    X = M[0][0] * r + M[0][1] * g + M[0][2] * b;
+    Y = M[1][0] * r + M[1][1] * g + M[1][2] * b;
+    Z = M[2][0] * r + M[2][1] * g + M[2][2] * b;
+
+    // 色坐标
+    x = X / (X + Y + Z);
+    y = Y / (X + Y + Z);
+
+    // 色温
+    n   = (x - 0.3320) / (0.1858 - y);
+    CCT = 437 * n * n * n + 3601 * n * n + 6831 * n + 5517;
+
+    return CCT;
+}
+
+uint16_t calculate_brightness(uint16_t r, uint16_t g, uint16_t b)
+{
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
+temperature_rank_t get_temperature_rank(double cct)
+{
+    if (cct > 5000)
+        return TEMP_RANK_COLD;
+    else if (cct > 3300)
+        return TEMP_RANK_MIDDLE;
+    else
+        return TEMP_RANK_WARM;
+}
+
+uint16_t tcs3472x_calculate_color_temperature_ex(uint16_t r, uint16_t g, uint16_t b)
+{
     float X, Y, Z; /* RGB to XYZ correlation      */
     float xc, yc;  /* Chromaticity co-ordinates   */
     float n;       /* McCamy's formula            */
@@ -123,92 +320,9 @@ uint16_t TCS3472X_CalculateColorTemperature(uint16_t r, uint16_t g, uint16_t b) 
     return (uint16_t)cct;
 }
 
-uint16_t TCS3472X_CalculateLux(uint16_t r, uint16_t g, uint16_t b) {
-    float illuminance;
-
+uint16_t tcs3472x_calculate_lux_ex(uint16_t r, uint16_t g, uint16_t b)
+{
     /* This only uses RGB ... how can we integrate clear or calculate lux */
     /* based exclusively on clear since this might be more reliable?      */
-    illuminance = (-0.32466F * r) + (1.57837F * g) + (-0.73191F * b);
-
-    return (uint16_t)illuminance;
-}
-
-void TCS3472X_Lock() {  // 使能中断
-    TCS3472X_WriteReg(TCS3472X_ENABLE, TCS3472X_ReadReg(TCS3472X_ENABLE) | TCS3472X_ENABLE_AIEN);
-}
-
-void TCS3472X_Unlock() {  // 禁用中断
-    TCS3472X_WriteReg(TCS3472X_ENABLE, TCS3472X_ReadReg(TCS3472X_ENABLE) & ~TCS3472X_ENABLE_AIEN);
-}
-
-void TCS3472X_Clear(void) {  // 清除中断标志(每次TCS3472X产生中断后,需调用该函数进行中断标志位清除)
-    uint8_t v = TCS3472X_COMMAND_BIT | 0x66;
-    HAL_I2C_Master_Transmit(&TCS3472X_I2C, TCS3472X_DEV, &v, 1, 0xFF);
-}
-
-void TCS3472X_SetIntLimits(uint16_t low, uint16_t high) {
-    TCS3472X_WriteReg(0x04, low & 0xFF);
-    TCS3472X_WriteReg(0x05, low >> 8);
-    TCS3472X_WriteReg(0x06, high & 0xFF);
-    TCS3472X_WriteReg(0x07, high >> 8);
-}
-
-// RGB 转 HSL
-
-typedef struct {
-    uint16_t c;  //[0-65536]
-    uint16_t r;
-    uint16_t g;
-    uint16_t b;
-} COLOR_RGBC;  // RGBC
-
-typedef struct {
-    uint16_t h;  //[0,360]
-    uint8_t  s;  //[0,100]
-    uint8_t  l;  //[0,100]
-} COLOR_HSL;     // HSL
-
-#define max3v(v1, v2, v3) ((v1) < (v2) ? ((v2) < (v3) ? (v3) : (v2)) : ((v1) < (v3) ? (v3) : (v1)))
-#define min3v(v1, v2, v3) ((v1) > (v2) ? ((v2) > (v3) ? (v3) : (v2)) : ((v1) > (v3) ? (v3) : (v1)))
-
-COLOR_RGBC rgb;
-COLOR_HSL  hsl;
-
-void RGBtoHSL(COLOR_RGBC* Rgb, COLOR_HSL* Hsl) {
-    uint8_t maxVal, minVal, difVal;
-    uint8_t r = Rgb->r * 100 / Rgb->c;  //[0-100]
-    uint8_t g = Rgb->g * 100 / Rgb->c;
-    uint8_t b = Rgb->b * 100 / Rgb->c;
-
-    maxVal = max3v(r, g, b);
-    minVal = min3v(r, g, b);
-    difVal = maxVal - minVal;
-
-    //计算亮度
-    Hsl->l = (maxVal + minVal) / 2;  //[0-100]
-
-    if (maxVal == minVal)  //若r=g=b,灰度
-    {
-        Hsl->h = 0;
-        Hsl->s = 0;
-    } else {
-        //计算色调
-        if (maxVal == r) {
-            if (g >= b)
-                Hsl->h = 60 * (g - b) / difVal;
-            else
-                Hsl->h = 60 * (g - b) / difVal + 360;
-        } else {
-            if (maxVal == g)
-                Hsl->h = 60 * (b - r) / difVal + 120;
-            else if (maxVal == b)
-                Hsl->h = 60 * (r - g) / difVal + 240;
-        }
-
-        //计算饱和度
-        if (Hsl->l <= 50)
-            Hsl->s = difVal * 100 / (maxVal + minVal);  //[0-100]
-        else
-            Hsl->s = difVal * 100 / (200 - (maxVal + minVal));
-    }
+    return 0.32466F * r + 1.57837F * g + -0.73191F * b;
 }

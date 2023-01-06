@@ -17,15 +17,15 @@
  ******************************************************************************
  */
 /* USER CODE END Header */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "gpio.h"
 #include "i2c.h"
 #include "usart.h"
+#include "gpio.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "TCS3472X/tcs3472x.h"  // 使用前需在头文件里设置 MPU6050_DEV 和 MPU6050_I2C
+#include "tcs3472x/tcs3472x.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,16 +57,31 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#include <math.h>
-#define commonAnode 1
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    static uint32_t t = 0;
+    if (t) println("interval = %f s", (HAL_GetTick() - t) / 1000.f);
+    t = HAL_GetTick();  // 计算中断间隔时间
+
+    uint16_t rgb565;
+    uint32_t rgb888;
+    uint16_t red, green, blue, clear;
+    if (tcs3472x_read_rgbc(&red, &green, &blue, &clear)) {
+        tcs3472x_get_rgb565_rgb888(red, green, blue, &rgb565, &rgb888);
+        println("%d\t%d\t%d", rgb888 >> 16, (rgb888 >> 8) & 0xFF, rgb888 & 0xFF);
+    } else {
+        println("fail to read rgbc");
+    }
+}
+
 /* USER CODE END 0 */
 
 /**
  * @brief  The application entry point.
  * @retval int
  */
-
-int main(void) {
+int main(void)
+{
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -91,34 +106,89 @@ int main(void) {
     MX_GPIO_Init();
     MX_USART1_UART_Init();
     MX_I2C2_Init();
+    MX_USART2_UART_Init();
     /* USER CODE BEGIN 2 */
 
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
-    // thanks PhilB for this gamma table!
-    // it helps convert RGB colors to what humans see
 
-    TCS3472X_Init();
-    InitGammaTable(1);
-    while (1) {
-        uint16_t red, green, blue, clear;
-        if (TCS3472X_GetRGBC(&red, &green, &blue, &clear)) {
-            uint16_t colorTemp = TCS3472X_CalculateColorTemperature(red, green, blue);
-            uint16_t lux       = TCS3472X_CalculateLux(red, green, blue);
-            printf("crTemp:%d\tlux:%d\r\n", colorTemp, lux);
-            printf("R:%d\tG:%d\tB:%d\tC:%d\r\n", red, green, blue, clear);
-#ifdef USE_GAMMA_TABLE
-            uint8_t r = 256.f * red / clear,
-                    g = 256.f * green / clear,
-                    b = 256.f * blue / clear;  // calc hex code
-            printf("0x%x\t0x%x\t0x%x\r\n", r, g, b);
-            printf("%d\t%d\t%d\r\n", gammatable[r], gammatable[g], gammatable[b]);
+#define PRINT_FREQ 0  // 频率
+#define PRINT_LUX  0  // 流名
+#define PRINT_CCT  1  // 色温
+#define PRINT_RGB  0  //
+#define PRINT_IRQ  0  // 中断
+
+    uint16_t red, green, blue, clear;
+
+    if (!tcs3472x_init()) {
+        i2c_scan(&TCS3472X_I2C);
+        println("can't find tcs3472x");
+        while (1) {}
+    }
+
+#if PRINT_FREQ
+    uint32_t t = HAL_GetTick(), cnt = 0;
+    // 采样间隔 = 等待时间 + 积分时间
+    tcs3472x_set_wait_enable(true);
+    tcs3472x_set_wait_time(TCS3472X_WAIT_TIME_204MS);
+    tcs3472x_set_integration_time(TCS3472X_INTEGRATION_TIME_154MS);
 #endif
-        }
-        HAL_Delay(500);  // 延时至少1个积分周期（或者采用中断/定时器进行采样）
 
+#if PRINT_RGB
+    tcs3472x_set_gain(TCS3472X_GAIN_16X);
+#endif
+#if PRINT_IRQ
+    tcs3472x_set_wait_enable(true);
+    // tcs3472x_set_wait_enable(false);
+    tcs3472x_set_wait_time(TCS3472X_WAIT_TIME_2450MS);
+#if 1
+    tcs3472x_set_interrupt_mode(TCS3472X_PERS_NONE);
+#else
+    tcs3472x_set_interrupt_mode(TCS3472X_PERS_2_CYCLE);
+    tcs3472x_set_clear_low_limit(2000);
+    tcs3472x_set_clear_high_limit(8000);
+#endif
+    tcs3472x_set_integration_time(TCS3472X_INTEGRATION_TIME_700MS);
+    tcs3472x_set_interrupt_enable(true);
+    if (tcs3472x_read_rgbc(&red, &green, &blue, &clear)) {
+    } else {
+        println("fail to read rgbc");
+    }
+
+    while (1) {}
+#endif
+    while (1) {
+        if (tcs3472x_read_rgbc(&red, &green, &blue, &clear)) {
+#if PRINT_FREQ
+            // freq = 1 / (integration time + wait time)
+            println("%.4f", ++cnt / ((HAL_GetTick() - t) / 1000.0));  // hz
+#endif
+#if PRINT_LUX
+            uint16_t lux = tcs3472x_calculate_lux(red, green, blue, clear);
+            println("%d", lux);  // println("lux:%d", lux);
+#endif
+#if PRINT_CCT
+            uint16_t cct1 = calculate_color_temperature(red, green, blue);
+            uint16_t cct2 = tcs3472x_calculate_color_temperature(red, green, blue, clear);
+            uint16_t cct3 = tcs3472x_calculate_color_temperature_ex(red, green, blue);
+            println("R:%d\tG:%d\tB:%d\tC:%d\tT:%d\tT:%d\tT:%d", red, green, blue, clear, cct1, cct2, cct3);
+#endif
+#if PRINT_RGB
+            uint16_t rgb565;
+            uint32_t rgb888;
+            tcs3472x_get_rgb565_rgb888(red, green, blue, &rgb565, &rgb888);
+            // 可用 python/app.py 查看颜色
+            println("%d\t%d\t%d", rgb888 >> 16, (rgb888 >> 8) & 0xFF, rgb888 & 0xFF);
+#endif
+        } else {
+            println("fail to read rgbc");
+        }
+#if 1
+        tcs3472x_delay_integration_time();
+        tcs3472x_delay_wait_time();
+#endif
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
@@ -130,11 +200,13 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-    /** Initializes the CPU, AHB and APB busses clocks
+    /** Initializes the RCC Oscillators according to the specified parameters
+     * in the RCC_OscInitTypeDef structure.
      */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
@@ -146,7 +218,8 @@ void SystemClock_Config(void) {
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
-    /** Initializes the CPU, AHB and APB busses clocks
+
+    /** Initializes the CPU, AHB and APB buses clocks
      */
     RCC_ClkInitStruct.ClockType      = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
@@ -167,7 +240,8 @@ void SystemClock_Config(void) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
@@ -182,12 +256,11 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t* file, uint32_t line)
+{
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
     /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
