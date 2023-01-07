@@ -85,7 +85,7 @@
 | | pca9685 | 多路PWM舵机控制器 | √ |
 | | mlx90614 | 红外测温传感器 | √ |
 | **SPI**           |               |                                     | - |
-|  | spibus | 模拟 SPI | |
+|  | spibus | 模拟 SPI | √ |
 |                   | st7735_0.96 | 板载 0.96 寸屏幕                    | √      |
 | | st7735_luat | 合宙 1.8 寸屏幕 | √ |
 |                   | mfrc522       | RFID                                | √      |
@@ -99,7 +99,6 @@
 |                | mcp2551              | SPI转CAN                            |        |
 |                | st7789               | 屏幕                                |        |
 |                | ws2812               | 彩灯                                |  |
-| |  |  |  |
 | **I2S**           |               |                                     | - |
 |  | i2sbus | 模拟 I2S |  |
 |                   | inmp441       | 麦克风                              | √      |
@@ -113,17 +112,18 @@
 |                   | sd card（sdio） | TF 卡（sdio 接口）                  | √      |
 |                   | w25qxx（spi） | 外部 flash（spi 接口）              | √      |
 | **USB**           |               |                                     | - |
-| MSC               |               | 大容量设备（U盘）                   |        |
+| MSC               |               | 大容量设备（U盘）                   | - |
 |                   | sram          | 内部 SRAM 模拟 U 盘                 | √      |
 |                   | w25qxx        | 外部 Flash 模拟 U 盘                | √      |
 |                   | rom           | 片上 Flash 模拟 U 盘                |        |
-| CDC               |               | 虚拟串口                            | √      |
-| HID               |               | 人体学接口设备 |        |
+| CDC               |               |                             | -      |
+|  | | 虚拟串口 | √ |
+| HID               |               | 人体学接口设备 | - |
 |                   | keypress      | 模拟键盘按键 | √      |
 | **RTOS**          |               | 实时操作系统                          | - |
-| UCOS-II | |  | |
-| UCOS-III | |  | |
-| FreeRTOS          |               |                                     |       |
+| UCOS-II | |  | - |
+| UCOS-III | |  | - |
+| FreeRTOS          |               |                                     | - |
 |  | task | 任务 | √ |
 | RT-Thread Nano    |               | RTT OS                              | - |
 |  | start | 移植 | √ |
@@ -132,9 +132,9 @@
 |                   | task | 任务 | √ |
 | | mutex | 互斥量 | √ |
 | | sem | 信号量 |  |
-| HUAWEI LiteOS |  | 华为 OS |  |
+| HUAWEI LiteOS |  | 华为 OS | - |
 | **Language**      |               |                                     | - |
-| Lua               |               |                                     |        |
+| Lua               |               |                                     | - |
 |  | start | 移植 | √ |
 
 ```
