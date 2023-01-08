@@ -135,7 +135,9 @@
 | HUAWEI LiteOS |  | 华为 OS | - |
 | **Language**      |               |                                     | - |
 | Lua               |               |                                     | - |
-|  | start | 移植 | √ |
+|  | start | 移植 | ● |
+| C++ |  |  | - |
+|  |  | 最小工程 | √ |
 
 ```
 DSP&NN ARM数学库
