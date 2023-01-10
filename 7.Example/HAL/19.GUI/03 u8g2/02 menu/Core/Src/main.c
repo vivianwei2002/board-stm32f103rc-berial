@@ -417,8 +417,8 @@ bool move_width(uint8_t* a, uint8_t* a_trg, uint8_t select, uint8_t id)
 // 进度条移动函�??
 bool move_bar(uint8_t* a, uint8_t* a_trg)
 {
-    static uint8_t step        = 16 / SPEED;                                                                                          // 判断步数
-    static uint8_t width_speed = ((single_line_length % step) == 0 ? (single_line_length / step) : (single_line_length / step + 1));  // 计算步长
+    uint8_t step        = 16 / SPEED;                                                                                          // 判断步数
+    uint8_t width_speed = ((single_line_length % step) == 0 ? (single_line_length / step) : (single_line_length / step + 1));  // 计算步长
     return move_to_u8(a, a_trg, width_speed);
 }
 
@@ -580,10 +580,10 @@ void icon_ui_show(void)  // 显示icon
     }
 }
 
-uint16_t analogRead(uint8_t pin)
+uint16_t analogRead()
 {
     HAL_ADC_Start(&hadc1);
-    return abs((HAL_ADC_GetValue(&hadc1) - 2048)) * 5;
+    return abs((HAL_ADC_GetValue(&hadc1) - 2048)) * 2;
 }
 
 void chart_ui_show()  // chart界面
@@ -592,7 +592,7 @@ void chart_ui_show()  // chart界面
     {
         u8g2_ClearBuffer(&u8g2);
         chart_draw_frame();
-        angle_last      = 20.00 + (float)analogRead(READ) / 100.00;
+        angle_last      = 20.00 + (float)analogRead() / 100.00;
         frame_is_drawed = true;
     }
 
@@ -610,7 +610,7 @@ void chart_ui_show()  // chart界面
 
     // 异或绘制
     u8g2_SetDrawColor(&u8g2, 2);
-    angle = 20.00 + (float)analogRead(READ) / 100.00;
+    angle = 20.00 + (float)analogRead() / 100.00;
     u8g2_DrawLine(&u8g2, chart_x + 11, 58 - (int)angle_last / 2, chart_x + 12, 58 - (int)angle / 2);
     u8g2_DrawVLine(&u8g2, chart_x + 12, 59, 3);
     angle_last = angle;

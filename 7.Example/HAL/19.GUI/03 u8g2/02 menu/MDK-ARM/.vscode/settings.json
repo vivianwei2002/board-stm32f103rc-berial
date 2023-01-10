@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "*.H": "c",
+        "**/*.html": "html",
+        "__config": "c",
+        "version": "c",
+        "initializer_list": "c",
+        "limits": "c",
+        "type_traits": "c",
+        "cmath": "c",
+        "*.tcc": "c"
+    }
+}
