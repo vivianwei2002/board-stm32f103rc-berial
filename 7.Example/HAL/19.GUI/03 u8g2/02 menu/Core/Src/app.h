@@ -23,7 +23,7 @@ uint16_t buf_len;
 #define min(a, b) ((a < b) ? (a) : (b))
 
 ////////////////////////////////////////////////////////////////////////
-#if 0
+#if 1
 const uint8_t icon_pic[][200] = {
     {
         0x00, 0x00, 0x1C, 0x00, 0x00, 0x00, 0x00, 0x3E,
@@ -177,37 +177,32 @@ typedef struct {
 } menu_t;
 
 extern struct container;
-typedef struct container container_t;
+typedef struct container page_t;
 
 struct container {
-    void (*painter)(container_t*);
-    // void painter(container_t* container);
+    void (*painter)(page_t*);
+    // void painter(page_t* container);
 
-    void (*handler)(menu_t*, uint8_t, uint8_t, key_type_t);
-    // void handler(menu_t* menu, uint8_t index, uint8_t size, key_type_t key);
+    void (*handler)(page_t*);
+    // void handler(page_t*);
+
+    bool repaint;
 
     menu_t* menus;
     uint8_t size;  // count of menu
 
-    uint8_t count_display;  // number of menus can be displayed per page
-
-    uint8_t menu_height;    // height of menu ( CONFIG_SCREEN_HEIGHT / count_display )
-    uint8_t slider_height;  // height of scroll ( CONFIG_SCREEN_HEIGHT / size)
-
-    // for mask
-    easing_t w_mask;
-    easing_t y_mask;
-    // for scroll
-    easing_t y_slider;
-    // for text
-    easing_t y_text;  // offset of menu title
-
-    uint8_t index_masked;  // [0, min(count_display,size)), index of the masked menu in page
-
+    uint8_t count_display;   // number of menus can be displayed per page
+    uint8_t index_masked;    // [0, min(count_display,size)), index of the masked menu in page
     uint8_t index_selected;  // [0, size), current selected menu index in all
 
-    //
-    bool repaint;
+    uint8_t h_line;    // height of menu / line ( CONFIG_SCREEN_HEIGHT / count_display )
+    uint8_t h_slider;  // height of scroll ( CONFIG_SCREEN_HEIGHT / size)
+
+    easing_t w_mask;
+    easing_t y_mask;
+    easing_t y_slider;
+    easing_t y_title;
+    easing_t x_icon;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -272,11 +267,6 @@ u8g2_t u8g2;
 
 ////////////////////////////////////////////////////////////////////////
 
-void painter_text(container_t*);
-void painter_icon(container_t*);
-
-////////////////////////////////////////////////////////////////////////
-
 #define CONFIG_PADDING_X 4   // x_padding
 #define CONFIG_PADDING_Y 12  // y_padding
 
@@ -307,6 +297,10 @@ const menu_t menu_main[] = {
     {M_ABOUT, "{ About }", 0},
 };
 
+uint8_t pid_select;
+uint8_t pid_max = 10.00;
+uint8_t Kpid[3] = {9.97, 0.2, 0.01};  // Kp,Ki,Kd
+
 const menu_t menu_pid[] = {
     {0, "-Proportion", 0},
     {1, "-Integral", 0},
@@ -321,12 +315,19 @@ const menu_t menu_icon[] = {
     {3, "Share", 0},
 };
 
-void handler_main(menu_t* menu, uint8_t index, uint8_t size, key_type_t key);
-void handler_pid(menu_t* menu, uint8_t index, uint8_t size, key_type_t key);
+void painter_text(page_t*);
+void painter_icon(page_t*);
+void painter_text_editor(page_t*);
+void painter_chart(page_t* p);
+
+void handler_main(page_t* p);
+void handler_pid(page_t* p);
+void handler_icon(page_t* p);
+void handler_text_editor(page_t* p);
 
 uint8_t container_index = 0;
 
-container_t containers[] = {
+page_t pages[] = {
 
     {
         .painter = painter_text,
@@ -337,8 +338,8 @@ container_t containers[] = {
 
         .count_display = 4,
 
-        .menu_height   = CONFIG_SCREEN_HEIGHT / 4,                      // CONFIG_SCREEN_HEIGHT / count_display
-        .slider_height = CONFIG_SCREEN_HEIGHT / ARRAR_SIZE(menu_main),  // CONFIG_SCREEN_HEIGHT / size
+        .h_line   = CONFIG_SCREEN_HEIGHT / 4,                      // CONFIG_SCREEN_HEIGHT / count_display
+        .h_slider = CONFIG_SCREEN_HEIGHT / ARRAR_SIZE(menu_main),  // CONFIG_SCREEN_HEIGHT / size
 
         .repaint = true,
 
@@ -353,24 +354,43 @@ container_t containers[] = {
 
         .count_display = 4,
 
-        .menu_height   = CONFIG_SCREEN_HEIGHT / 4,
-        .slider_height = CONFIG_SCREEN_HEIGHT / ARRAR_SIZE(menu_pid),
+        .h_line   = CONFIG_SCREEN_HEIGHT / 4,
+        .h_slider = CONFIG_SCREEN_HEIGHT / ARRAR_SIZE(menu_pid),
 
         .repaint = true,
 
     },
 
     {
-        .painter = painter_text,
-        .handler = handler_pid,
+        .painter = painter_icon,
+        .handler = handler_icon,
 
         .menus = menu_icon,
         .size  = ARRAR_SIZE(menu_icon),
 
         .count_display = 4,  // < size
 
-        .menu_height   = CONFIG_SCREEN_HEIGHT / 4,
-        .slider_height = CONFIG_SCREEN_HEIGHT / ARRAR_SIZE(menu_icon),
+        .h_line   = CONFIG_SCREEN_HEIGHT / 4,
+        .h_slider = CONFIG_SCREEN_HEIGHT / ARRAR_SIZE(menu_icon),
+
+        .repaint = true,
+
+    },
+
+    {
+        .painter = painter_text_editor,
+        .handler = handler_text_editor,
+
+        .repaint = true,
+
+        .size = 11,  // pos of button
+
+        .h_line = 16,
+
+    },
+
+    {
+        .painter = painter_chart,
 
         .repaint = true,
 
@@ -401,7 +421,7 @@ void effect_disappear()
 
 ////////////////////////////////////////////////////////////////////////
 
-void painter_text(container_t* p)
+void painter_text(page_t* p)
 {
     if (p->w_mask.current == 0)
         p->w_mask.current = StrW(p->menus[0].title) + CONFIG_PADDING_X * 2;
@@ -418,13 +438,13 @@ void painter_text(container_t* p)
                     // decrease masked index
                     --p->index_masked;
                     // decrease mask ypos
-                    easing_init(&p->y_mask, 0, -p->menu_height, p->y_mask.current, SPEED);
+                    easing_init(&p->y_mask, 0, -p->h_line, p->y_mask.current, SPEED);
                 } else {
                     // decrease text yoffset
-                    easing_init(&p->y_text, 0, -p->menu_height, p->y_text.current, SPEED);
+                    easing_init(&p->y_title, 0, -p->h_line, p->y_title.current, SPEED);
                 }
                 // decrease scroll ypos
-                easing_init(&p->y_slider, 0, -p->slider_height, p->y_slider.current, SPEED);
+                easing_init(&p->y_slider, 0, -p->h_slider, p->y_slider.current, SPEED);
                 // change mask width
                 easing_init(&p->w_mask, p->w_mask.current, StrW(p->menus[p->index_selected].title), 0, SPEED);
                 // repaint
@@ -442,13 +462,13 @@ void painter_text(container_t* p)
                     // increase masked index
                     ++p->index_masked;
                     // increase mask ypos
-                    easing_init(&p->y_mask, 0, p->menu_height, p->y_mask.current, SPEED);
+                    easing_init(&p->y_mask, 0, p->h_line, p->y_mask.current, SPEED);
                 } else {
                     // increase text yoffset
-                    easing_init(&p->y_text, 0, p->menu_height, p->y_text.current, SPEED);
+                    easing_init(&p->y_title, 0, p->h_line, p->y_title.current, SPEED);
                 }
                 // increase scroll ypos
-                easing_init(&p->y_slider, 0, p->slider_height, p->y_slider.current, SPEED);
+                easing_init(&p->y_slider, 0, p->h_slider, p->y_slider.current, SPEED);
                 // change mask width
                 easing_init(&p->w_mask, p->w_mask.current, StrW(p->menus[p->index_selected].title), 0, SPEED);
                 // repaint
@@ -459,8 +479,7 @@ void painter_text(container_t* p)
         // other keys
         default: {
             printf("other\r\n");
-            if (p->handler) p->handler(p->menus, p->index_selected, p->size, key_id);
-            containers[container_index].repaint = true;
+            if (p->handler) p->handler(p);
         }
     }
 
@@ -469,10 +488,10 @@ void painter_text(container_t* p)
 
         do_easing_linear(&p->w_mask);
         do_easing_linear(&p->y_mask);
-        do_easing_linear(&p->y_text);
+        do_easing_linear(&p->y_title);
         do_easing_linear(&p->y_slider);
 
-        p->repaint = p->w_mask.running || p->y_mask.running || p->y_text.running || p->y_slider.running;
+        p->repaint = p->w_mask.running || p->y_mask.running || p->y_title.running || p->y_slider.running;
 
         // new frame
 
@@ -480,29 +499,29 @@ void painter_text(container_t* p)
 
         // titles
 
-        uint8_t index  = p->y_text.current / p->menu_height;
-        int8_t  offset = index * p->menu_height - p->y_text.current;
+        uint8_t index  = p->y_title.current / p->h_line;
+        int8_t  offset = index * p->h_line - p->y_title.current;
         while (index < p->size && offset < CONFIG_SCREEN_HEIGHT) {
             u8g2_DrawStr(&u8g2, CONFIG_PADDING_X, offset + CONFIG_PADDING_Y, p->menus[index].title);
-            ++index, offset += p->menu_height;
+            ++index, offset += p->h_line;
         }
 
         // scroll
 
         u8g2_DrawVLine(&u8g2, 126, 0, CONFIG_SCREEN_HEIGHT);  // 轴
 
-        for (uint8_t i = 0, y = 0; i <= p->size; ++i, y += p->slider_height) {  // 两侧小点
+        for (uint8_t i = 0, y = 0; i <= p->size; ++i, y += p->h_slider) {  // 两侧小点
             u8g2_DrawPixel(&u8g2, 125, y);
             u8g2_DrawPixel(&u8g2, 127, y);
         }
 
-        u8g2_DrawVLine(&u8g2, 125, p->y_slider.current, p->slider_height);  // 滑块
-        u8g2_DrawVLine(&u8g2, 127, p->y_slider.current, p->slider_height);
+        u8g2_DrawVLine(&u8g2, 125, p->y_slider.current, p->h_slider);  // 滑块
+        u8g2_DrawVLine(&u8g2, 127, p->y_slider.current, p->h_slider);
 
         // mask
 
         u8g2_SetDrawColor(&u8g2, 2);
-        u8g2_DrawRBox(&u8g2, 0, p->y_mask.current, p->w_mask.current + CONFIG_PADDING_X * 2, p->menu_height, 1);
+        u8g2_DrawRBox(&u8g2, 0, p->y_mask.current, p->w_mask.current + CONFIG_PADDING_X * 2, p->h_line, 1);
         u8g2_SetDrawColor(&u8g2, 1);
 
         // update screen
@@ -511,7 +530,7 @@ void painter_text(container_t* p)
     }
 }
 
-void painter_icon(container_t* p)
+void painter_icon(page_t* p)
 {
     switch (key_scan()) {
         case KEY_ID_NONE: break;
@@ -520,20 +539,10 @@ void painter_icon(container_t* p)
             if (p->index_selected > 0) {
                 // decrease selected index
                 --p->index_selected;
-                // check if masked index at top
-                if (p->index_masked > 0) {
-                    // decrease masked index
-                    --p->index_masked;
-                    // decrease mask ypos
-                    easing_init(&p->y_mask, 0, -p->menu_height, p->y_mask.current, SPEED);
-                } else {
-                    // decrease text yoffset
-                    easing_init(&p->y_text, 0, -p->menu_height, p->y_text.current, SPEED);
-                }
-                // decrease scroll ypos
-                easing_init(&p->y_slider, 0, -p->slider_height, p->y_slider.current, SPEED);
-                // change mask width
-                easing_init(&p->w_mask, p->w_mask.current, StrW(p->menus[p->index_selected].title), 0, SPEED);
+
+                easing_init(&p->x_icon, 0, -ICON_SPACE, p->x_icon.current, SPEED);
+                easing_init(&p->y_title, 0, -p->h_line, p->y_title.current, SPEED);
+
                 // repaint
                 p->repaint = true;
             }
@@ -544,20 +553,10 @@ void painter_icon(container_t* p)
             if (p->index_selected < p->size - 1) {
                 // increase selected index
                 ++p->index_selected;
-                // check if masked index at bottom
-                if (p->index_masked < p->count_display - 1) {
-                    // increase masked index
-                    ++p->index_masked;
-                    // increase mask ypos
-                    easing_init(&p->y_mask, 0, p->menu_height, p->y_mask.current, SPEED);
-                } else {
-                    // increase text yoffset
-                    easing_init(&p->y_text, 0, p->menu_height, p->y_text.current, SPEED);
-                }
-                // increase scroll ypos
-                easing_init(&p->y_slider, 0, p->slider_height, p->y_slider.current, SPEED);
-                // change mask width
-                easing_init(&p->w_mask, p->w_mask.current, StrW(p->menus[p->index_selected].title), 0, SPEED);
+
+                easing_init(&p->x_icon, 0, ICON_SPACE, p->x_icon.current, SPEED);
+                easing_init(&p->y_title, 0, p->h_line, p->y_title.current, SPEED);
+
                 // repaint
                 p->repaint = true;
             }
@@ -566,30 +565,182 @@ void painter_icon(container_t* p)
         // other keys
         default: {
             printf("other\r\n");
-            if (p->handler) p->handler(p->menus, p->index_selected, p->size, key_id);
-            containers[container_index].repaint = true;
+            if (p->handler) p->handler(p);
+            pages[container_index].repaint = true;
+        }
+    }
+
+    if (p->repaint) {
+        // easing
+
+        do_easing_linear(&p->y_title);
+        do_easing_linear(&p->x_icon);
+
+        p->repaint = p->x_icon.running || p->y_title.running;
+
+        // new frame
+
+        u8g2_ClearBuffer(&u8g2);
+
+        // icon & title
+
+        uint8_t index = p->x_icon.current / ICON_SPACE;
+        if (index > 0) --index;
+        int8_t offset = index * ICON_SPACE - p->x_icon.current;
+        while (index < p->size && offset < CONFIG_SCREEN_WIDTH) {
+            u8g2_DrawXBMP(&u8g2, 46 + offset, 6, 36, icon_width[index], icon_pic[index]);
+            u8g2_SetClipWindow(&u8g2, 0, 48, CONFIG_SCREEN_WIDTH, CONFIG_SCREEN_HEIGHT);
+            u8g2_DrawStr(&u8g2, (CONFIG_SCREEN_WIDTH - u8g2_GetStrWidth(&u8g2, p->menus[index].title)) / 2, 62 - p->y_title.current + index * 16, p->menus[index].title);
+            u8g2_SetMaxClipWindow(&u8g2);
+
+            ++index, offset += ICON_SPACE;
+        }
+
+        // update screen
+
+        u8g2_SendBuffer(&u8g2);
+    }
+}
+
+char name[] = "AZaz World ";
+
+static bool    is_edit = false;  // 编辑中
+static uint8_t blink   = false;  // 高亮
+
+void handler_text_editor(page_t* p)
+{
+    switch (key_scan()) {
+        case KEY_ID_NONE: break;
+        case KEY_ID_PREV: {
+            if (is_edit) {
+                // space->Z->...->A->z->...->a->space
+                char ch = name[p->index_selected];
+                switch (ch) {
+                    case 'a': ch = ' '; break;
+                    case 'A': ch = 'z'; break;
+                    case ' ': ch = 'Z'; break;
+                    default: --ch; break;
+                }
+                name[p->index_selected] = ch;
+            } else {
+                // decrease selected
+                if (p->index_selected > 0) {
+                    --p->index_selected;
+                } else {
+                    p->index_selected = p->size;
+                }
+            }
+            // repaint
+            p->repaint = true;
+            break;
+        }
+        case KEY_ID_NEXT: {
+            if (is_edit) {
+                // space->a->...->z->A->...->Z->space
+                char ch = name[p->index_selected];
+                switch (ch) {
+                    case ' ': ch = 'a'; break;
+                    case 'z': ch = 'A'; break;
+                    case 'Z': ch = ' '; break;
+                    default: ++ch; break;
+                }
+                name[p->index_selected] = ch;
+            } else {
+                // increase selected
+                if (p->index_selected < p->size) {
+                    ++p->index_selected;
+                } else {
+                    p->index_selected = 0;
+                }
+            }
+            // repaint
+            p->repaint = true;
+            break;
+        }
+        case KEY_ID_OK: {
+            if (p->index_selected == p->size) {
+                // return
+                effect_disappear();
+                // repaint
+                pages[container_index = 0].repaint = true;
+                return;
+            } else {
+                // edit mode
+                is_edit = !is_edit;
+                // repaint
+                p->repaint = true;
+            }
+            break;
         }
     }
 }
 
-void handler_pid(menu_t* menu, uint8_t index, uint8_t size, key_type_t key)
+void painter_text_editor(page_t* p)
 {
-    println("%s", menu[index].title);
+    handler_text_editor(p);
 
+    if (p->repaint) {
+        p->repaint = false;
+
+        u8g2_ClearBuffer(&u8g2);
+
+        // frame
+        u8g2_DrawRFrame(&u8g2, 4, 6, 120, 52, 8);
+        // title
+        u8g2_DrawStr(&u8g2, (128 - u8g2_GetStrWidth(&u8g2, "--Text Editor--")) / 2, 20, "--Text Editor--");
+        // text
+        uint8_t box_x = 10;
+        u8g2_DrawStr(&u8g2, box_x, 38, name);
+        // button
+        u8g2_DrawStr(&u8g2, 80, 50, "-Return");
+
+#define BLINK_SPEED 24  // 2的倍数
+
+        // cursor
+        if (p->index_selected < p->size) {
+            if (blink < BLINK_SPEED / 2) {
+                char ch                 = name[p->index_selected];
+                name[p->index_selected] = '\0';
+                box_x += u8g2_GetStrWidth(&u8g2, name);
+                name[p->index_selected] = ch;
+                // char (hover)
+                char temp[2] = {name[p->index_selected], '\0'};
+                u8g2_SetDrawColor(&u8g2, 2);
+                u8g2_DrawBox(&u8g2, box_x, 26, u8g2_GetStrWidth(&u8g2, temp) + 2, p->h_line);
+                u8g2_SetDrawColor(&u8g2, 1);
+            }
+        } else {
+            // button (hover)
+            u8g2_SetDrawColor(&u8g2, 2);
+            u8g2_DrawRBox(&u8g2, 78, 38, u8g2_GetStrWidth(&u8g2, "-Return") + 4, p->h_line, 1);
+            u8g2_SetDrawColor(&u8g2, 1);
+        }
+
+        if (is_edit) {
+            blink      = (blink < BLINK_SPEED) ? (blink + 1) : 0;
+            p->repaint = true;
+        }
+
+        u8g2_SendBuffer(&u8g2);
+    }
+}
+
+void handler_pid(page_t* p)
+{
     uint8_t i = 0;
 
-    switch (menu[index].id) {
+    switch (p->menus[p->index_selected].id) {
         case 0:
         case 1:
         case 2:
             for (uint16_t i = 0; i < buf_len; ++i)
                 buf_ptr[i] &= (i % 2 == 0 ? 0x55 : 0xAA);
             u8g2_SendBuffer(&u8g2);
-            pid_select = menu[index].id;
+            pid_select = p->menus[p->index_selected].id;
             while (1) {
                 switch (key_scan()) {
                     case KEY_ID_NEXT:
-                        if (Kpid[pid_select] < PID_MAX)
+                        if (Kpid[pid_select] < pid_max)
                             Kpid[pid_select] += 1;
                         break;
                     case KEY_ID_PREV:
@@ -606,7 +757,7 @@ void handler_pid(menu_t* menu, uint8_t index, uint8_t size, key_type_t key)
                 u8g2_SetDrawColor(&u8g2, 1);
 
                 u8g2_DrawFrame(&u8g2, 18, 36, 60, 8);
-                u8g2_DrawBox(&u8g2, 20, 38, (uint8_t)(Kpid[pid_select] / PID_MAX * 56), 4);
+                u8g2_DrawBox(&u8g2, 20, 38, (uint8_t)((float)Kpid[pid_select] / pid_max * 56), 4);
 
                 switch (pid_select) {
                     case 0: u8g2_DrawStr(&u8g2, 22, 30, "Editing Kp"); break;
@@ -626,7 +777,7 @@ void handler_pid(menu_t* menu, uint8_t index, uint8_t size, key_type_t key)
 
         case 3: {
             effect_disappear();
-            container_index = 0;
+            pages[container_index = 0].repaint = true;
             return;
         }
 
@@ -635,21 +786,20 @@ void handler_pid(menu_t* menu, uint8_t index, uint8_t size, key_type_t key)
     }
 }
 
-void handler_main(menu_t* menu, uint8_t index, uint8_t size, key_type_t key)
+void handler_main(page_t* p)
 {
-    println("%s", menu[index].title);
-
     effect_disappear();
 
     uint8_t i = 0;
 
-    switch (menu[index].id) {
+    switch (p->menus[p->index_selected].id) {
         case M_LOGO: {
             while (1) {
                 switch (key_scan()) {
                     case KEY_ID_PREV:
                     case KEY_ID_OK: {
                         effect_disappear();
+                        pages[container_index = 0].repaint = true;
                         return;
                     }
                     default: break;
@@ -658,11 +808,11 @@ void handler_main(menu_t* menu, uint8_t index, uint8_t size, key_type_t key)
                     i = 1;
                     u8g2_ClearBuffer(&u8g2);
                     u8g2_SetDrawColor(&u8g2, 0);
-                    u8g2_DrawStr(&u8g2, x, 12, "Hello World");
+                    u8g2_DrawStr(&u8g2, CONFIG_PADDING_X, 12, "Hello World");
                     u8g2_SetDrawColor(&u8g2, 1);
-                    u8g2_DrawStr(&u8g2, x, 24, "Hello World");
+                    u8g2_DrawStr(&u8g2, CONFIG_PADDING_X, 24, "Hello World");
                     u8g2_SetDrawColor(&u8g2, 2);
-                    u8g2_DrawStr(&u8g2, x, 36, "Hello World");
+                    u8g2_DrawStr(&u8g2, CONFIG_PADDING_X, 36, "Hello World");
                     u8g2_SendBuffer(&u8g2);
                 }
             }
@@ -670,19 +820,23 @@ void handler_main(menu_t* menu, uint8_t index, uint8_t size, key_type_t key)
         }
         case M_PID: {
             effect_disappear();
-            container_index = 1;
-            break;
+            pages[container_index = 1].repaint = true;
+            return;
         }
         case M_ICON: {
             effect_disappear();
-            container_index = 2;
-            break;
+            pages[container_index = 2].repaint = true;
+            return;
         }
         case M_CHART: {
-            break;
+            effect_disappear();
+            pages[container_index = 4].repaint = true;
+            return;
         }
         case M_TEXT: {
-            break;
+            effect_disappear();
+            pages[container_index = 3].repaint = true;
+            return;
         }
         case M_VIDEO: {
             break;
@@ -693,6 +847,7 @@ void handler_main(menu_t* menu, uint8_t index, uint8_t size, key_type_t key)
                     case KEY_ID_PREV:
                     case KEY_ID_OK: {
                         effect_disappear();
+                        pages[container_index = 0].repaint = true;
                         return;
                     }
                     default: break;
@@ -712,4 +867,86 @@ void handler_main(menu_t* menu, uint8_t index, uint8_t size, key_type_t key)
             break;
         }
     }
+    pages[container_index = 0].repaint = true;
+}
+
+void handler_icon(page_t* p)
+{
+    effect_disappear();
+    pages[container_index = 0].repaint = true;
+    return;
+}
+
+float   angle, angle_last;
+uint8_t chart_x;
+
+float analogRead()
+{
+    HAL_ADC_Start(&hadc1);
+    return (float)abs((HAL_ADC_GetValue(&hadc1) - 3700)) / 300 * 100;
+}
+
+void painter_chart(page_t* p)
+{
+    switch (key_scan()) {
+        case KEY_ID_NONE: break;
+        default: {
+            effect_disappear();
+            pages[container_index = 0].repaint = true;
+            return;
+        }
+    }
+
+    if (p->repaint) {
+        // fraw frame
+
+        u8g2_ClearBuffer(&u8g2);
+
+        u8g2_DrawStr(&u8g2, 4, 12, "Real time angle :");
+        u8g2_DrawRBox(&u8g2, 4, 18, 120, 46, 8);
+        u8g2_SetDrawColor(&u8g2, 2);
+        u8g2_DrawHLine(&u8g2, 10, 58, 108);
+        u8g2_DrawVLine(&u8g2, 10, 24, 34);
+        // 箭头
+        u8g2_DrawPixel(&u8g2, 7, 27);
+        u8g2_DrawPixel(&u8g2, 8, 26);
+        u8g2_DrawPixel(&u8g2, 9, 25);
+
+        u8g2_DrawPixel(&u8g2, 116, 59);
+        u8g2_DrawPixel(&u8g2, 115, 60);
+        u8g2_DrawPixel(&u8g2, 114, 61);
+        u8g2_SetDrawColor(&u8g2, 1);
+
+        angle_last = analogRead();
+
+        p->repaint = false;
+    }
+
+    u8g2_DrawBox(&u8g2, 96, 0, 30, 14);
+
+    u8g2_DrawVLine(&u8g2, chart_x + 10, 59, 3);
+    if (chart_x == 100) chart_x = 0;
+
+    // u8g2_DrawBox(&u8g2,chart_x+11,24,8,32);
+
+    u8g2_DrawVLine(&u8g2, chart_x + 11, 24, 34);
+    u8g2_DrawVLine(&u8g2, chart_x + 12, 24, 34);
+    u8g2_DrawVLine(&u8g2, chart_x + 13, 24, 34);
+    u8g2_DrawVLine(&u8g2, chart_x + 14, 24, 34);
+
+    // 异或绘制
+    u8g2_SetDrawColor(&u8g2, 2);
+    angle = analogRead();
+    u8g2_DrawLine(&u8g2, chart_x + 11, 58 - (int)angle_last / 2, chart_x + 12, 58 - (int)angle / 2);
+    u8g2_DrawVLine(&u8g2, chart_x + 12, 59, 3);
+    angle_last = angle;
+    chart_x += 2;
+    u8g2_DrawBox(&u8g2, 96, 0, 30, 14);
+    u8g2_SetDrawColor(&u8g2, 1);
+
+    static char buff[16];
+    sprintf(buff, "%.2f", angle);
+    u8g2_DrawStr(&u8g2, 96, 12, buff);
+
+    u8g2_SendBuffer(&u8g2);
 }
