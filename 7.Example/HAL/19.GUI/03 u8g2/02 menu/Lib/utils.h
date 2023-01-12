@@ -33,6 +33,9 @@ static void HAL_Delay_us(uint32_t us)
 // #define print_code(code) printf("[ " #code "]"), code
 #define print_code(code) println("[ " #code "]"), code
 
+// debug
+#define print_line_number() printf("[ line: %d | function: %s ]\r\n", __LINE__, __FUNCTION__)
+
 static void print_binary(uint8_t n)
 {
     for (uint8_t i = 0x80; i > 0; i >>= 1)
@@ -48,5 +51,7 @@ static void print_binary(uint8_t n)
 #define MEMBER_OFFSET(structure, member) ((int)&(((structure*)0)->member))
 // size of a member of a structure
 #define MEMBER_SIZE(structure, member) (sizeof(((structure*)0)->member))
+
+#define INLINE __inline__ __attribute__((always_inline))
 
 #endif

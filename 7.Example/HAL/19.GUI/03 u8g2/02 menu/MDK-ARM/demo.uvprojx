@@ -328,7 +328,7 @@
             <uC99>1</uC99>
             <uGnu>0</uGnu>
             <useXO>0</useXO>
-            <v6Lang>3</v6Lang>
+            <v6Lang>0</v6Lang>
             <v6LangP>3</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
@@ -692,9 +692,29 @@
               <FilePath>..\..\Lib\oled\oled.c</FilePath>
             </File>
             <File>
-              <FileName>matrixkey.c</FileName>
+              <FileName>easing.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\Lib\matrixkey\matrixkey.c</FilePath>
+              <FilePath>..\Lib\easing\easing.c</FilePath>
+            </File>
+            <File>
+              <FileName>key.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Lib\key\key.c</FilePath>
+            </File>
+            <File>
+              <FileName>base.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Lib\apps\base.c</FilePath>
+            </File>
+            <File>
+              <FileName>menulist.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Lib\apps\menulist.c</FilePath>
+            </File>
+            <File>
+              <FileName>iconlist.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Lib\apps\iconlist.c</FilePath>
             </File>
           </Files>
         </Group>

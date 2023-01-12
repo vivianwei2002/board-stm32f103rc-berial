@@ -26,10 +26,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "oled/oled.h"
 #include <stdbool.h>
 #include "math.h"
-#include "matrixkey/matrixkey.h"
+#include "apps/menulist.h"
+#include "apps/iconlist.h"
+
+#define CONFIG_PADDING_X 4
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,8 +54,6 @@
 
 /* USER CODE BEGIN PV */
 
-#include "app.h"
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,6 +64,219 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+#include "res/images.h"
+
+typedef enum {
+    PAGE_ID_NONE = -1,
+    //
+    PAGE_ID_FIRST = 0,
+
+    PAGE_ID_MAIN_MENULIST = PAGE_ID_FIRST,
+    PAGE_ID_PID_MENULIST,
+    PAGE_ID_ICON_ICONLIST,
+
+    PAGE_ID_LOGO,
+    PAGE_ID_CHART,
+    PAGE_ID_TEXTEDIT,
+    PAGE_ID_ABOUT,
+
+    PAGE_ID_LAST,
+    //
+    FUNC_ID_RETURN = PAGE_ID_LAST + 1,
+    FUNC_ID_ANIMATION,
+} page_id_t;
+
+page_t*   pages[PAGE_ID_LAST];
+page_id_t page_selected;  // index of rendering
+
+#define PAGE_SWITCH(ID)    pages[page_selected = ID]->repaint = true
+#define PAGE_SET(ID, page) pages[ID] = (page_t*)&page
+#define PAGE_RENDER()                                        \
+    pages[page_selected]->handler(pages[page_selected]);     \
+    if (pages[page_selected]->repaint) {                     \
+        println("repaint");                                  \
+        pages[page_selected]->repaint = 0;                   \
+        pages[page_selected]->painter(pages[page_selected]); \
+    }
+
+///
+
+const item_menu_t menu_main[] = {
+    {PAGE_ID_LOGO, "MainUI"},
+    {PAGE_ID_PID_MENULIST, "+PID Editor"},
+    {PAGE_ID_ICON_ICONLIST, "-Icon Test"},
+    {PAGE_ID_CHART, "-Chart Test"},
+    {PAGE_ID_TEXTEDIT, "-Text Edit"},
+    {PAGE_ID_NONE, "-Play Video"},
+    {PAGE_ID_ABOUT, "{ About }"},
+};
+
+void _painter_logo(page_t* p)
+{
+    _clear();
+    _set_color(0);
+    _draw_str(CONFIG_PADDING_X, 12, "Hello World");
+    _set_color(1);
+    _draw_str(CONFIG_PADDING_X, 24, "Hello World");
+    _set_color(2);
+    _draw_str(CONFIG_PADDING_X, 36, "Hello World");
+    _update();
+}
+
+void _handler_logo(page_t* p)
+{
+    switch (key_scan()) {
+        case KEY_ID_NONE:
+            break;
+        default:
+            effect_disappear();
+            PAGE_SWITCH(PAGE_ID_MAIN_MENULIST);
+            break;
+    }
+}
+
+void _painter_chart(page_t* p)
+{
+    _clear();
+    _update();
+}
+void _handler_chart(page_t* p)
+{
+    switch (key_scan()) {
+        case KEY_ID_NONE:
+            break;
+        default:
+            effect_disappear();
+            PAGE_SWITCH(PAGE_ID_MAIN_MENULIST);
+            break;
+    }
+}
+
+void _painter_textedit(page_t* p)
+{
+    _clear();
+    _update();
+}
+void _handler_textedit(page_t* p)
+{
+    switch (key_scan()) {
+        case KEY_ID_NONE:
+            break;
+        default:
+            println("hello");
+            effect_disappear();
+            PAGE_SWITCH(PAGE_ID_MAIN_MENULIST);
+            break;
+    }
+}
+
+void _painter_about(page_t* p)
+{
+    _clear();
+    _set_color(1);
+    _draw_str(2, 12, "MCU : STM32");
+    _draw_str(2, 28, "FLASH : 512KB");
+    _draw_str(2, 44, "SRAM : 256KB");
+    _draw_str(2, 60, "RTC SRAM : 16KB");
+    _update();
+}
+
+void _handler_about(page_t* p)
+{
+    switch (key_scan()) {
+        case KEY_ID_NONE:
+            break;
+        default:
+            effect_disappear();
+            PAGE_SWITCH(PAGE_ID_MAIN_MENULIST);
+            break;
+    }
+}
+
+void _hander_main(menulist_t* p)
+{
+    switch (key_scan()) {
+        case KEY_ID_NONE: break;
+        case KEY_ID_PREV: menulist_callback_handler_switch_prev(p); break;
+        case KEY_ID_NEXT: menulist_callback_handler_switch_next(p); break;
+        case KEY_ID_OK:
+
+            switch (p->items[p->index_selected].ID) {
+                case PAGE_ID_LOGO:
+                case PAGE_ID_CHART:
+                case PAGE_ID_TEXTEDIT:
+                case PAGE_ID_ABOUT:
+                case PAGE_ID_PID_MENULIST:
+                case PAGE_ID_ICON_ICONLIST: {
+                    effect_disappear();
+                    PAGE_SWITCH(p->items[p->index_selected].ID);
+                    break;
+                }
+
+                default:
+                    break;
+            }
+
+            p->repaint = true;
+
+            break;
+    }
+}
+
+const item_menu_t menu_pid[] = {
+    {0, "-Proportion"},
+    {0, "-Integral"},
+    {0, "-Derivative"},
+    {FUNC_ID_RETURN, "Return"},
+};
+
+void _hander_pid(menulist_t* p)
+{
+    switch (key_scan()) {
+        case KEY_ID_NONE: break;
+        case KEY_ID_PREV: menulist_callback_handler_switch_prev(p); break;
+        case KEY_ID_NEXT: menulist_callback_handler_switch_next(p); break;
+        case KEY_ID_OK:
+
+            switch (p->items[p->index_selected].ID) {
+                case FUNC_ID_RETURN: {
+                    effect_disappear();
+                    PAGE_SWITCH(PAGE_ID_MAIN_MENULIST);
+                    break;
+                }
+            }
+    }
+}
+
+const item_icon_t menu_icon[] = {
+    {FUNC_ID_ANIMATION, "Likes", 36, 35, res_likes},
+    {FUNC_ID_RETURN, "Collection", 36, 37, res_collect},
+    {FUNC_ID_ANIMATION, "Slot", 36, 36, res_coin},
+    {FUNC_ID_RETURN, "Share", 36, 36, res_share},
+};
+
+void _hander_icon(iconlist_t* p)
+{
+    switch (key_scan()) {
+        case KEY_ID_NONE: break;
+        case KEY_ID_PREV: iconlist_callback_handler_switch_prev(p); break;
+        case KEY_ID_NEXT: iconlist_callback_handler_switch_next(p); break;
+        case KEY_ID_OK:
+            switch (p->items[p->index_selected].ID) {
+                case FUNC_ID_ANIMATION:
+                    easing_start_relative(&p->y_padding_icon, -p->icon_space / 8, 1);
+                    p->repaint = true;
+                    break;
+                case FUNC_ID_RETURN: {
+                    effect_disappear();
+                    PAGE_SWITCH(PAGE_ID_MAIN_MENULIST);
+                    break;
+                }
+                default: break;
+            }
+    }
+}
 
 /* USER CODE END 0 */
 
@@ -97,26 +311,41 @@ int main(void)
     MX_USART1_UART_Init();
     MX_I2C2_Init();
     MX_USART2_UART_Init();
-    MX_ADC1_Init();
+    // MX_ADC1_Init();
     /* USER CODE BEGIN 2 */
     /* USER CODE END 2 */
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
 
-    HAL_ADCEx_Calibration_Start(&hadc1);
+    // HAL_ADCEx_Calibration_Start(&hadc1);
 
     key_init();
+    u8g2_init();
 
-    u8g2Init(&u8g2);
-    // u8g2_SetBusClock(&u8g2, 800000);
-    u8g2_SetFont(&u8g2, u8g2_font_wqy12_t_chinese1);
-    // u8g2_SetContrast(&u8g2,10);
+    page_t page_logo     = page_new(_painter_logo, _handler_logo);
+    page_t page_chart    = page_new(_painter_chart, _handler_chart);
+    page_t page_textedit = page_new(_painter_textedit, _handler_textedit);
+    page_t page_about    = page_new(_painter_about, _handler_about);
 
-    buf_ptr = u8g2_GetBufferPtr(&u8g2);
-    buf_len = 8 * u8g2_GetBufferTileHeight(&u8g2) * u8g2_GetBufferTileWidth(&u8g2);
+    PAGE_SET(PAGE_ID_LOGO, page_logo);
+    PAGE_SET(PAGE_ID_CHART, page_chart);
+    PAGE_SET(PAGE_ID_TEXTEDIT, page_textedit);
+    PAGE_SET(PAGE_ID_ABOUT, page_about);
+
+    menulist_t menulist_main = menulist_initialize(menu_main, ARRAY_SIZE(menu_main), 4, 0, _hander_main);
+    menulist_t menulist_pid  = menulist_initialize(menu_pid, ARRAY_SIZE(menu_pid), 4, 0, _hander_pid);
+
+    PAGE_SET(PAGE_ID_MAIN_MENULIST, menulist_main);
+    PAGE_SET(PAGE_ID_PID_MENULIST, menulist_pid);
+
+    iconlist_t iconlist_icon = iconlist_initialize(menu_icon, ARRAY_SIZE(menu_icon), 0, _hander_icon);
+
+    PAGE_SET(PAGE_ID_ICON_ICONLIST, iconlist_icon);
+
+    PAGE_SWITCH(PAGE_ID_FIRST);
 
     while (1) {
-        pages[container_index].painter(&pages[container_index]);
+        PAGE_RENDER();
 
         /* USER CODE END WHILE */
 

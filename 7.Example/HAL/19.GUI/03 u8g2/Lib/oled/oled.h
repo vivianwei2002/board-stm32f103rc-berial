@@ -4,6 +4,9 @@
 #include "i2c.h"
 #include "u8g2/u8g2.h"
 
+#define CONFIG_SCREEN_HEIGHT 64   // height of screen
+#define CONFIG_SCREEN_WIDTH  128  // width of screen
+
 #define SSD1306_ADDRESS 0x78
 
 uint8_t u8x8_byte_hw_i2c(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_ptr);
