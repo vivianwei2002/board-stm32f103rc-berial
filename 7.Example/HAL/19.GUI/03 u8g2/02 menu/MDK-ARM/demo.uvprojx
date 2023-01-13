@@ -716,6 +716,21 @@
               <FileType>1</FileType>
               <FilePath>..\Lib\apps\iconlist.c</FilePath>
             </File>
+            <File>
+              <FileName>textedit.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Lib\apps\textedit.c</FilePath>
+            </File>
+            <File>
+              <FileName>easingchart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Lib\apps\easingchart.c</FilePath>
+            </File>
+            <File>
+              <FileName>adcchart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Lib\apps\adcchart.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

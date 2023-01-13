@@ -194,55 +194,48 @@ float _easing_calc_InOutBack(const float t)
 easing_t easing_create(
     easing_mode_t dwMode,
     easing_calc_t lpfnCalc,
-    easing_pos_t  nCurrent,
-    uint8_t       nFrameCount,
+    easing_pos_t  nOffset,
+    uint16_t      nFrameCount,
     uint16_t      nInterval)
 {
-    if (nFrameCount == 0)
-        nFrameCount = 1;
-
     easing_t easing = {
         .dwMode      = dwMode,
         .lpfnCalc    = lpfnCalc == 0 ? _easing_calc_Linear : lpfnCalc,
-        .nStart      = nCurrent,
-        .nStop       = nCurrent,
+        .nStart      = 0,
+        .nStop       = 0,
         .nDelta      = 0,
-        .nCurrent    = nCurrent,
-        .nFrameIndex = nFrameCount,
-        .nFrameCount = nFrameCount,
-        .fProgress   = 1.0f,
+        .nCurrent    = 0,
+        .nOffset     = nOffset,
+        .nFrameIndex = 0,
+        .nFrameCount = (nFrameCount < 2) ? 2 : nFrameCount,
+        .fProgress   = 0.f,
         .nInterval   = nInterval,
         .nMills      = 0,
-        .nDirection  = 0,
+        .bDirection  = dwMode & EASING_DIR_REVERSE,
         .nTimes      = 0,
     };
+
     return easing;
 }
 
 void easing_start_absolute(
     easing_t*    pEasing,
     easing_pos_t nStart,
-    easing_pos_t nStop,
-    uint8_t      nTimes)
+    easing_pos_t nStop)
 {
     pEasing->nStart = nStart;
     pEasing->nStop  = nStop;
     pEasing->nDelta = nStop - nStart;
 
-    if (pEasing->dwMode & EASING_DIR_REVERSE) {
-        pEasing->nDirection  = -1;
-        pEasing->fProgress   = 1;
-        pEasing->nFrameIndex = pEasing->nFrameCount;
-    } else {
-        pEasing->nDirection  = +1;
-        pEasing->nFrameIndex = 0;
-        pEasing->fProgress   = 0;
-    }
+    pEasing->nFrameIndex = 0;  // first frame is nStart
+    pEasing->fProgress   = 0.f;
 
-    if (pEasing->dwMode & EASING_TIMES_FOREVER) {
+    pEasing->bDirection = pEasing->dwMode & EASING_DIR_REVERSE;
+
+    if (pEasing->dwMode & EASING_TIMES_INFINITE) {
         pEasing->nTimes = -1;
     } else {
-        pEasing->nTimes = ((pEasing->dwMode & EASING_TIMES_MANYTIMES) && (nTimes > 0)) ? nTimes : 1;
+        pEasing->nTimes = (pEasing->dwMode & EASING_TIMES_MANYTIMES) ? (pEasing->dwMode >> EASING_TIMES_SET) : 1;
         if (pEasing->dwMode & EASING_DIR_BACKANDFORTH) pEasing->nTimes *= 2;
     }
 
@@ -253,8 +246,7 @@ void easing_start_absolute(
 
 void easing_start_relative(
     easing_t*    pEasing,
-    easing_pos_t nDistance,
-    uint8_t      nTimes)
+    easing_pos_t nDistance)
 {
     easing_start_absolute(
         pEasing,
@@ -263,12 +255,12 @@ void easing_start_relative(
 #else
         easing->nStop,  // from stop pos
 #endif
-        pEasing->nStop + nDistance,
-        nTimes);
+        pEasing->nStop + nDistance);
 }
 
 void easing_update(easing_t* pEasing)
 {
+    // isok
     if (pEasing->nTimes == 0) return;
 
 #ifdef easing_mills
@@ -278,21 +270,92 @@ void easing_update(easing_t* pEasing)
     }
 #endif
 
-    pEasing->nFrameIndex += pEasing->nDirection;
-    if (pEasing->nFrameIndex == 0) {
-        pEasing->fProgress = 0.f;
-        pEasing->nCurrent  = pEasing->nStart;
-    } else if (pEasing->nFrameIndex == pEasing->nFrameCount) {
-        pEasing->fProgress = 1.f;
-        pEasing->nCurrent  = pEasing->nStop;
-    } else {
-        pEasing->fProgress = (float)pEasing->nFrameIndex / (pEasing->nFrameCount);
-        pEasing->nCurrent  = pEasing->nStart + pEasing->nDelta * pEasing->lpfnCalc(pEasing->fProgress);
-        return;
+    // next frame
+    ++pEasing->nFrameIndex;
+
+    if (pEasing->nFrameIndex > pEasing->nFrameCount) {
+        if (pEasing->dwMode & EASING_DIR_BACKANDFORTH) {
+            // reverse direction
+            pEasing->bDirection = !pEasing->bDirection;
+            // skip once nStart/nStop pos
+            pEasing->nFrameIndex = 2;
+        } else {
+            // at first frame
+            pEasing->nFrameIndex = 1;
+        }
     }
 
-    if (pEasing->nTimes > 0)
-        --pEasing->nTimes;
-    if (pEasing->dwMode & EASING_DIR_BACKANDFORTH)
-        pEasing->nDirection = -pEasing->nDirection;
+    if (pEasing->nFrameIndex == pEasing->nFrameCount) {
+        // at last frame
+        pEasing->fProgress = 1.f;
+        pEasing->nCurrent  = pEasing->bDirection ? pEasing->nStart : pEasing->nStop;
+        // decrease times
+        if (!(pEasing->dwMode & EASING_TIMES_INFINITE))
+            if (--pEasing->nTimes) return;
+    } else {
+        // calculate progress
+        pEasing->fProgress = (float)(pEasing->nFrameIndex - 1) / (pEasing->nFrameCount - 1);
+        // calculate position
+        pEasing->nCurrent = pEasing->bDirection ?
+                                (pEasing->nStop - pEasing->nDelta * pEasing->lpfnCalc(pEasing->fProgress)) :
+                                (pEasing->nStart + pEasing->nDelta * pEasing->lpfnCalc(pEasing->fProgress));
+    }
 }
+
+#define INLINE
+
+INLINE bool easing_isok(easing_t* pEasing)
+{
+    return pEasing->nTimes == 0;
+}
+
+INLINE void easing_stop(easing_t* pEasing, easing_pos_t nCurrent)
+{
+    pEasing->nTimes   = 0;
+    pEasing->nCurrent = nCurrent;
+}
+
+INLINE easing_pos_t easing_curpos(easing_t* pEasing)
+{
+    return pEasing->nCurrent + pEasing->nOffset;
+}
+
+#if 0
+
+#include "stdio.h"
+
+int main()
+{
+#if 0
+    // easing_t e = easing_create(EASING_DIR_FORWARD | EASING_TIMES_SINGLE, _easing_calc_Linear, 10, 5, 0);
+    // easing_t e = easing_create(EASING_DIR_FORWARD | EASING_TIMES_MANYTIMES | (2 << EASING_TIMES_SET), _easing_calc_Linear, 0, 5, 0);
+    // easing_t e = easing_create(EASING_DIR_REVERSE | EASING_TIMES_MANYTIMES | (2 << EASING_TIMES_SET), _easing_calc_Linear, 0, 1, 0);
+    easing_t e = easing_create(EASING_DIR_BACKANDFORTH | EASING_TIMES_MANYTIMES | (2 << EASING_TIMES_SET), _easing_calc_Linear, 0, 5, 0);
+    easing_start_relative(&e, 10);  // 0 [2.5 5 7.5] 10
+    while (!easing_isok(&e)) {
+        easing_update(&e);
+        printf("%f\r\n", easing_curpos(&e));
+        // printf("%f\r\n", e.nCurrent);
+    }
+#endif
+
+    easing_t e = easing_create(EASING_MODE_DEFAULT, _easing_calc_Linear, 0, 400, 0);
+
+    easing_start_absolute(&e, -1.57, 1.57);
+
+    float x1 = 0, y1 = 0, x2, y2;
+
+    char  buff[32];
+    FILE* f = fopen("data.csv", "w");
+    while (!easing_isok(&e)) {
+        easing_update(&e);
+        float x = easing_curpos(&e);
+        sprintf(buff, "%f\n", y);
+        fputs(buff, f);
+    }
+    fclose(f);
+
+    return 0;
+}
+
+#endif

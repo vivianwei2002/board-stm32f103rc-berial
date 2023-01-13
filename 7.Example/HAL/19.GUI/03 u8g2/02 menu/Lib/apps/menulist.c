@@ -4,52 +4,54 @@
 
 #define CORRECT(v) ((v - (uint8_t)v) > 0.5f)
 
-menulist_t menulist_initialize(item_menu_t items[], uint8_t size, uint8_t count_display, cbk_t painter, cbk_t handler)
+menulist_t menulist_initialize(item_menu_t pItems[], uint8_t nSize, uint8_t nDisplyedCount, cbk_t lpfnPainter, cbk_t lpfnHandler)
 {
-    if (size == 0) {
+    if (nSize == 0) {
         menulist_t m = {0};
         return m;
     }
 
-    if (count_display == 0) count_display = 1;
+    if (nDisplyedCount == 0) nDisplyedCount = 1;
 
-    uint8_t width  = CONFIG_SCREEN_WIDTH;
-    uint8_t height = CONFIG_SCREEN_HEIGHT;
+    uint8_t nWidth  = CONFIG_SCREEN_WIDTH;
+    uint8_t nHeight = CONFIG_SCREEN_HEIGHT;
 
     menulist_t m = {
-        .repaint = true,
+        .bRepaint = true,
 
-        .painter = painter == 0 ? menulist_callback_default_painter : painter,
-        .handler = handler == 0 ? menulist_callback_default_handler : handler,
+        .lpfnPainter = lpfnPainter == 0 ? menulist_callback_default_painter : lpfnPainter,
+        .lpfnHandler = lpfnHandler == 0 ? menulist_callback_default_handler : lpfnHandler,
 
-        .width  = width,
-        .height = height,
+        .nWidth  = nWidth,
+        .nHeight = nHeight,
 
-        .items = items,
-        .size  = size,
+        .pItems = pItems,
+        .nSize  = nSize,
 
-        .count_display = count_display,
+        .nDisplyedCount = nDisplyedCount,
 
-        .h_line   = (easing_pos_t)height / count_display,
-        .h_slider = (easing_pos_t)height / size,
+        .hLine   = (easing_pos_t)nHeight / nDisplyedCount,
+        .hSlider = (easing_pos_t)nHeight / nSize,
 
-        .index_masked   = 0,
-        .index_selected = 0,
+        .nMaskedIndex   = 0,
+        .nSelectedIndex = 0,
 
-        .x_padding = 4,
-        .y_padding = 8,  // fontsize ?
+        .xPadding = 4,
+        .yPadding = 8,  // fontsize ?
 
-        .x_slider = width - 2,
+        .xSlider = nWidth - 2,
 
-        .w_mask = easing_create(EASING_TIMES_SINGLE | EASING_DIR_FORWARD, _easing_calc_OutCubic, _str_w_(items[0].title), FRAMECOUNT, 0),
-        .y_mask = easing_create(EASING_TIMES_SINGLE | EASING_DIR_FORWARD, _easing_calc_OutCubic, 0, FRAMECOUNT, 0),
+        .wMask = easing_create(EASING_MODE_DEFAULT, _easing_calc_OutCubic, 0, FRAMECOUNT, EASING_INTERVAL_NONE),
+        .yMask = easing_create(EASING_MODE_DEFAULT, _easing_calc_OutCubic, 0, FRAMECOUNT, EASING_INTERVAL_NONE),
 
-        .y_slider = easing_create(EASING_TIMES_SINGLE | EASING_DIR_FORWARD, _easing_calc_OutCubic, 0, FRAMECOUNT, 0),
-        .y_title  = easing_create(EASING_TIMES_SINGLE | EASING_DIR_FORWARD, _easing_calc_Linear, 0, FRAMECOUNT, 0),
+        .ySlider      = easing_create(EASING_MODE_DEFAULT, _easing_calc_OutCubic, 0, FRAMECOUNT, EASING_INTERVAL_NONE),
+        .yTitleOffset = easing_create(EASING_MODE_DEFAULT, _easing_calc_Linear, 0, FRAMECOUNT, EASING_INTERVAL_NONE),
 
     };
 
-    m.y_padding += (m.h_line - m.y_padding) / 2;
+    m.wMask.nCurrent = _str_w_(pItems[0].title);
+
+    m.yPadding += (m.hLine - m.yPadding) / 2;
 
     return m;
 }
@@ -61,7 +63,7 @@ void menulist_callback_default_handler(menulist_t* p)
         case KEY_ID_PREV: menulist_callback_handler_switch_prev(p); break;
         case KEY_ID_NEXT: menulist_callback_handler_switch_next(p); break;
         default: {
-            println("%s", p->items[p->index_selected].title);
+            println("%s", p->pItems[p->nSelectedIndex].title);
             break;
         }
     }
@@ -69,73 +71,108 @@ void menulist_callback_default_handler(menulist_t* p)
 
 void menulist_callback_handler_switch_prev(menulist_t* p)
 {
-    if (p->index_selected > 0) {
+    if (p->nSelectedIndex > 0) {
         // decrease selected index
-        --p->index_selected;
+        --p->nSelectedIndex;
         // check if masked index at top
-        if (p->index_masked > 0) {
+        if (p->nMaskedIndex > 0) {
             // decrease masked index
-            --p->index_masked;
+            --p->nMaskedIndex;
             // decrease mask ypos
-            easing_start_relative(&p->y_mask, -p->h_line, 1);
+            easing_start_relative(&p->yMask, -p->hLine);
         } else {
             // decrease text yoffset
-            easing_start_relative(&p->y_title, -p->h_line, 1);
+            easing_start_relative(&p->yTitleOffset, -p->hLine);
         }
         // decrease scroll ypos
-        easing_start_relative(&p->y_slider, -p->h_slider, 1);
+        easing_start_relative(&p->ySlider, -p->hSlider);
         // change mask width
-        easing_start_absolute(&p->w_mask, p->w_mask.nCurrent, _str_w_(p->items[p->index_selected].title), 1);
+        easing_start_absolute(&p->wMask, p->wMask.nCurrent, _str_w_(p->pItems[p->nSelectedIndex].title));
         // repaint
-        p->repaint = true;
+        p->bRepaint = true;
     }
 }
 
 void menulist_callback_handler_switch_next(menulist_t* p)
 {
-    if (p->index_selected < p->size - 1) {
+    if (p->nSelectedIndex < p->nSize - 1) {
         // increase selected index
-        ++p->index_selected;
+        ++p->nSelectedIndex;
         // check if masked index at bottom
-        if (p->index_masked < p->count_display - 1) {
+        if (p->nMaskedIndex < p->nDisplyedCount - 1) {
             // increase masked index
-            ++p->index_masked;
+            ++p->nMaskedIndex;
             // increase mask ypos
-            easing_start_relative(&p->y_mask, p->h_line, 1);
+            easing_start_relative(&p->yMask, p->hLine);
         } else {
             // increase text yoffset
-            easing_start_relative(&p->y_title, p->h_line, 1);
+            easing_start_relative(&p->yTitleOffset, p->hLine);
         }
         // increase scroll ypos
-        easing_start_relative(&p->y_slider, p->h_slider, 1);
+        easing_start_relative(&p->ySlider, p->hSlider);
         // change mask width
-        easing_start_absolute(&p->w_mask, p->w_mask.nCurrent, _str_w_(p->items[p->index_selected].title), 1);
+        easing_start_absolute(&p->wMask, p->wMask.nCurrent, _str_w_(p->pItems[p->nSelectedIndex].title));
         // repaint
-        p->repaint = true;
+        p->bRepaint = true;
     }
 }
 
-INLINE void _draw_2side_line(uint8_t x, easing_pos_t y, uint8_t d, easing_pos_t h)
+void menulist_callback_painter_update_easing(menulist_t* p)
 {
-    h += CORRECT(y);
-    _draw_vline(x - d, y, h);
-    _draw_vline(x + d, y, h);
+    easing_update(&p->wMask);
+    easing_update(&p->yMask);
+    easing_update(&p->yTitleOffset);
+    easing_update(&p->ySlider);
+
+    p->bRepaint =
+        !(easing_isok(&p->wMask) &&
+          easing_isok(&p->yMask) &&
+          easing_isok(&p->yTitleOffset) &&
+          easing_isok(&p->ySlider));
+}
+
+void menulist_callback_painter_draw_items(menulist_t* p)
+{
+    // 虚表绘制:
+    uint8_t      index    = easing_curpos(&p->yTitleOffset) / p->hLine;
+    easing_pos_t y_offset = index * p->hLine - easing_curpos(&p->yTitleOffset);
+    while (index < p->nSize && y_offset < p->nHeight) {
+        _draw_str(p->xPadding, y_offset + p->yPadding, p->pItems[index].title);
+        ++index, y_offset += p->hLine;
+    }
+}
+
+void menulist_callback_painter_draw_scroll(menulist_t* p)
+{
+    _draw_vline(p->xSlider, 0, p->nHeight);  // 轴
+
+    easing_pos_t y = 0;
+
+    for (uint8_t i = 0; i < p->nSize; ++i) {  // 刻度
+        _draw_pixel(p->xSlider - 1, y);
+        _draw_pixel(p->xSlider + 1, y);
+        y += p->hSlider;
+    }
+    _draw_pixel(p->xSlider - 1, p->nHeight - 1);
+    _draw_pixel(p->xSlider + 1, p->nHeight - 1);
+
+    easing_pos_t h = p->hSlider + CORRECT(easing_curpos(&p->ySlider));
+    _draw_vline(p->xSlider - 1, easing_curpos(&p->ySlider), h);  // 滑块
+    _draw_vline(p->xSlider + 1, easing_curpos(&p->ySlider), h);
+}
+
+void menulist_callback_painter_draw_item_mask(menulist_t* p)
+{
+    _set_color(2);
+    _draw_rounded_rect(0, easing_curpos(&p->yMask), easing_curpos(&p->wMask) + p->xPadding * 2, p->hLine + CORRECT(easing_curpos(&p->yMask)), 1);
+    _set_color(1);
 }
 
 void menulist_callback_default_painter(menulist_t* p)
 {
     // easing
 
-    easing_update(&p->w_mask);
-    easing_update(&p->y_mask);
-    easing_update(&p->y_title);
-    easing_update(&p->y_slider);
-
-    p->repaint =
-        EASING_IS_RUNNING(p->w_mask) ||
-        EASING_IS_RUNNING(p->y_mask) ||
-        EASING_IS_RUNNING(p->y_title) ||
-        EASING_IS_RUNNING(p->y_slider);
+    menulist_callback_painter_update_easing(p);
 
     // new frame
 
@@ -143,34 +180,15 @@ void menulist_callback_default_painter(menulist_t* p)
 
     // title
 
-    uint8_t      index    = p->y_title.nCurrent / p->h_line;
-    easing_pos_t y_offset = index * p->h_line - p->y_title.nCurrent;
-    while (index < p->size && y_offset < p->height) {
-        _draw_str(p->x_padding, y_offset + p->y_padding, p->items[index].title);
-        ++index, y_offset += p->h_line;
-    }
+    menulist_callback_painter_draw_items(p);
 
     // scroll
 
-    _draw_vline(p->x_slider, 0, p->height);  // 轴
-
-    easing_pos_t y = 0;
-
-    for (uint8_t i = 0; i < p->size; ++i) {  // 刻度
-        _draw_pixel(p->x_slider - 1, y);
-        _draw_pixel(p->x_slider + 1, y);
-        y += p->h_slider;
-    }
-    _draw_pixel(p->x_slider - 1, p->height - 1);
-    _draw_pixel(p->x_slider + 1, p->height - 1);
-
-    _draw_2side_line(p->x_slider, p->y_slider.nCurrent, 1, p->h_slider);  // 滑块
+    menulist_callback_painter_draw_scroll(p);
 
     // mask
 
-    _set_color(2);
-    _draw_rounded_rect(0, p->y_mask.nCurrent, p->w_mask.nCurrent + p->x_padding * 2, p->h_line + CORRECT(p->y_mask.nCurrent), 1);
-    _set_color(1);
+    menulist_callback_painter_draw_item_mask(p);
 
     // update screen
 

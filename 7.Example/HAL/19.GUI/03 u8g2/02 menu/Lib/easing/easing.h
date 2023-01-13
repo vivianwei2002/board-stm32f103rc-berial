@@ -12,8 +12,9 @@ extern "C" {
 #include <stdbool.h>
 
 #include <math.h>
+#include "utils.h"
 
-// #define easing_mills() HAL_GetTick()
+#define easing_mills() HAL_GetTick()
 
 ////////////////
 
@@ -22,29 +23,25 @@ typedef float (*easing_calc_t)(const float t);
 typedef float easing_pos_t;  // data type
 
 typedef enum {
-    EASING_TIMES_SINGLE     = 0 << 0,  // 单次(default)
-    EASING_TIMES_MANYTIMES  = 1 << 0,  // 多次
-    EASING_TIMES_FOREVER    = 1 << 1,  // 循环
+    EASING_MODE_BITCNT = 4,
+    EASING_MODE_MASK   = (1 << EASING_MODE_BITCNT) - 1,
+
+    EASING_TIMES_SINGLE    = 0 << 0,  // 单次(default)
+    EASING_TIMES_MANYTIMES = 1 << 0,  // 多次
+    EASING_TIMES_INFINITE  = 1 << 1,  // 循环
+
+    EASING_TIMES_SET = EASING_MODE_BITCNT,
+
     EASING_DIR_FORWARD      = 0 << 0,  // 正向(default)
     EASING_DIR_REVERSE      = 1 << 2,  // 反向
-    EASING_DIR_BACKANDFORTH = 1 << 3,  // 来回
+    EASING_DIR_BACKANDFORTH = 1 << 3,  // 往返
+
 } easing_mode_t;
 
-typedef enum {
-    EASING_INTERVAL_NONE   = 0,
-    EASING_INTERVAL_5MS    = 5,
-    EASING_INTERVAL_10MS   = 10,
-    EASING_INTERVAL_20MS   = 20,
-    EASING_INTERVAL_50MS   = 50,
-    EASING_INTERVAL_100MS  = 100,
-    EASING_INTERVAL_200MS  = 200,
-    EASING_INTERVAL_500MS  = 500,
-    EASING_INTERVAL_1000MS = 1000,
-} easing_interval_t;
+#define EASING_MODE_DEFAULT   EASING_TIMES_SINGLE | EASING_DIR_FORWARD
+#define EASING_MODE_NTIMES(n) EASING_TIMES_MANYTIMES | (n << EASING_TIMES_SET)
 
-typedef enum {
-    EASING_STATE_PAUSE,
-} easing_state_t;
+#define EASING_INTERVAL_NONE 0
 
 typedef struct easing {
     easing_mode_t dwMode;
@@ -55,19 +52,20 @@ typedef struct easing {
     // position
     easing_pos_t nStart;
     easing_pos_t nStop;
+    easing_pos_t nOffset;
     easing_pos_t nDelta;
     easing_pos_t nCurrent;  // range: [nStart, nStop]
 
     // progress
-    uint8_t nFrameCount;
-    uint8_t nFrameIndex;  // current frame
-    float   fProgress;    // current progress, range: [0,1]
+    uint16_t nFrameCount;  // range: [2,n], 1: nStart/nStop; n:nStop/nStart;
+    uint16_t nFrameIndex;  // current frame. range: [0, nFrameCount], 0:nStart/nStop; nFrameCount:nStop/nStart;
+    float    fProgress;    // current progress. range: [0,1]
 
     int16_t nTimes;
-    int8_t  nDirection;
+    bool    bDirection;  // true: reverse, false：forward
 
     uint32_t nMills;
-    uint16_t nInterval;  // time interval per frame (ms)
+    uint16_t nInterval;  // minimum time interval per frame (ms)
 } easing_t;
 
 //////////////// _easing_calc_xxx
@@ -116,28 +114,30 @@ float _easing_calc_InOutBounce(const float t);
 
 ////////////////
 
-#define EASING_IS_RUNNING(easing) (easing.nTimes != 0)
-
 easing_t easing_create(
-    easing_mode_t dwMode,  // default: EASING_TIMES_SINGLE | EASING_DIR_FORWARD
-    easing_calc_t lpfnCalc,
-    easing_pos_t  nCurrent,
-    uint8_t       nFrameCount,
-    uint16_t      nInterval);
+    easing_mode_t dwMode,       // default: EASING_TIMES_SINGLE | EASING_DIR_FORWARD
+    easing_calc_t lpfnCalc,     // default: _easing_calc_Linear
+    easing_pos_t  nOffset,      // default: 0
+    uint16_t      nFrameCount,  // default: 2
+    uint16_t      nInterval     // default: EASING_INTERVAL_NONE
+);
 
 void easing_start_absolute(
     easing_t*    pEasing,
     easing_pos_t nStart,
-    easing_pos_t nStop,
-    uint8_t      nTimes);
+    easing_pos_t nStop);
 
 void easing_start_relative(
     easing_t*    pEasing,
-    easing_pos_t nDistance,
-    uint8_t      nTimes);
+    easing_pos_t nDistance);
 
 // update easing position
 void easing_update(easing_t* easing);
+
+bool easing_isok(easing_t* pEasing);
+void easing_stop(easing_t* pEasing, easing_pos_t nCurrent);
+
+easing_pos_t easing_curpos(easing_t* pEasing);
 
 #ifdef __cpluscplus
 }

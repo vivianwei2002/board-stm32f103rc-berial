@@ -7,9 +7,9 @@ key_state_t keys[KEY_ID_END];
 bool key_val(key_id_t id)
 {
     switch (id) {
-        case KEY_ID_PREV: return HAL_GPIO_ReadPin(KEY_C1_GPIO_Port, KEY_C1_Pin) == GPIO_PIN_RESET;
-        case KEY_ID_OK: return HAL_GPIO_ReadPin(KEY_C3_GPIO_Port, KEY_C3_Pin) == GPIO_PIN_RESET;
-        case KEY_ID_NEXT: return HAL_GPIO_ReadPin(KEY_C2_GPIO_Port, KEY_C2_Pin) == GPIO_PIN_RESET;
+        case KEY_ID_OK: return HAL_GPIO_ReadPin(KEY_C1_GPIO_Port, KEY_C1_Pin) == GPIO_PIN_RESET;    // b
+        case KEY_ID_PREV: return HAL_GPIO_ReadPin(KEY_C3_GPIO_Port, KEY_C3_Pin) == GPIO_PIN_RESET;  // d
+        case KEY_ID_NEXT: return HAL_GPIO_ReadPin(KEY_C2_GPIO_Port, KEY_C2_Pin) == GPIO_PIN_RESET;  // c
         default: break;
     }
     return false;
