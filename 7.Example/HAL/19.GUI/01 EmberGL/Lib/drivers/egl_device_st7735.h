@@ -145,7 +145,7 @@ private:
     }
     EGL_INLINE void write_data(uint8_t* data_, uint8_t len_) { HAL_SPI_Transmit(m_spi, data_, len_, HAL_MAX_DELAY); }
 
-    EGL_INLINE void set_data_window(uint16_t x0_, uint16_t y0_, uint16_t x1_, uint16_t y1_);
+    EGL_INLINE void set_data_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
 
     EGL_INLINE void select() { HAL_GPIO_WritePin(m_port_cs, m_pin_cs, GPIO_PIN_RESET); }
     EGL_INLINE void unselect() { HAL_GPIO_WritePin(m_port_cs, m_pin_cs, GPIO_PIN_SET); }

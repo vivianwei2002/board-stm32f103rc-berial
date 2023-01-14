@@ -22,10 +22,13 @@ extern "C" {
 #include "lvgl/lvgl.h"
 #endif
 
+#include "st7735/st7735.h"
 /*********************
  *      DEFINES
  *********************/
-#define LV_VER_RES_MAX (32U * 1024U)
+#define LV_VER_RES_MAX (2U * 1024U)
+#define MY_DISP_HOR_RES 160
+#define MY_DISP_VER_RES 80
 /**********************
  *      TYPEDEFS
  **********************/

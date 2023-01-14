@@ -17,9 +17,9 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -59,40 +59,38 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static void event_handler(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
 
-    if(code == LV_EVENT_CLICKED) {
-        LV_LOG_USER("Clicked");
-    }
-    else if(code == LV_EVENT_VALUE_CHANGED) {
-        LV_LOG_USER("Toggled");
+static void btn_event_cb(lv_event_t * event)
+{
+    lv_obj_t *btn = lv_event_get_target(event);            
+    if(event->code == LV_EVENT_CLICKED) 
+    {
+        static uint8_t cnt = 0;
+        cnt++;
+
+        /*Get the first child of the button which is the label and change its text*/
+        lv_obj_t * label = lv_obj_get_child(btn, NULL);
+        lv_label_set_text_fmt(label, "Button: %d", cnt);
+			
     }
 }
 
-void lv_example_btn_1(void)
+static void lvgl_first_demo_start(void)
 {
-    lv_obj_t * label;
+    lv_obj_t * btn = lv_btn_create(lv_scr_act());           /*Add a button the current screen*/
+    lv_obj_set_pos(btn, 10, 10);                            /*Set its position*/
+    lv_obj_set_size(btn, 100, 30);                          /*Set its size*/
+    lv_obj_add_event_cb(btn, (lv_event_cb_t)btn_event_cb, LV_EVENT_CLICKED, NULL);/*Assign a callback to the button*/
 
-    lv_obj_t * btn1 = lv_btn_create(lv_scr_act());
-    lv_obj_add_event_cb(btn1, event_handler, LV_EVENT_ALL, NULL);
-    lv_obj_align(btn1, LV_ALIGN_CENTER, 0, -40);
+    lv_obj_t * label = lv_label_create(btn);                /*Add a label to the button*/
+    lv_label_set_text(label, "Yeah");                       /*Set the labels text*/
 
-    label = lv_label_create(btn1);
-    lv_label_set_text(label, "Button");
-    lv_obj_center(label);
-
-    lv_obj_t * btn2 = lv_btn_create(lv_scr_act());
-    lv_obj_add_event_cb(btn2, event_handler, LV_EVENT_ALL, NULL);
-    lv_obj_align(btn2, LV_ALIGN_CENTER, 0, 40);
-    lv_obj_add_flag(btn2, LV_OBJ_FLAG_CHECKABLE);
-    lv_obj_set_height(btn2, LV_SIZE_CONTENT);
-
-    label = lv_label_create(btn2);
-    lv_label_set_text(label, "Toggle");
-    lv_obj_center(label);
+    lv_obj_t * label1 = lv_label_create(lv_scr_act());
+    lv_label_set_text(label1, "Hello world!"); 
+    lv_obj_align(label1, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align_to(btn, label1, LV_ALIGN_OUT_TOP_MID, 0, -10);
 }
+
 /* USER CODE END 0 */
 
 /**
@@ -104,7 +102,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -125,16 +122,19 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART1_UART_Init();
+  MX_SPI1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+
 	lv_init();                   
   lv_port_disp_init();         
-  // lv_port_indev_init();
+  lv_port_indev_init();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	lv_example_btn_1();
+	lvgl_first_demo_start();
   while (1)
   {
 		lv_task_handler(); 
@@ -154,7 +154,8 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
@@ -167,7 +168,8 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+
+  /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -207,12 +209,10 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

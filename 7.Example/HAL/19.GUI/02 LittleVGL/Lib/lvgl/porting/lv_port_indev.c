@@ -12,6 +12,7 @@
 #include "lv_port_indev.h"
 #include "../lvgl.h"
 
+#include "gpio.h"
 /*********************
  *      DEFINES
  *********************/
@@ -95,6 +96,8 @@ void lv_port_indev_init(void)
     indev_drv.type    = LV_INDEV_TYPE_POINTER;
     indev_drv.read_cb = touchpad_read;
     indev_touchpad    = lv_indev_drv_register(&indev_drv);
+		
+		return;
 
     /*------------------
      * Mouse
@@ -208,6 +211,10 @@ static void touchpad_read(lv_indev_drv_t* indev_drv, lv_indev_data_t* data)
 static bool touchpad_is_pressed(void)
 {
     /*Your code comes here*/
+	
+		if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_SET) {
+        return true;
+    }
 
     return false;
 }
@@ -216,6 +223,12 @@ static bool touchpad_is_pressed(void)
 static void touchpad_get_xy(lv_coord_t* x, lv_coord_t* y)
 {
     /*Your code comes here*/
+	
+		if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_SET) {
+				*x = 40;
+				*y = 15;
+        return;
+    }
 
     (*x) = 0;
     (*y) = 0;
@@ -249,7 +262,7 @@ static void mouse_read(lv_indev_drv_t* indev_drv, lv_indev_data_t* data)
 static bool mouse_is_pressed(void)
 {
     /*Your code comes here*/
-
+	
     return false;
 }
 
@@ -257,7 +270,7 @@ static bool mouse_is_pressed(void)
 static void mouse_get_xy(lv_coord_t* x, lv_coord_t* y)
 {
     /*Your code comes here*/
-
+	
     (*x) = 0;
     (*y) = 0;
 }
@@ -396,7 +409,7 @@ static int8_t button_get_pressed_id(void)
 static bool button_is_pressed(uint8_t id)
 {
     /*Your code comes here*/
-
+	
     return false;
 }
 
