@@ -2,6 +2,7 @@
 5.Toolchain/FlyMcuConfig.ini
 *.d
 *.o
+.vscode
 *.uvguix.Administrator
 *.sct
 *.lnp

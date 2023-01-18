@@ -53,7 +53,7 @@ static void print_binary(uint8_t n)
 #define MEMBER_SIZE(structure, member) (sizeof(((structure*)0)->member))
 
 #define INLINE __inline__ __attribute__((always_inline))
-
+#define NOINLINE __attribute__((noinline))
 // 计数参数个数
 
 #define __COUNT_ARGS(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _n, X...) _n

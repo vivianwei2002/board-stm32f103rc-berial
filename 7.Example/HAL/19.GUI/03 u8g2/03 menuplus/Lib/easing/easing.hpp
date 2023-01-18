@@ -1,7 +1,11 @@
 #ifndef __EASING_H__
 #define __EASING_H__
 
-#include "base.hpp"
+#ifdef __cplusplus
+
+#include "epos.hpp"
+
+static inline easing_type correct(easing_type v) { return (v - (uint8_t)v) > 0.5f; }
 
 class easing_core {
 public:
@@ -32,46 +36,20 @@ public:
         uint32_t      nFrameCount = 2,  // greater than or equal to 2
         mode          dwMode      = EASING_MODE_NTIMES(1, DIR_FORWARD),
         easing_calc_t lpfnCalc    = _easing_calc_Linear,
-        uint32_t      nInterval   = 0)
-    {
-        assert_param(pItems);
-        assert_param(nLength);
-        assert_param(lpfnCalc);
-        assert_param(nFrameCount >= 2);
-
-        m_dwMode = dwMode;
-
-        m_lpfnCalc = lpfnCalc;
-
-        m_pItems  = pItems;
-        m_nLength = nLength;
-
-        m_nFrameIndex = 0;
-        m_nFrameCount = nFrameCount;
-
-        m_fProgress    = 0.f;
-        m_fCoefficient = 0.f;
-
-        m_nTimes = 0;
-
-        m_bDirection = dwMode & mode::DIR_REVERSE;
-#ifdef easing_mills
-        m_nInterval = nInterval;
-#endif
-    }
-
+        uint32_t      nInterval   = 0);
     ~easing_core() {}
 
     void start(void);
-
-    // update easing position
     void update(void);
+
+    // 0:start 1:stop 2:delta 3:current 4:offset 5:curpos
+    void print(uint8_t type);
 
     void stop(void) { m_nTimes = 0; }
 
     bool isok(void) { return m_nTimes == 0; }
 
-    easing_type_t curpos(uint32_t index) { return m_pItems[index].curpos(); }
+    easing_type curpos(uint32_t index) { return m_pItems[index].curpos(); }
 
     float progress(void) { return m_fProgress; }
     float coefficient(void) { return m_fCoefficient; }
@@ -125,83 +103,10 @@ private:
 #endif
 };
 
-void easing_core::start(void)
-{
-    m_nFrameIndex = 0;  // first frame is nStart
-    m_fProgress   = 0.f;
-
-    m_bDirection = m_dwMode & mode::DIR_REVERSE;
-
-    if (m_dwMode & mode::TIMES_INFINITE) {
-        m_nTimes = -1;
-    } else {
-        m_nTimes = m_dwMode >> mode::TIMES_SET;
-        if (m_nTimes == 0) m_nTimes = 1;
-        if (m_dwMode & mode::DIR_BACKANDFORTH) m_nTimes *= 2;
-    }
-
-#ifdef easing_mills
-    m_nMills = easing_mills();
-#endif
-}
-
-void easing_core::update(void)
-{
-    // isok
-    if (isok()) return;
-
-#ifdef easing_mills
-    if (m_nInterval > 0) {
-        if (easing_mills() < m_nMills) return;
-        m_nMills = easing_mills() + m_nInterval;
-    }
-#endif
-
-    // next frame
-    ++m_nFrameIndex;
-
-    if (m_nFrameIndex > m_nFrameCount) {
-        if (m_dwMode & mode::DIR_BACKANDFORTH) {
-            // reverse direction
-            m_bDirection = !m_bDirection;
-            // skip once nStart/nStop pos
-            m_nFrameIndex = 2;
-        } else {
-            // at first frame
-            m_nFrameIndex = 1;
-        }
-    }
-
-    easing_pos* src  = m_pItems;
-    easing_pos* dest = m_pItems + m_nLength;
-
-    if (m_nFrameIndex == m_nFrameCount) {
-        // at last frame
-        m_fProgress    = 1.f;
-        m_fCoefficient = 1.f;
-        while (src < dest) {
-            if (src->m_bEnable) src->m_nCurrent = m_bDirection ? src->m_nStart : src->m_nStop;
-            ++src;
-        }
-        // decrease times
-        if (!(m_dwMode & mode::TIMES_INFINITE)) --m_nTimes;
-    } else {
-        // calculate progress
-        m_fProgress = (float)(m_nFrameIndex - 1) / (m_nFrameCount - 1);
-        // calculate position
-        m_fCoefficient = m_lpfnCalc(m_fProgress);
-        while (src < dest) {
-            if (src->m_bEnable)
-                src->m_nCurrent = m_bDirection ? (src->m_nStop - m_fCoefficient * src->m_nDelta) : (src->m_nStart + m_fCoefficient * src->m_nDelta);
-            ++src;
-        }
-    }
-}
-
 class easing_fast : public easing_core, public easing_pos {
 public:
-    easing_fast(easing_type_t nCurrent    = 0,
-                easing_type_t nOffset     = 0,
+    easing_fast(easing_type   nCurrent    = 0,
+                easing_type   nOffset     = 0,
                 uint32_t      nFrameCount = 2,  // greater than or equal to 2
                 mode          dwMode      = EASING_MODE_NTIMES(1, DIR_FORWARD),
                 easing_calc_t lpfnCalc    = _easing_calc_Linear,
@@ -211,7 +116,9 @@ public:
     }
     ~easing_fast() {}
 
-    easing_type_t curpos(void) { return easing_pos::curpos(); }
+    easing_type curpos(void) { return easing_pos::curpos(); }
 };
+
+#endif
 
 #endif

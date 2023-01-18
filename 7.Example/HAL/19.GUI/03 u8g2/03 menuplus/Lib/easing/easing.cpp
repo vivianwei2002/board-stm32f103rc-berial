@@ -1,6 +1,153 @@
 
 #include "easing.hpp"
 
+easing_core::easing_core(
+    easing_pos    pItems[],
+    uint32_t      nLength,
+    uint32_t      nFrameCount,
+    mode          dwMode,
+    easing_calc_t lpfnCalc,
+    uint32_t      nInterval)
+{
+    assert_param(pItems);
+    assert_param(nLength);
+    assert_param(lpfnCalc);
+    assert_param(nFrameCount >= 2);
+
+    m_dwMode = dwMode;
+
+    m_lpfnCalc = lpfnCalc;
+
+    m_pItems  = pItems;
+    m_nLength = nLength;
+
+    m_nFrameIndex = 0;
+    m_nFrameCount = nFrameCount;
+
+    m_fProgress    = 0.f;
+    m_fCoefficient = 0.f;
+
+    m_nTimes = 0;
+
+    m_bDirection = dwMode & mode::DIR_REVERSE;
+#ifdef easing_mills
+    m_nInterval = nInterval;
+#endif
+}
+
+void easing_core::start(void)
+{
+    m_nFrameIndex = 0;  // first frame is nStart
+    m_fProgress   = 0.f;
+
+    m_bDirection = m_dwMode & mode::DIR_REVERSE;
+
+    if (m_dwMode & mode::TIMES_INFINITE) {
+        m_nTimes = -1;
+    } else {
+        m_nTimes = m_dwMode >> mode::TIMES_SET;
+        if (m_nTimes == 0) m_nTimes = 1;
+        if (m_dwMode & mode::DIR_BACKANDFORTH) m_nTimes *= 2;
+    }
+
+#ifdef easing_mills
+    m_nMills = easing_mills();
+#endif
+}
+
+// update easing position
+void easing_core::update(void)
+{
+    // isok
+    if (isok()) return;
+
+#ifdef easing_mills
+    if (m_nInterval > 0) {
+        if (easing_mills() < m_nMills) return;
+        m_nMills = easing_mills() + m_nInterval;
+    }
+#endif
+
+    // next frame
+    ++m_nFrameIndex;
+
+    if (m_nFrameIndex > m_nFrameCount) {
+        if (m_dwMode & mode::DIR_BACKANDFORTH) {
+            // reverse direction
+            m_bDirection = !m_bDirection;
+            // skip once nStart/nStop pos
+            m_nFrameIndex = 2;
+        } else {
+            // at first frame
+            m_nFrameIndex = 1;
+        }
+    }
+
+    easing_pos* src  = m_pItems;
+    easing_pos* dest = m_pItems + m_nLength;
+
+    if (m_nFrameIndex == m_nFrameCount) {
+        // at last frame
+        m_fProgress    = 1.f;
+        m_fCoefficient = 1.f;
+        while (src < dest) {
+            if (src->m_bEnable) src->m_nCurrent = m_bDirection ? src->m_nStart : src->m_nStop;
+            ++src;
+        }
+        // decrease times
+        if (!(m_dwMode & mode::TIMES_INFINITE)) {
+            if (--m_nTimes == 0) {
+                src = m_pItems;
+                while (src < dest)
+                    src++->m_bEnable = false;
+            }
+        }
+    } else {
+        // calculate progress
+        m_fProgress = (float)(m_nFrameIndex - 1) / (m_nFrameCount - 1);
+        // calculate position
+        m_fCoefficient = m_lpfnCalc(m_fProgress);
+        while (src < dest) {
+            if (src->m_bEnable) {
+                src->m_nCurrent = m_bDirection ?
+                                      (src->m_nStop - m_fCoefficient * src->m_nDelta) :
+                                      (src->m_nStart + m_fCoefficient * src->m_nDelta);
+            }
+            ++src;
+        }
+    }
+}
+
+void easing_core::print(uint8_t type)
+{
+    easing_pos* src  = m_pItems;
+    easing_pos* dest = m_pItems + m_nLength;
+    switch (type) {
+        case 0:
+            while (src < dest) printf("%f\t", src++->m_nStart);
+            break;
+        case 1:
+            while (src < dest) printf("%f\t", src++->m_nStop);
+            break;
+        case 2:
+            while (src < dest) printf("%f\t", src++->m_nDelta);
+            break;
+        case 3:
+            while (src < dest) printf("%f\t", src++->m_nCurrent);
+            break;
+        case 4:
+            while (src < dest) printf("%f\t", src++->m_nOffset);
+            break;
+        case 5:
+            while (src < dest) printf("%f\t", src++->curpos());
+            break;
+        default:
+            break;
+    }
+
+    printf("\r\n");
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef TESTMODE

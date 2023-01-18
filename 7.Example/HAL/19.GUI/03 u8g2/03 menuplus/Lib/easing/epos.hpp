@@ -33,10 +33,10 @@
 /***********************************************************************************************/  // easing_pos
 
 // the min or max moving distance
-#define EASING_MINIMUM_MOVING_DISTACE (1.0f)
+#define EASING_MINIMUM_MOVING_DISTACE (1.5f)
 // #define EASING_MAXIMUM_MOVING_DISTACE (999999.0f)
 
-typedef float easing_type_t;              // datatype
+typedef float easing_type;                // datatype
 typedef void (*easing_cbk_t)(void* arg);  // callback
 
 class easing_core;
@@ -46,12 +46,12 @@ class easing_pos {
     friend easing_core;
 
 public:
-    easing_pos(easing_type_t nCurrent = 0, easing_type_t nOffset = 0)
+    easing_pos(easing_type nCurrent = 0, easing_type nOffset = 0)
         : m_nStart(nCurrent), m_nStop(nCurrent), m_nCurrent(nCurrent), m_nOffset(nOffset), m_bEnable(false) {}
     ~easing_pos() {}
 
     // absolute
-    easing_pos& move(easing_type_t nStart, easing_type_t nStop)
+    easing_pos& move(easing_type nStart, easing_type nStop)
     {
         m_nStart = nStart;
         m_nStop  = nStop;
@@ -60,7 +60,7 @@ public:
     }
 
     // absolute
-    easing_pos& moveto(easing_type_t nStop)
+    easing_pos& moveto(easing_type nStop)
     {
 #if 1
         return move(m_nCurrent, nStop);  // from current pos
@@ -70,12 +70,12 @@ public:
     }
 
     // relative
-    easing_pos& move(easing_type_t nDistance)
+    easing_pos& move(easing_type nDistance)
     {
         return moveto(m_nStop + nDistance);
     }
 
-    easing_pos& offset(easing_type_t nOffset)
+    easing_pos& offset(easing_type nOffset)
     {
         m_nOffset = nOffset;
         return *this;
@@ -90,18 +90,19 @@ public:
 
     easing_pos& print(void)
     {
-        printf("[ nStart   ]: %f\r\n", m_nStart);
-        printf("[ nStop    ]: %f\r\n", m_nStop);
-        printf("[ nCurrent ]: %f\r\n", m_nCurrent);
-        printf("[ nOffset  ]: %f\r\n", m_nOffset);
-        printf("[ nDelta   ]: %f\r\n", m_nDelta);
-        printf("[ bEnable  ]: %s\r\n", m_bEnable ? "true" : "false");
-        printf("[ curpos   ]: %f\r\n", curpos());
+        printv("%f", m_nStart);
+        printv("%f", m_nStop);
+        printv("%f", m_nCurrent);
+        printv("%f", m_nOffset);
+        printv("%f", m_nDelta);
+        printv("%d", m_bEnable);
+        printv("%f", curpos());
+        return *this;
     }
 
     // operator
 
-    easing_pos& operator=(easing_type_t nCurrent)
+    easing_pos& operator=(easing_type nCurrent)
     {
         m_nCurrent = nCurrent;
         return *this;
@@ -115,7 +116,7 @@ public:
     }
 #endif
 
-    easing_type_t curpos(void)
+    easing_type curpos(void)
     {
         return m_nCurrent + m_nOffset;
     }
@@ -123,7 +124,8 @@ public:
 private:
     void calc_delta(void)
     {
-        m_nDelta = m_nStop - m_nStart;
+        m_bEnable = true;
+        m_nDelta  = m_nStop - m_nStart;
 #ifdef EASING_MINIMUM_MOVING_DISTACE
         m_bEnable = abs(m_nDelta) >= EASING_MINIMUM_MOVING_DISTACE;
 #endif
@@ -134,17 +136,17 @@ private:
 
 private:
     // initial and final position
-    easing_type_t m_nStart;
-    easing_type_t m_nStop;
+    easing_type m_nStart;
+    easing_type m_nStop;
 
     // curpos = m_nOffset + m_nCurrent
-    easing_type_t m_nOffset;
+    easing_type m_nOffset;
 
     // nDelta = nStop - nStart
-    easing_type_t m_nDelta;
+    easing_type m_nDelta;
 
-    // range: [m_nStart, nStop]
-    easing_type_t m_nCurrent;
+    // range: [nStart, nStop]
+    easing_type m_nCurrent;
 
     // updatable
     bool m_bEnable;

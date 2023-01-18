@@ -726,11 +726,6 @@
               <FileType>1</FileType>
               <FilePath>..\Lib\apps\adcchart.c</FilePath>
             </File>
-            <File>
-              <FileName>easing.cpp</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Lib\easing\easing.cpp</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -997,14 +992,9 @@
               <FilePath>..\Lib\menus\item.cpp</FilePath>
             </File>
             <File>
-              <FileName>base.hpp</FileName>
+              <FileName>easing.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\Lib\easing\base.hpp</FilePath>
-            </File>
-            <File>
-              <FileName>easing.hpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\Lib\easing\easing.hpp</FilePath>
+              <FilePath>..\Lib\easing\easing.cpp</FilePath>
             </File>
           </Files>
         </Group>
