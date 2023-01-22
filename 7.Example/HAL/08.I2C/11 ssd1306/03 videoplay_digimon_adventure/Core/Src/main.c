@@ -17,7 +17,6 @@
  ******************************************************************************
  */
 /* USER CODE END Header */
-
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "gpio.h"
@@ -28,11 +27,15 @@
 /* USER CODE BEGIN Includes */
 #include "ssd1306/ssd1306_i2c.h"
 #include "images.h"
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+
+#define LENGTH 1024
+uint8_t rxBuffer[LENGTH];
+uint8_t rxCount = 0;
+char    flag    = 0;
 
 /* USER CODE END PTD */
 
@@ -60,6 +63,10 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
+    flag = 1;
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)rxBuffer, 1024);
+}
 
 /* USER CODE END 0 */
 
@@ -67,8 +74,7 @@ void SystemClock_Config(void);
  * @brief  The application entry point.
  * @retval int
  */
-int main(void)
-{
+int main(void) {
     /* USER CODE BEGIN 1 */
 
     /* USER CODE END 1 */
@@ -79,7 +85,7 @@ int main(void)
     HAL_Init();
 
     /* USER CODE BEGIN Init */
-
+    HAL_Delay(500);
     /* USER CODE END Init */
 
     /* Configure the system clock */
@@ -99,36 +105,19 @@ int main(void)
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
+
     ssd1306_init();
+    ssd1306_clear();
+
+    ssd1306_fill_img(img);
+
+    HAL_UART_Receive_IT(&huart1, (uint8_t*)rxBuffer, 1024);
+
     while (1) {
-        // 全屏填充
-        ssd1306_fill(0xFF);  // 亮
-        HAL_Delay(1000);
-        ssd1306_fill(0x00);  // 灭
-        HAL_Delay(1000);
-
-        // 中文显示
-        for (uint8_t i = 0; i < 3; i++)
-            ssd1306_show_cn(i * 16, 0, i);
-        // 英文显示
-        ssd1306_show_str(0, 3, (const uint8_t*)"uYanki", 1);       // 6*8
-        ssd1306_show_str(0, 4, (const uint8_t*)"Hello World", 2);  // 8*16
-        HAL_Delay(2000);
-
-        // 清屏
-        ssd1306_clear();
-        HAL_Delay(1000);
-
-        // 位图显示
-        ssd1306_show_img(0, 0, 128, 8, img_mp3ui);
-        // ssd1306_fill_img(img_mp3ui);
-        HAL_Delay(1000);
-				
-				// 休眠
-        ssd1306_display_off();
-        HAL_Delay(1000);
-        // 唤醒
-        ssd1306_display_on();
+        if (flag == 1) {
+            ssd1306_fill_img(rxBuffer);
+            flag = 0;
+        }
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
@@ -140,12 +129,12 @@ int main(void)
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void)
-{
+void SystemClock_Config(void) {
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-    /** Initializes the CPU, AHB and APB busses clocks
+    /** Initializes the RCC Oscillators according to the specified parameters
+     * in the RCC_OscInitTypeDef structure.
      */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
@@ -157,7 +146,8 @@ void SystemClock_Config(void)
     if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
         Error_Handler();
     }
-    /** Initializes the CPU, AHB and APB busses clocks
+
+    /** Initializes the CPU, AHB and APB buses clocks
      */
     RCC_ClkInitStruct.ClockType      = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
@@ -178,8 +168,7 @@ void SystemClock_Config(void)
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void)
-{
+void Error_Handler(void) {
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
 
@@ -194,13 +183,10 @@ void Error_Handler(void)
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line)
-{
+void assert_failed(uint8_t* file, uint32_t line) {
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
        tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
     /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
