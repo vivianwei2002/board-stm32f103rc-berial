@@ -1,20 +1,16 @@
 
 #include "ssd1306_i2c.h"
+
 #include "font.h"
 
-#define ssd1306_write(reg, dat, len) HAL_I2C_Mem_Write(&SSD1306_I2C, SSD1306_DEV, reg, I2C_MEMADD_SIZE_8BIT, (uint8_t*)dat, len, 0xFF);
-
 // 写命令
-void ssd1306_write_cmd(uint8_t cmd)
-{
-    ssd1306_write(0x00, &cmd, 1);
-}
+void ssd1306_write_cmd(uint8_t cmd) { ssd1306_write(0x00, &cmd, 1); }
 
 // 写数据
-void ssd1306_write_data(uint8_t data)
-{
-    ssd1306_write(0x40, &data, 1);
-}
+void ssd1306_write_data(uint8_t data) { ssd1306_write(0x40, &data, 1); }
+
+// 写数据
+void ssd1306_write_ndata(uint8_t* data, uint16_t len) { ssd1306_write(0x40, data, len); }
 
 // 初始化
 void ssd1306_init(void)
@@ -62,25 +58,13 @@ void ssd1306_set_cursor(uint8_t x, uint8_t y)
 // 全屏填充(全亮:0xFF,全灭:0x00)
 void ssd1306_fill(uint8_t data)
 {
-#if 1
     static const uint8_t zerobuff[128] = {0x00};
 
     uint8_t y;
     for (y = 0; y < 8; ++y) {
         ssd1306_set_cursor(0, y);
-        ssd1306_write(0x40, zerobuff, 128);
+        ssd1306_write_ndata(zerobuff, 128);
     }
-
-#else
-    uint8_t m, n;
-    for (m = 0; m < 8; m++) {
-        ssd1306_write_cmd(0xb0 + m);  // page0 - page1
-        ssd1306_write_cmd(0x00);      // low column start address
-        ssd1306_write_cmd(0x10);      // high column start address
-        for (n = 0; n < 128; n++)
-            ssd1306_write_data(data);
-    }
-#endif
 }
 
 // 清屏
@@ -105,92 +89,63 @@ void ssd1306_display_off(void)
     ssd1306_write_cmd(0XAE);  // SSD1306休眠
 }
 
-#if FONT_ENABLE
-#if FONT_ENABLE_ASCII_6X8 || FONT_ENABLE_ASCII_8X16
+#if CONFIG_ENABLE_FONT
 
 // 显示 ascii 字符 ( size = 1: 6*8, 2: 8*16)
 void ssd1306_show_str(uint8_t x, uint8_t y, const uint8_t str[], uint8_t size)
 {
     uint8_t c = 0, i = 0, j = 0;
     switch (size) {
-        case 1:
-#if FONT_ENABLE_ASCII_6X8
-        {
+#if CONFIG_ENABLE_FONT_ASCII_6X8
+        case 1: {
             while (str[j] != '\0') {
                 c = str[j] - 32;
                 if (x > 126) {
                     x = 0;
                     ++y;
                 }
-#if 1
                 ssd1306_set_cursor(x, y);
-                ssd1306_write(0x40, &F6x8[c], 6);
-#else
-                ssd1306_set_cursor(x, y);
-                for (i = 0; i < 6; i++)
-                    ssd1306_write_data(F6x8[c][i]);
-#endif
+                ssd1306_write_ndata(&F6x8[c], 6);
                 x += 6;
                 ++j;
             }
-        }
+        } break;
 #endif
-        break;
-        case 2:
-#if FONT_ENABLE_ASCII_8X16
-        {
+#if CONFIG_ENABLE_FONT_ASCII_8X16
+        case 2: {
             while (str[j] != '\0') {
                 c = str[j] - 32;
                 if (x > 120) {
                     x = 0;
                     ++y;
                 }
-#if 1
-                uint32_t idx = c * 16;
+                uint32_t idx = c << 4;  // idx = c * 16
                 ssd1306_set_cursor(x, y);
-                ssd1306_write(0x40, &F8X16[idx + 0], 8);
+                ssd1306_write_ndata(&F8X16[idx + 0], 8);
                 ssd1306_set_cursor(x, y + 1);
-                ssd1306_write(0x40, &F8X16[idx + 8], 8);
-#else
-                ssd1306_set_cursor(x, y);
-                for (i = 0; i < 8; i++)
-                    ssd1306_write_data(F8X16[c * 16 + i]);
-                ssd1306_set_cursor(x, y + 1);
-                for (i = 0; i < 8; i++)
-                    ssd1306_write_data(F8X16[c * 16 + i + 8]);
-#endif
+                ssd1306_write_ndata(&F8X16[idx + 8], 8);
                 x += 8;
                 ++j;
             }
-        }
+        } break;
 #endif
-        break;
+        default: break;
     }
 }
-#endif
+
 #endif
 
-#if FONT_ENABLE
-#if FONT_ENABLE_CN_16X16
+#if CONFIG_ENABLE_FONT
+#if CONFIG_ENABLE_FONT_CN_16X16
 
 // 显示汉字（需先取模，16*16点阵，N 为 汉字在 font.h 中的索引）
 void ssd1306_show_cn(uint8_t x, uint8_t y, uint8_t N)
 {
-    uint32_t idx = 32 * N;
-#if 1
+    uint32_t idx = N << 5;  // *32
     ssd1306_set_cursor(x, y);
-    ssd1306_write(0x40, &F16x16[idx + 0], 16);
+    ssd1306_write_ndata(&F16x16[idx + 0], 16);
     ssd1306_set_cursor(x, y + 1);
-    ssd1306_write(0x40, &F16x16[idx + 16], 16);
-#else
-    uint8_t wm = 0;
-    ssd1306_set_cursor(x, y);
-    for (wm = 0; wm < 16; ++wm)
-        ssd1306_write_data(F16x16[idx++]);
-    ssd1306_set_cursor(x, y + 1);
-    for (wm = 0; wm < 16; ++wm)
-        ssd1306_write_data(F16x16[idx++]);
-#endif
+    ssd1306_write_ndata(&F16x16[idx + 16], 16);
 }
 #endif
 #endif
@@ -199,38 +154,34 @@ void ssd1306_show_cn(uint8_t x, uint8_t y, uint8_t N)
 void ssd1306_show_img(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t img[])
 {
     uint8_t  i = 0;
-    uint16_t j = 0;
+    uint32_t j = 0;
     for (i = 0; i < h; ++i) {
         ssd1306_set_cursor(x, y + i);
-#if 1
-        ssd1306_write(0x40, &img[j], w);
+        ssd1306_write_ndata(&img[j], w);
         j += w;
-#else
-        for (x = 0; x < w; ++x, ++j)
-            ssd1306_write_data(img[j]);
-#endif
     }
 }
 
 // 显示动画
 void ssd1306_show_anim(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t frames, uint8_t fps, const uint8_t imgs[])
 {
-		uint32_t size = w * h; //  frame size
-    for (uint8_t i = 0; i < frames; ++i) {
-        ssd1306_show_img(x, y, w, h, &imgs[size*i]);
+    uint32_t       size = w * h;  //  frame size
+    const uint8_t* p    = imgs;
+    for (uint8_t i = 0; i < frames; ++i, p += size) {
+        ssd1306_show_img(x, y, w, h, p);
         HAL_Delay(1000 / fps);
     }
 }
 
 // 填充图片
-void ssd1306_fill_img(const uint8_t img[1024])
+void ssd1306_fill_img(const uint8_t img[SSD1306_BUFFER_SZIE])
 {
     ssd1306_set_cursor(0, 0);
-    ssd1306_write(0x40, img, 1024);
+    ssd1306_write_ndata(img, SSD1306_BUFFER_SZIE);
 }
 
 // 填充动画
-void ssd1306_fill_anim(uint8_t frames, uint8_t fps, const uint8_t imgs[][1024])
+void ssd1306_fill_anim(uint8_t frames, uint8_t fps, const uint8_t imgs[][SSD1306_BUFFER_SZIE])
 {
     for (uint8_t i = 0; i < frames; ++i) {
         ssd1306_fill_img(imgs[i]);

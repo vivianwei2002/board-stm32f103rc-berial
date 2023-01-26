@@ -3,11 +3,15 @@
 #ifndef _FONT_H_
 #define _FONT_H_
 
-#include "ssd1306_i2c.h"
+#if 1
+#include "ssd1306_conf.h"
+#else
+#include "ssd1306/ssd1306_conf.h"
+#endif
 
-#if FONT_ENABLE
+#if CONFIG_ENABLE_FONT
 
-#if FONT_ENABLE_CN_16X16
+#if CONFIG_ENABLE_FONT_CN_16X16
 
 const static uint8_t F16x16[] = {
     0x00, 0x00, 0x00, 0xF8, 0xF8, 0x48, 0x4C, 0x4F, 0x4B, 0x4A, 0x48, 0x48, 0xF8, 0xF8, 0x00, 0x00,  //
@@ -20,7 +24,7 @@ const static uint8_t F16x16[] = {
 
 #endif
 
-#if FONT_ENABLE_ASCII_6X8
+#if CONFIG_ENABLE_FONT_ASCII_6X8
 
 const static uint8_t F6x8[][6] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // sp
@@ -119,7 +123,7 @@ const static uint8_t F6x8[][6] = {
 
 #endif
 
-#if FONT_ENABLE_ASCII_8X16
+#if CONFIG_ENABLE_FONT_ASCII_8X16
 
 const static uint8_t F8X16[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // 0
@@ -221,6 +225,5 @@ const static uint8_t F8X16[] = {
 
 #endif
 #endif
-
 
 #endif

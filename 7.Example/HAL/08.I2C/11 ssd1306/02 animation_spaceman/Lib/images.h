@@ -1,7 +1,7 @@
 #ifndef _IMAGES_H_
 #define _IMAGES_H_
 
-#include "ssd1306/ssd1306_i2c.h"
+#include <stdint.h>
 
 #if 1
 
