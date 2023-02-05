@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xE,LV_CONF_INCLUDE_SIMPLE</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.4/Drivers/STM32F1xx_HAL_Driver/Inc;C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.4/Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.4/Drivers/CMSIS/Device/ST/STM32F1xx/Include;C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.4/Drivers/CMSIS/Include;../Lib;../../Lib;../../Lib/lvgl</IncludePath>
+              <IncludePath>../Core/Inc;C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.4/Drivers/STM32F1xx_HAL_Driver/Inc;C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.4/Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.4/Drivers/CMSIS/Device/ST/STM32F1xx/Include;C:/Users/Administrator/STM32Cube/Repository/STM32Cube_FW_F1_V1.8.4/Drivers/CMSIS/Include;../Lib;../Lib/lvgl;../../Lib;../../Lib/lvgl</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1324,22 +1324,22 @@
             <File>
               <FileName>lv_port_disp.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\Lib\lvgl\porting\lv_port_disp.c</FilePath>
+              <FilePath>..\Lib\lvgl\porting\lv_port_disp.c</FilePath>
             </File>
             <File>
               <FileName>lv_port_fs.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\Lib\lvgl\porting\lv_port_fs.c</FilePath>
+              <FilePath>..\Lib\lvgl\porting\lv_port_fs.c</FilePath>
             </File>
             <File>
               <FileName>lv_port_indev.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\Lib\lvgl\porting\lv_port_indev.c</FilePath>
+              <FilePath>..\Lib\lvgl\porting\lv_port_indev.c</FilePath>
             </File>
             <File>
               <FileName>lv_conf.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Lib\lv_conf.h</FilePath>
+              <FilePath>..\Lib\lvgl\lv_conf.h</FilePath>
             </File>
           </Files>
         </Group>

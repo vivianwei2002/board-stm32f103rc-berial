@@ -4,13 +4,13 @@
  */
 
 /*Copy this file as "lv_port_indev.c" and set this value to "1" to enable content*/
-#if 1
+#if 0
 
 /*********************
  *      INCLUDES
  *********************/
 #include "lv_port_indev.h"
-#include "../lvgl.h"
+#include "lvgl.h"
 
 #include "gpio.h"
 /*********************
@@ -96,8 +96,6 @@ void lv_port_indev_init(void)
     indev_drv.type    = LV_INDEV_TYPE_POINTER;
     indev_drv.read_cb = touchpad_read;
     indev_touchpad    = lv_indev_drv_register(&indev_drv);
-		
-		return;
 
     /*------------------
      * Mouse
@@ -168,7 +166,7 @@ void lv_port_indev_init(void)
 
     /*Assign buttons to points on the screen*/
     static const lv_point_t btn_points[2] = {
-        {10, 10},  /*Button 0 -> x:10; y:10*/
+        {80, 25},  /*Button 0 -> x:40; y:15*/
         {40, 100}, /*Button 1 -> x:40; y:100*/
     };
     lv_indev_set_button_points(indev_button, btn_points);
@@ -211,10 +209,6 @@ static void touchpad_read(lv_indev_drv_t* indev_drv, lv_indev_data_t* data)
 static bool touchpad_is_pressed(void)
 {
     /*Your code comes here*/
-	
-		if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_SET) {
-        return true;
-    }
 
     return false;
 }
@@ -223,12 +217,6 @@ static bool touchpad_is_pressed(void)
 static void touchpad_get_xy(lv_coord_t* x, lv_coord_t* y)
 {
     /*Your code comes here*/
-	
-		if (HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_SET) {
-				*x = 40;
-				*y = 15;
-        return;
-    }
 
     (*x) = 0;
     (*y) = 0;
@@ -262,7 +250,7 @@ static void mouse_read(lv_indev_drv_t* indev_drv, lv_indev_data_t* data)
 static bool mouse_is_pressed(void)
 {
     /*Your code comes here*/
-	
+
     return false;
 }
 
@@ -270,7 +258,7 @@ static bool mouse_is_pressed(void)
 static void mouse_get_xy(lv_coord_t* x, lv_coord_t* y)
 {
     /*Your code comes here*/
-	
+
     (*x) = 0;
     (*y) = 0;
 }
@@ -409,7 +397,12 @@ static int8_t button_get_pressed_id(void)
 static bool button_is_pressed(uint8_t id)
 {
     /*Your code comes here*/
-	
+
+    switch (id) {
+        case 0: return HAL_GPIO_ReadPin(KEY_GPIO_Port, KEY_Pin) == GPIO_PIN_SET;
+        default: return false;
+    }
+
     return false;
 }
 

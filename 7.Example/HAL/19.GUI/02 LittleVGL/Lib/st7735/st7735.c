@@ -54,14 +54,14 @@ static const uint8_t
 #endif                    // ST7735_IS_128X128
 
 #ifdef ST7735_IS_160X80
-    init_cmds2[] = {       // Init for 7735S, part 2 (160x80 display)
-        3,                 //  3 commands in list:
-        ST7735_CASET, 4,   //  1: Column addr set, 4 args, no delay:
-        0x00, 0x00,        //     XSTART = 0
-        0x00, 0x4F,        //     XEND = 79
-        ST7735_RASET, 4,   //  2: Row addr set, 4 args, no delay:
-        0x00, 0x00,        //     XSTART = 0
-        0x00, 0x9F,        //     XEND = 159
+    init_cmds2[] = {        // Init for 7735S, part 2 (160x80 display)
+        3,                  //  3 commands in list:
+        ST7735_CASET, 4,    //  1: Column addr set, 4 args, no delay:
+        0x00, 0x00,         //     XSTART = 0
+        0x00, 0x4F,         //     XEND = 79
+        ST7735_RASET, 4,    //  2: Row addr set, 4 args, no delay:
+        0x00, 0x00,         //     XSTART = 0
+        0x00, 0x9F,         //     XEND = 159
         ST7735_INVOFF, 0},  //  3: Invert colors
 #endif
 
@@ -74,17 +74,15 @@ static const uint8_t
         ST7735_DISPON, DELAY,                                                                                                 //  4: Main screen turn on, no args w/delay
         100};                                                                                                                 //     100 ms delay
 
-
 inline void ST7735_Reset()
 {
     HAL_GPIO_WritePin(LCD_RES_GPIO_Port, LCD_RES_Pin, GPIO_PIN_RESET);
     HAL_Delay(5);
     HAL_GPIO_WritePin(LCD_RES_GPIO_Port, LCD_RES_Pin, GPIO_PIN_SET);
     HAL_Delay(5);
-    HAL_GPIO_WritePin(LCD_BL_GPIO_Port, LCD_BL_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LCD_BL_GPIO_Port, LCD_BL_Pin, BACKLIGHT_ON);
     HAL_Delay(20);
 }
-
 
 static void ST7735_ExecuteCommandList(const uint8_t* addr)
 {
@@ -140,7 +138,6 @@ void ST7735_Init()
     ST7735_ExecuteCommandList(init_cmds3);
     ST7735_Unselect();
 }
-
 
 void ST7735_InvertColors(bool invert)
 {

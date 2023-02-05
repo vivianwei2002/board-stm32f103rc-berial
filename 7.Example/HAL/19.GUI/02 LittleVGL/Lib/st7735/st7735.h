@@ -17,16 +17,29 @@
 #define ST7735_MADCTL_MH  0x04
 
 /*** Redefine if necessary ***/
-#define LCD_SPI_PORT hspi1
+#define LCD_SPI_PORT hspi3
 
-// mini 160x80, rotate right
+// 160x80, rotate right
 
-#define ST7735_IS_160X80 1
-#define ST7735_XSTART    0
-#define ST7735_YSTART    24
-#define ST7735_WIDTH     160
-#define ST7735_HEIGHT    80
-#define ST7735_ROTATION  (ST7735_MADCTL_MY | ST7735_MADCTL_MV | ST7735_MADCTL_BGR)
+// #define LCD_SPI_PORT     hspi1
+// #define ST7735_IS_160X80 1
+// #define ST7735_XSTART    0
+// #define ST7735_YSTART    24
+// #define ST7735_WIDTH     160
+// #define ST7735_HEIGHT    80
+// #define ST7735_ROTATION  (ST7735_MADCTL_MY | ST7735_MADCTL_MV | ST7735_MADCTL_BGR)
+// #define BACKLIGHT_ON     GPIO_PIN_RESET
+
+// 128x160, rotate right
+
+#define LCD_SPI_PORT      hspi3
+#define ST7735_IS_160X128 1
+#define ST7735_WIDTH      160
+#define ST7735_HEIGHT     128
+#define ST7735_XSTART     1
+#define ST7735_YSTART     2
+#define ST7735_ROTATION   (ST7735_MADCTL_MY | ST7735_MADCTL_MV)
+#define BACKLIGHT_ON      GPIO_PIN_SET
 
 /****************************/
 
@@ -93,23 +106,26 @@ void ST7735_Init(void);
 
 void ST7735_InvertColors(bool invert);
 
-#define ST7735_CS_L() HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET) // select
-#define ST7735_CS_H() HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET) // unselect
+#define ST7735_CS_L() HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET)  // select
+#define ST7735_CS_H() HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET)    // unselect
 
-#define ST7735_Select() ST7735_CS_L()
+#define ST7735_Select()   ST7735_CS_L()
 #define ST7735_Unselect() ST7735_CS_H()
 
-#define ST7735_DC_L() HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_RESET) // cmd
-#define ST7735_DC_H() HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_SET) // data
+#define ST7735_DC_L() HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_RESET)  // cmd
+#define ST7735_DC_H() HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_SET)    // data
 
-#define ST7735_WriteBytes(buff,size) HAL_SPI_Transmit(&LCD_SPI_PORT, buff, size, HAL_MAX_DELAY)
+#define ST7735_WriteBytes(buff, size) HAL_SPI_Transmit(&LCD_SPI_PORT, buff, size, HAL_MAX_DELAY)
 
-static inline void ST7735_WriteCommand(uint8_t buff){
-	ST7735_DC_L();
-	ST7735_WriteBytes(&buff,1);
+static inline void ST7735_WriteCommand(uint8_t buff)
+{
+    ST7735_DC_L();
+    ST7735_WriteBytes(&buff, 1);
 }
 
-#define ST7735_WriteData(buff,size) ST7735_DC_H();ST7735_WriteBytes(buff,size)
+#define ST7735_WriteData(buff, size) \
+    ST7735_DC_H();                   \
+    ST7735_WriteBytes(buff, size)
 
 void ST7735_SetAddressWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
 

@@ -4,7 +4,7 @@
  */
 
 /*Copy this file as "lv_port_disp.h" and set this value to "1" to enable content*/
-#if 0
+#if 1
 
 #ifndef LV_PORT_DISP_TEMPL_H
 #define LV_PORT_DISP_TEMPL_H
@@ -22,10 +22,13 @@ extern "C" {
 #include "lvgl/lvgl.h"
 #endif
 
+#include "st7735/st7735.h"
 /*********************
  *      DEFINES
  *********************/
-
+#define LV_VER_RES_MAX  (2U * 1024U)
+#define MY_DISP_HOR_RES ST7735_WIDTH
+#define MY_DISP_VER_RES ST7735_HEIGHT
 /**********************
  *      TYPEDEFS
  **********************/

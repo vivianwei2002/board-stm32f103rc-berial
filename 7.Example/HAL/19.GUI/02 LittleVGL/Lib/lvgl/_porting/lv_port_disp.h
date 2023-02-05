@@ -26,9 +26,9 @@ extern "C" {
 /*********************
  *      DEFINES
  *********************/
-#define LV_VER_RES_MAX (2U * 1024U)
-#define MY_DISP_HOR_RES 160
-#define MY_DISP_VER_RES 80
+#define LV_VER_RES_MAX  (2U * 1024U)
+#define MY_DISP_HOR_RES ST7735_WIDTH
+#define MY_DISP_VER_RES ST7735_HEIGHT
 /**********************
  *      TYPEDEFS
  **********************/
