@@ -111,8 +111,8 @@ int main(void)
         for (uint8_t i = 0; i < 3; i++)
             ssd1306_show_cn(i * 16, 0, i);
         // 英文显示
-        ssd1306_show_str(0, 3, (const uint8_t*)"uYanki", 1);       // 6*8
-        ssd1306_show_str(0, 4, (const uint8_t*)"Hello World", 2);  // 8*16
+        ssd1306_show_str(0, 3, "uYanki", 1);       // 6*8
+        ssd1306_show_str(0, 4, "Hello World", 2);  // 8*16
         HAL_Delay(2000);
 
         // 清屏
@@ -123,13 +123,13 @@ int main(void)
         ssd1306_show_img(0, 0, 128, 8, img_mp3ui);
         // ssd1306_fill_img(img_mp3ui);
         HAL_Delay(1000);
-				
-				// 休眠
+
+        // 休眠
         ssd1306_display_off();
         HAL_Delay(1000);
         // 唤醒
         ssd1306_display_on();
-				HAL_Delay(1000);
+        HAL_Delay(1000);
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */

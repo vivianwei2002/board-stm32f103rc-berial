@@ -52,7 +52,7 @@ void ssd1306_set_cursor(uint8_t x, uint8_t y)
 {
     ssd1306_write_cmd(0xb0 + y);
     ssd1306_write_cmd(((x & 0xf0) >> 4) | 0x10);
-    ssd1306_write_cmd((x & 0x0f) | 0x01);
+    ssd1306_write_cmd(x & 0x0f);
 }
 
 // 全屏填充(全亮:0xFF,全灭:0x00)
@@ -92,7 +92,7 @@ void ssd1306_display_off(void)
 #if CONFIG_ENABLE_FONT
 
 // 显示 ascii 字符 ( size = 1: 6*8, 2: 8*16)
-void ssd1306_show_str(uint8_t x, uint8_t y, const uint8_t str[], uint8_t size)
+void ssd1306_show_str(uint8_t x, uint8_t y, uint8_t str[], uint8_t size)
 {
     uint8_t c = 0, i = 0, j = 0;
     switch (size) {
@@ -133,6 +133,60 @@ void ssd1306_show_str(uint8_t x, uint8_t y, const uint8_t str[], uint8_t size)
     }
 }
 
+// 显示 ascii 字符 ( size = 1: 6*8, 2: 8*16) , 透明
+void ssd1306_show_str_ex(uint8_t x, uint8_t y, uint8_t str[], uint8_t size)
+{
+    uint8_t c = 0, i = 0, j = 0;
+    switch (size) {
+#if CONFIG_ENABLE_FONT_ASCII_6X8
+        case 1: {
+            while (str[j] != '\0') {
+                c = str[j] - 32;
+                if (x > 126) {
+                    x = 0;
+                    ++y;
+                }
+
+                for (i = 0; i < 6; ++i, ++x) {
+                    if (F6x8[c][i] == 0x00) continue;
+                    ssd1306_set_cursor(x, y);
+                    ssd1306_write_data(F6x8[c][i]);
+                }
+
+                ++j;
+            }
+        } break;
+#endif
+#if CONFIG_ENABLE_FONT_ASCII_8X16
+        case 2: {
+            while (str[j] != '\0') {
+                c = str[j] - 32;
+                if (x > 120) {
+                    x = 0;
+                    ++y;
+                }
+                uint32_t idx = c << 4;  // idx = c * 16
+
+                uint8_t i;
+                for (i = 0; i < 8; ++i, ++x, ++idx) {
+                    if (F8X16[idx] == 0x00) continue;
+                    ssd1306_set_cursor(x, y);
+                    ssd1306_write_data(&F8X16[idx]);
+                }
+                for (i = 0; i < 8; ++i, ++x, ++idx) {
+                    if (F8X16[idx] == 0x00) continue;
+                    ssd1306_set_cursor(x, y + 1);
+                    ssd1306_write_data(&F8X16[idx]);
+                }
+
+                ++j;
+            }
+        } break;
+#endif
+        default: break;
+    }
+}
+
 #endif
 
 #if CONFIG_ENABLE_FONT
@@ -150,20 +204,19 @@ void ssd1306_show_cn(uint8_t x, uint8_t y, uint8_t N)
 #endif
 #endif
 
-// 显示图片 (x:0~127, y:0~7)
-void ssd1306_show_img(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t img[])
+// 显示图片 (x:0~127, y:0~7,x+w<ssd1306_width,y+h<ssd1306_height)
+void ssd1306_show_img(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t img[])
 {
-    uint8_t  i = 0;
     uint32_t j = 0;
-    for (i = 0; i < h; ++i) {
-        ssd1306_set_cursor(x, y + i);
+    while (h--) {
+        ssd1306_set_cursor(x, y++);
         ssd1306_write_ndata(&img[j], w);
         j += w;
     }
 }
 
 // 显示动画
-void ssd1306_show_anim(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t frames, uint8_t fps, const uint8_t imgs[])
+void ssd1306_show_anim(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t frames, uint8_t fps, uint8_t imgs[])
 {
     uint32_t       size = w * h;  //  frame size
     const uint8_t* p    = imgs;
@@ -174,14 +227,14 @@ void ssd1306_show_anim(uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t frame
 }
 
 // 填充图片
-void ssd1306_fill_img(const uint8_t img[SSD1306_BUFFER_SZIE])
+void ssd1306_fill_img(uint8_t img[SSD1306_BUFFER_SZIE])
 {
     ssd1306_set_cursor(0, 0);
     ssd1306_write_ndata(img, SSD1306_BUFFER_SZIE);
 }
 
 // 填充动画
-void ssd1306_fill_anim(uint8_t frames, uint8_t fps, const uint8_t imgs[][SSD1306_BUFFER_SZIE])
+void ssd1306_fill_anim(uint8_t frames, uint8_t fps, uint8_t imgs[][SSD1306_BUFFER_SZIE])
 {
     for (uint8_t i = 0; i < frames; ++i) {
         ssd1306_fill_img(imgs[i]);

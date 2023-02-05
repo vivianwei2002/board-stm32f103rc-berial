@@ -9,8 +9,6 @@
 #define CONFIG_ENABLE_FONT_ASCII_8X16 1
 #endif
 
-#define CONFIG_ENABLE_GRAPHICS 0
-
 #define SSD1306_DEV (SSD1306_ADDR_LOW << 1)  // <--- 器件地址
 #define SSD1306_I2C hi2c2                    // <--- 硬件I2C
 
